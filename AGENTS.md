@@ -24,10 +24,15 @@ VulkittenEngine/
 │   ├── src/Vulkitten/      # Core headers and sources
 │   │   ├── Core.h          # Platform defines, API macros
 │   │   ├── Log.h           # Logging system
+│   │   ├── Assert.h        # Assert macros
 │   │   ├── Application.h   # Application base class
+│   │   ├── Window.h        # Window abstract class
 │   │   ├── EntryPoint.h    # Main entry point
-│   │   └── Events/         # Event system (Event.h, *Event.h)
-│   └── vendor/             # Third-party (spdlog, glm)
+│   │   ├── vktpch.h        # Precompiled header
+│   │   ├── Events/         # Event system (Event.h, *Event.h)
+│   │   └── Platform/       # Platform implementations
+│   │       └── Windows/    # Windows-specific code
+│   └── vendor/             # Third-party (spdlog, glm, glfw)
 └── SandBox/                # Example/editor application
     └── src/                # Application sources
 ```
@@ -109,8 +114,8 @@ namespace Vulkitten
 | Class/Struct | PascalCase | `Application`, `Vector3` |
 | Function | PascalCase | `CreateApplication`, `Initialize` |
 | Variable | camelCase | `deltaTime`, `entityCount` |
-| Static Member | camelCase with s_ prefix | `s_CoreLogger` |
-| Instance Member | camelCase with m_ prefix | `m_Width`, `m_Handled` |
+| Static Member | camelCase with s_ prefix | `s_GLFWInitialized` |
+| Instance Member | camelCase with m_ prefix | `m_Width`, `m_Window` |
 | Constant | kPascalCase or UPPER_SNAKE | `kMaxEntities`, `MAX_BUFFER_SIZE` |
 | Enum | PascalCase | `EventType` |
 | Enum Value | PascalCase | `EventType::KeyPressed` |
@@ -179,9 +184,10 @@ public:
 ## Include Order
 
 1. Corresponding header (for .cpp files)
-2. System headers (`<stdio.h>`, `<vector>`, etc.)
-3. Third-party library headers (`<spdlog/spdlog.h>`)
-4. Project headers (`"Vulkitten/Core.h"`, `"<Vulkitten.h>"`)
+2. Precompiled header (`vktpch.h`)
+3. System headers (`<stdio.h>`, `<vector>`, etc.)
+4. Third-party library headers (`<spdlog/spdlog.h>`, `<GLFW/glfw3.h>`)
+5. Project headers (`"Vulkitten/Core.h"`, `"<Vulkitten.h>"`)
 
 ---
 
@@ -227,44 +233,101 @@ VKT_DEBUG("Debug: {}", details);
 VKT_TRACE("Trace: {}", details);
 ```
 
-### Usage
+---
+
+## Assertions
+
+Assertions are controlled by `VULKITTEN_ENABLE_ASSERTS` (default: enabled in CMakeLists.txt):
 
 ```cpp
-#include <Vulkitten.h>  // Or: #include "Vulkitten/Log.h"
+#include "Vulkitten/Assert.h"
 
-Application::Application()
+VKT_ASSERT(condition, "Error message: {0}", value);
+VKT_CORE_ASSERT(condition, "Error message: {0}", value);
+```
+
+---
+
+## Window System
+
+### Abstract Window (Vulkitten/Window.h)
+
+```cpp
+class VKT_API Window
 {
-    Vulkitten::Log::Initialize();
-}
+public:
+    using EventCallbackFn = std::function<void(Event&)>;
+    
+    virtual void OnUpdate() = 0;
+    virtual unsigned int GetWidth() const = 0;
+    virtual unsigned int GetHeight() const = 0;
+    virtual void SetEventCallback(const EventCallbackFn& callback) = 0;
+    virtual void SetVSync(bool enabled) = 0;
+    virtual bool IsVSync() const = 0;
+    
+    static Window* Create(const WindowProps& props = WindowProps());
+};
 ```
 
----
-
-## Error Handling
-
-- Use exceptions sparingly; prefer return codes for performance-critical code
-- Log errors using the provided logging macros
-- Platform check macro: `VULKITTEN_PLATFORM_WINDOWS`
-
----
-
-## Header Guidelines
-
-### Always Use Pragma Once
+### Window Props
 
 ```cpp
-#pragma once
+struct WindowProps
+{
+    std::string Title;
+    unsigned int Width;
+    unsigned int Height;
+    
+    WindowProps(const std::string& title = "Vulkitten Engine",
+                unsigned int width = 1280,
+                unsigned int height = 720);
+};
 ```
 
-### Minimize Includes
+---
 
-- Use forward declarations when possible
-- Include only what's necessary for declaration
+## Event System
 
-### Public vs Internal Headers
+### Application Event Callbacks
 
-- Public API: `Vulkitten/src/Vulkitten/*.h`
-- Internal headers: Same directory as source
+Override event handlers in your Application subclass:
+
+```cpp
+class Sandbox : public Vulkitten::Application
+{
+public:
+    Sandbox()
+    {
+        m_Window->SetEventCallback(BIND_EVENT_FN(Sandbox::OnEvent));
+    }
+    
+    void OnEvent(Vulkitten::Event& e)
+    {
+        // Handle events
+    }
+    
+private:
+    bool OnWindowClose(Vulkitten::WindowCloseEvent& e)
+    {
+        m_Running = false;
+        return true; // Event handled
+    }
+};
+```
+
+### Event Binding Macro
+
+Use `BIND_EVENT_FN` to bind member functions:
+
+```cpp
+#define BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
+```
+
+### Supported Events
+
+- **Window**: `WindowCloseEvent`, `WindowResizeEvent`, `WindowFocusEvent`, `WindowMovedEvent`
+- **Keyboard**: `KeyPressedEvent`, `KeyReleasedEvent`, `KeyTypedEvent`
+- **Mouse**: `MouseButtonPressedEvent`, `MouseButtonReleasedEvent`, `MouseMovedEvent`, `MouseScrolledEvent`
 
 ---
 
@@ -278,8 +341,16 @@ Applications implement `CreateApplication()` in the `Vulkitten` namespace:
 class Sandbox : public Vulkitten::Application
 {
 public:
-    Sandbox() {}
-    ~Sandbox() {}
+    Sandbox()
+    {
+        m_Window->SetEventCallback(BIND_EVENT_FN(Sandbox::OnEvent));
+    }
+    
+    void OnEvent(Vulkitten::Event& e)
+    {
+        if (e.GetEventType() == Vulkitten::EventType::WindowClose)
+            m_Running = false;
+    }
 };
 
 Vulkitten::Application* Vulkitten::CreateApplication()
@@ -287,6 +358,16 @@ Vulkitten::Application* Vulkitten::CreateApplication()
     return new Sandbox();
 }
 ```
+
+---
+
+## Third-Party Libraries
+
+| Library | Location | Purpose |
+|---------|----------|---------|
+| spdlog | `vendor/spdlog/` | Logging |
+| glm | `vendor/glm/` | Math (vectors, matrices) |
+| glfw | `vendor/glfw/` | Window and input |
 
 ---
 
@@ -304,6 +385,6 @@ Vulkitten::Application* Vulkitten::CreateApplication()
 ## Notes
 
 - No test framework configured yet
-- spdlog and glm are vendored in `Vulkitten/vendor/`
+- spdlog, glm, and glfw are vendored in `Vulkitten/vendor/`
 - The engine entry point is defined in `EntryPoint.h`
 - Only Windows platform is currently supported
