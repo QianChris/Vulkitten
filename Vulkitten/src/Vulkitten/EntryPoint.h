@@ -8,7 +8,6 @@
     {
 		Vulkitten::Log::Initialize();
         VKT_CORE_INFO("Vulkitten Engine Starting...");
-        VKT_WARN("warn");
 
         auto app = Vulkitten::CreateApplication();
         app->Run();
