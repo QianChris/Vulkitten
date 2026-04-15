@@ -17,6 +17,9 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${VULKITTEN_SOURCES})
 # 创建DLL
 add_library(Vulkitten SHARED ${VULKITTEN_SOURCES})
 
+# 预编译头
+target_precompile_headers(Vulkitten PRIVATE src/vktpch.h)
+
 # 定义导出宏
 target_compile_definitions(Vulkitten PRIVATE 
     VULKITTEN_BUILD_DLL

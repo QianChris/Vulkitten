@@ -1,3 +1,4 @@
+#include "vktpch.h"
 #include "Vulkitten/Application.h"
 
 #include "Vulkitten/Log.h"
@@ -19,10 +20,10 @@ namespace Vulkitten
     {
         WindowResizeEvent e(1280, 720);
         VKT_TRACE("{}", e.ToString());
-		KeyPressedEvent e2(32, 1);
-		VKT_TRACE("{}", e2.ToString());
-		MouseButtonPressedEvent e3(1);
-		VKT_TRACE("{}", e3.ToString());
+        KeyPressedEvent e2(32, 1);
+        VKT_TRACE("{}", e2.ToString());
+        MouseButtonPressedEvent e3(1);
+        VKT_TRACE("{}", e3.ToString());
         if (e.IsInCategory(EventCategoryApplication))
             VKT_TRACE("Event belongs to Application category!");
         if (e.IsInCategory(EventCategoryInput))

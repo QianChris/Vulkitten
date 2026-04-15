@@ -1,3 +1,4 @@
+#include "vktpch.h"
 #include "Vulkitten/Log.h"
 #include <spdlog/sinks/stdout_color_sinks-inl.h>
 
