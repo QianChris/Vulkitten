@@ -1,0 +1,63 @@
+# Vulkitten - 引擎核心DLL
+project(Vulkitten VERSION 1.0.0 LANGUAGES CXX)
+
+# 收集源文件
+file(GLOB_RECURSE VULKITTEN_SOURCES 
+    src/*.cpp 
+    src/*.h 
+    src/*.hpp
+)
+
+# 创建DLL
+add_library(Vulkitten SHARED ${VULKITTEN_SOURCES})
+
+# 定义导出宏
+target_compile_definitions(Vulkitten PRIVATE 
+    VULKITTEN_BUILD_DLL
+    VULKITTEN_EXPORTS
+)
+
+# 公开头文件目录 (供SandBox使用)
+target_include_directories(Vulkitten 
+    PUBLIC 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<INSTALL_INTERFACE:include>
+)
+
+# 设置输出目录为项目名子文件夹
+set_target_properties(Vulkitten PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Vulkitten
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/Vulkitten
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/Vulkitten
+)
+
+# 为每种配置设置输出目录
+foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG_UPPER)
+    set_target_properties(Vulkitten PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}}/Vulkitten
+        LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}}/Vulkitten
+        ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}}/Vulkitten
+    )
+endforeach()
+
+# 中间文件目录
+set_target_properties(Vulkitten PROPERTIES
+    CMAKE_INTERMEDIATE_DIRECTORY ${CMAKE_INTERMEDIATE_DIRECTORY}/Vulkitten
+    PDB_OUTPUT_DIRECTORY ${CMAKE_INTERMEDIATE_DIRECTORY}/Vulkitten
+    COMPILE_PDB_OUTPUT_DIRECTORY ${CMAKE_INTERMEDIATE_DIRECTORY}/Vulkitten
+)
+
+# Windows特定: 设置PDB名称与DLL一致
+if(MSVC)
+    set_target_properties(Vulkitten PROPERTIES
+        COMPILE_PDB_NAME Vulkitten
+    )
+endif()
+
+# 安装规则 (可选)
+install(TARGETS Vulkitten
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
