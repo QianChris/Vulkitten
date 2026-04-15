@@ -1,11 +1,8 @@
 #pragma once
 #include "Vulkitten/Core.h"
 #include "Vulkitten/Window.h"
-
+#include "Vulkitten/LayerStack.h"
 #include "Vulkitten/Events/Event.h"
-#include "Vulkitten/Events/ApplicationEvent.h"
-#include "Vulkitten/Events/KeyEvent.h"
-#include "Vulkitten/Events/MouseEvent.h"
 
 namespace Vulkitten
 {
@@ -18,11 +15,15 @@ namespace Vulkitten
         void Run();
 
 		void OnEvent(Event& e);
+
+        void PushLayer(Layer* layer);
+        void PushOverlay(Layer* overlay);
     private:
         bool OnWindowClose(WindowCloseEvent& e);
 
 		std::unique_ptr<Window> m_Window;
         bool m_Running = true;
+        LayerStack m_LayerStack;
     };
 
     // to be defined in client

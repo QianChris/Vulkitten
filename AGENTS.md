@@ -27,6 +27,8 @@ VulkittenEngine/
 │   │   ├── Assert.h        # Assert macros
 │   │   ├── Application.h   # Application base class
 │   │   ├── Window.h        # Window abstract class
+│   │   ├── Layer.h         # Layer base class
+│   │   ├── LayerStack.h    # Layer stack container
 │   │   ├── EntryPoint.h    # Main entry point
 │   │   ├── vktpch.h        # Precompiled header
 │   │   ├── Events/         # Event system (Event.h, *Event.h)
@@ -282,6 +284,62 @@ struct WindowProps
                 unsigned int width = 1280,
                 unsigned int height = 720);
 };
+```
+
+---
+
+## Layer System
+
+### Layer Base Class
+
+Layers provide a way to organize application functionality:
+
+```cpp
+class VKT_API Layer
+{
+public:
+    Layer(const std::string& name = "Layer");
+    virtual ~Layer();
+
+    virtual void OnAttach() {}      // Called when layer is added
+    virtual void OnDetach() {}      // Called when layer is removed
+    virtual void OnUpdate() {}      // Called every frame
+    virtual void OnEvent(Event& event) {}  // Handle events
+
+    inline const std::string& GetName() const { return m_DebugName; }
+};
+```
+
+### LayerStack
+
+The LayerStack manages layer ordering. Layers are updated in order; overlays are always on top:
+
+```cpp
+class VKT_API Application
+{
+public:
+    void PushLayer(Layer* layer);      // Insert before overlays
+    void PushOverlay(Layer* overlay);  // Always on top
+};
+```
+
+### Layer Usage
+
+```cpp
+class ImGuiLayer : public Vulkitten::Layer
+{
+public:
+    ImGuiLayer() : Layer("ImGui") {}
+    ~ImGuiLayer() {}
+
+    void OnAttach() override;
+    void OnDetach() override;
+    void OnUpdate() override;
+    void OnEvent(Vulkitten::Event& event) override;
+};
+
+// In Application
+PushLayer(new ImGuiLayer());
 ```
 
 ---

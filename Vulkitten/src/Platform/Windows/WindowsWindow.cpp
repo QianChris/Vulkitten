@@ -6,6 +6,8 @@
 #include "Vulkitten/Events/KeyEvent.h"
 #include "Vulkitten/Events/MouseEvent.h"
 
+#include <gl/GL.h>
+
 namespace Vulkitten {
     static bool s_GLFWInitialized = false;
 
@@ -35,7 +37,7 @@ namespace Vulkitten {
         m_Data.Width = props.Width;
         m_Data.Height = props.Height;
 
-		VKT_CORE_INFO("Creating window {0} ({1}, {2})", props.Title, props.Width, props.Height);
+        VKT_CORE_INFO("Creating window {0} ({1}, {2})", props.Title, props.Width, props.Height);
 
         if (!s_GLFWInitialized)
         {
@@ -45,10 +47,14 @@ namespace Vulkitten {
             s_GLFWInitialized = true;
         }
 
+
         m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
         glfwMakeContextCurrent(m_Window);
         glfwSetWindowUserPointer(m_Window, &m_Data);
         SetVSync(true);
+
+        const GLubyte* OpenGLVersion = glGetString(GL_VERSION);
+        VKT_CORE_INFO("OpenGL Version: {0}", (char*)OpenGLVersion);
 
         // Set GLFW callbacks
         glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height) {
