@@ -8,6 +8,8 @@ file(GLOB_RECURSE VULKITTEN_SOURCES
     src/*.hpp
 )
 
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${VULKITTEN_SOURCES})
+
 # 创建DLL
 add_library(Vulkitten SHARED ${VULKITTEN_SOURCES})
 

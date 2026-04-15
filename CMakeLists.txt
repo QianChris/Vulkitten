@@ -23,6 +23,7 @@ if(PLATFORM_NAME STREQUAL "Win32" OR PLATFORM_NAME STREQUAL "x86")
     set(PLATFORM_NAME "x86")
 elseif(PLATFORM_NAME STREQUAL "x64" OR PLATFORM_NAME STREQUAL "AMD64")
     set(PLATFORM_NAME "x64")
+    add_definitions(-DVULKITTEN_PLATFORM_WINDOWS)
 endif()
 
 # 规范化配置名称 (Debug/Release/RelWithDebInfo/MinSizeRel)
