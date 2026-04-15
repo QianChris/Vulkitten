@@ -1,0 +1,6 @@
+[submodule "Vulkitten/vendor/spdlog"]
+	path = Vulkitten/vendor/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "Vulkitten/vendor/glm"]
+	path = Vulkitten/vendor/glm
+	url = https://github.com/g-truc/glm.git

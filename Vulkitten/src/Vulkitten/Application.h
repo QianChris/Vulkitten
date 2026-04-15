@@ -3,7 +3,7 @@
 
 namespace Vulkitten
 {
-    class VulkitenAPI Application
+    class VulkittenAPI Application
     {
     public:
         Application();

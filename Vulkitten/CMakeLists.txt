@@ -1,6 +1,10 @@
 # Vulkitten - 引擎核心DLL
 project(Vulkitten VERSION 1.0.0 LANGUAGES CXX)
 
+# 添加 spdlog 子目录
+add_subdirectory(vendor/spdlog)
+add_subdirectory(vendor/glm)
+
 # 收集源文件
 file(GLOB_RECURSE VULKITTEN_SOURCES 
     src/*.cpp 
@@ -18,6 +22,15 @@ target_compile_definitions(Vulkitten PRIVATE
     VULKITTEN_BUILD_DLL
     VULKITTEN_EXPORTS
 )
+
+# spdlog
+target_link_libraries(Vulkitten PUBLIC spdlog::spdlog)
+target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vendor/spdlog/include")
+
+# glm
+target_link_libraries(Vulkitten PUBLIC glm::glm)
+target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vendor/glm")
+
 
 # 公开头文件目录 (供SandBox使用)
 target_include_directories(Vulkitten 

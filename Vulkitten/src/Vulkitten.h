@@ -2,8 +2,9 @@
 
 // For use by applications.
 
-#include "Vulkittem/Application.h"
+#include "Vulkitten/Log.h"
+#include "Vulkitten/Application.h"
 
 // ---Entry point-----------------------
-#include "Vulkittem/EntryPoint.h"
+#include "Vulkitten/EntryPoint.h"
 // -------------------------------------
