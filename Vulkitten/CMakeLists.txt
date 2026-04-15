@@ -22,6 +22,7 @@ target_compile_definitions(Vulkitten PRIVATE
     VULKITTEN_BUILD_DLL
     VULKITTEN_EXPORTS
 )
+target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 # spdlog
 target_link_libraries(Vulkitten PUBLIC spdlog::spdlog)

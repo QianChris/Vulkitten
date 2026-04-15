@@ -1,9 +1,10 @@
 #pragma once
-#include "Core.h"
+#include "Vulkitten/Core.h"
+#include "Vulkitten/Events/Event.h"
 
 namespace Vulkitten
 {
-    class VulkittenAPI Application
+    class VKT_API Application
     {
     public:
         Application();

@@ -1,14 +1,14 @@
 #pragma once
 
-#include "Core.h"
+#include "Vulkitten/Core.h"
 #include <memory>
 #include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks-inl.h>
+#include <spdlog/fmt/ostr.h>
 
 namespace Vulkitten
 {
 
-class VulkittenAPI Log
+class VKT_API Log
 {
 public:
     static void Initialize();
