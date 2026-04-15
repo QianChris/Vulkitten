@@ -1,13 +1,13 @@
 # Vulkitten - 引擎核心DLL
 project(Vulkitten VERSION 1.0.0 LANGUAGES CXX)
 
-# 宏开关
-add_definitions(-DVULKITTEN_ENABLE_ASSERTS=1)
-
 # 添加 spdlog 子目录
 add_subdirectory(vendor/spdlog)
 add_subdirectory(vendor/glm)
 add_subdirectory(vendor/glfw)
+
+# 宏开关
+add_definitions(-DVULKITTEN_ENABLE_ASSERTS=1)
 
 # 收集源文件
 file(GLOB_RECURSE VULKITTEN_SOURCES 
@@ -42,6 +42,10 @@ target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vendor
 # glfw
 target_link_libraries(Vulkitten PUBLIC glfw)
 target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vendor/glfw/include")
+
+# glad (OpenGL function loader)
+add_subdirectory(vendor/glad)
+target_link_libraries(Vulkitten PUBLIC glad)
 
 # OpenGL (Windows system library)
 target_link_libraries(Vulkitten PUBLIC opengl32)
