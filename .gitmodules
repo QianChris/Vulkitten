@@ -7,3 +7,6 @@
 [submodule "Vulkitten/vendor/glfw"]
 	path = Vulkitten/vendor/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "Vulkitten/vendor/imgui"]
+	path = Vulkitten/vendor/imgui
+	url = https://github.com/ocornut/imgui.git

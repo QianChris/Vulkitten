@@ -5,6 +5,8 @@ project(Vulkitten VERSION 1.0.0 LANGUAGES CXX)
 add_subdirectory(vendor/spdlog)
 add_subdirectory(vendor/glm)
 add_subdirectory(vendor/glfw)
+add_subdirectory(vendor/glad)
+add_subdirectory(vendor/imgui)
 
 # 宏开关
 add_definitions(-DVULKITTEN_ENABLE_ASSERTS=1)
@@ -44,8 +46,10 @@ target_link_libraries(Vulkitten PUBLIC glfw)
 target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vendor/glfw/include")
 
 # glad (OpenGL function loader)
-add_subdirectory(vendor/glad)
 target_link_libraries(Vulkitten PUBLIC glad)
+
+# imgui (GUI library)
+target_link_libraries(Vulkitten PUBLIC imgui)
 
 # OpenGL (Windows system library)
 target_link_libraries(Vulkitten PUBLIC opengl32)

@@ -87,6 +87,8 @@ namespace Vulkitten
 
 }
 
+#define VKT_BIND_EVENT_FN(x) std::bind(&x, this, std::placeholders::_1)
+
 #include "Vulkitten/Events/ApplicationEvent.h"
 #include "Vulkitten/Events/KeyEvent.h"
 #include "Vulkitten/Events/MouseEvent.h"

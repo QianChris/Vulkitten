@@ -426,6 +426,8 @@ Vulkitten::Application* Vulkitten::CreateApplication()
 | spdlog | `vendor/spdlog/` | Logging |
 | glm | `vendor/glm/` | Math (vectors, matrices) |
 | glfw | `vendor/glfw/` | Window and input |
+| imgui | `vendor/imgui/` | GUI library |
+| glad | `vendor/glad/` | OpenGL function loader |
 
 ---
 
