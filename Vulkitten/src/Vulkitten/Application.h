@@ -6,6 +6,7 @@
 
 #include "Vulkitten/ImGui/ImGuiLayer.h"
 #include "Vulkitten/Renderer/Shader.h"
+#include "Vulkitten/Renderer/Buffer.h"
 
 namespace Vulkitten
 {
@@ -34,6 +35,8 @@ namespace Vulkitten
 
 		unsigned int m_VertexArray, m_VertexBuffer, m_IndexBuffer;
         std::unique_ptr<Shader> m_Shader;
+        std::unique_ptr<VertexBuffer> m_VBO;
+        std::unique_ptr<IndexBuffer> m_IBO;
     private:
         static Application* s_Instance;
     };
