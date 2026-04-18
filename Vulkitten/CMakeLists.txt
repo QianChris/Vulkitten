@@ -50,7 +50,7 @@ target_link_libraries(Vulkitten PUBLIC glad)
 
 # imgui (GUI library)
 # target_link_libraries(Vulkitten PUBLIC imgui)
-target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vendor/imgui")
+target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/imgui")
 
 # OpenGL (Windows system library)
 target_link_libraries(Vulkitten PUBLIC opengl32)

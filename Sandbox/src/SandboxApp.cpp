@@ -1,4 +1,5 @@
 #include <Vulkitten.h>
+#include "imgui.h"
 
 class ExampleLayer : public Vulkitten::Layer
 {
@@ -12,6 +13,13 @@ public:
         if (Vulkitten::Input::IsKeyPressed(VKT_KEY_TAB))
             VKT_TRACE("Tab is pressed.");
     }
+
+    virtual void OnImguiRender() override
+    {
+        ImGui::Begin("Test");
+        ImGui::Text("Hello World");
+        ImGui::End();
+	}
 
     void OnEvent(Vulkitten::Event& event) override
     {

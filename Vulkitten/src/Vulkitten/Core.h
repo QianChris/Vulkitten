@@ -10,6 +10,8 @@
     #error Vulkitten only supports Windows!
 #endif
 
+#define IMGUI_API VKT_API
+
 #define BIT(x) (1 << x)
 
 #include "Vulkitten/Assert.h"
