@@ -6,4 +6,4 @@ cd build
 cmake .. -G "Visual Studio 17 2022" -A x64
 
 # 打开生成的解决方案
-# start VulkittenEngine.sln
+start VulkittenEngine.sln

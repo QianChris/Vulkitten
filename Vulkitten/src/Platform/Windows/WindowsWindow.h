@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vulkitten/Window.h"
+#include "Platform/OpenGL/OpenGLContext.h"
 
 #include <glad/glad.h>
 #define GLFW_INCLUDE_NONE
@@ -32,6 +33,7 @@ namespace Vulkitten
 
     private:
         GLFWwindow* m_Window;
+        OpenGLContext* m_Context;
 
         struct WindowData
         {

@@ -11,6 +11,9 @@ file(GLOB_RECURSE SANDBOX_SOURCES
 # 创建可执行文件
 add_executable(SandBox ${SANDBOX_SOURCES})
 
+# 确保Vulkitten先构建完成
+add_dependencies(SandBox Vulkitten)
+
 # 链接Vulkitten DLL
 target_link_libraries(SandBox PRIVATE Vulkitten)
 
@@ -43,11 +46,13 @@ endif()
 
 # 添加构建后事件: 复制Vulkitten.dll到SandBox输出目录 (解决DLL找不到问题)
 # 这样SandBox.exe和Vulkitten.dll在同一目录，运行时自动加载
+# 同时强制重新链接当DLL文件时间戳改变时
 if(WIN32)
     add_custom_command(TARGET SandBox POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:Vulkitten>
             $<TARGET_FILE_DIR:SandBox>
+        DEPENDS $<TARGET_FILE:Vulkitten>
         COMMENT "Copying Vulkitten.dll to SandBox output directory"
     )
 endif()
