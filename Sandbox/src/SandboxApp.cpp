@@ -27,7 +27,6 @@ class Sandbox : public Vulkitten::Application {
 public:
     Sandbox() {
         PushLayer(new ExampleLayer());
-		PushOverlay(new Vulkitten::ImGuiLayer());
     }
     ~Sandbox() {}
 };

@@ -4,6 +4,8 @@
 #include "Vulkitten/LayerStack.h"
 #include "Vulkitten/Events/Event.h"
 
+#include "Vulkitten/ImGui/ImGuiLayer.h"
+
 namespace Vulkitten
 {
     class VKT_API Application
@@ -25,6 +27,7 @@ namespace Vulkitten
         bool OnWindowClose(WindowCloseEvent& e);
 
 		std::unique_ptr<Window> m_Window;
+        ImGuiLayer* m_ImGuiLayer;
         bool m_Running = true;
         LayerStack m_LayerStack;
 

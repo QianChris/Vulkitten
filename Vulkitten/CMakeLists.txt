@@ -6,7 +6,7 @@ add_subdirectory(vendor/spdlog)
 add_subdirectory(vendor/glm)
 add_subdirectory(vendor/glfw)
 add_subdirectory(vendor/glad)
-add_subdirectory(vendor/imgui)
+# add_subdirectory(vendor/imgui)
 
 # 宏开关
 add_definitions(-DVULKITTEN_ENABLE_ASSERTS=1)
@@ -49,7 +49,8 @@ target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vendor
 target_link_libraries(Vulkitten PUBLIC glad)
 
 # imgui (GUI library)
-target_link_libraries(Vulkitten PUBLIC imgui)
+# target_link_libraries(Vulkitten PUBLIC imgui)
+target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vendor/imgui")
 
 # OpenGL (Windows system library)
 target_link_libraries(Vulkitten PUBLIC opengl32)
