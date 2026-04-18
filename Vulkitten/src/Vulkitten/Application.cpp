@@ -1,8 +1,9 @@
 #include "vktpch.h"
 #include "Vulkitten/Application.h"
-#include "Vulkitten/Layer.h"
 
 #include <GLFW/glfw3.h>
+#include "Vulkitten/Layer.h"
+#include "Vulkitten/Input.h"
 
 namespace Vulkitten
 {
@@ -34,6 +35,9 @@ namespace Vulkitten
                 layer->OnUpdate();
 
             m_Window->OnUpdate();
+
+            auto [mouseX, mouseY] = Input::GetMousePosition();
+            VKT_CORE_TRACE("{0}, {1}", mouseX, mouseY);
         }
     }
 
