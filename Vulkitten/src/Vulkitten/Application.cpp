@@ -36,8 +36,8 @@ namespace Vulkitten
 
             m_Window->OnUpdate();
 
-            auto [mouseX, mouseY] = Input::GetMousePosition();
-            VKT_CORE_TRACE("{0}, {1}", mouseX, mouseY);
+            //auto [mouseX, mouseY] = Input::GetMousePosition();
+            //VKT_CORE_TRACE("{0}, {1}", mouseX, mouseY);
         }
     }
 
@@ -53,7 +53,7 @@ namespace Vulkitten
                 break;
         }
 
-        VKT_CORE_TRACE("{}", e.ToString());
+        //VKT_CORE_TRACE("{}", e.ToString());
     }
 
     void Application::PushLayer(Layer *layer)

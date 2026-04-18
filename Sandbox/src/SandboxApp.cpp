@@ -8,11 +8,18 @@ public:
     void OnUpdate() override
     {
         //VKT_INFO("ExampleLayer::Update");
+
+        if (Vulkitten::Input::IsKeyPressed(VKT_KEY_TAB))
+            VKT_TRACE("Tab is pressed.");
     }
 
     void OnEvent(Vulkitten::Event& event) override
     {
-        //VKT_TRACE("{0}", event.ToString());
+        if (event.GetEventType() == Vulkitten::EventType::KeyPressed)
+        {
+            Vulkitten::KeyPressedEvent& e = (Vulkitten::KeyPressedEvent&)event;
+            VKT_TRACE("{0}", (char) e.GetKeyCode());
+		}
     }
 };
 
