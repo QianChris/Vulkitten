@@ -12,31 +12,6 @@ namespace Vulkitten
 {
     Application* Application::s_Instance = nullptr;
 
-    static GLenum ShaderDataTypeToOpenGLBaseType(ShaderDataType type)
-    {
-        switch (type)
-        {
-            case ShaderDataType::Float:   return GL_FLOAT;
-            case ShaderDataType::Float2:  return GL_FLOAT;
-            case ShaderDataType::Float3:  return GL_FLOAT;
-            case ShaderDataType::Float4:  return GL_FLOAT;
-            case ShaderDataType::Mat3:    return GL_FLOAT;
-            case ShaderDataType::Mat4:    return GL_FLOAT;
-            case ShaderDataType::Int:     return GL_INT;
-            case ShaderDataType::Int2:    return GL_INT;
-            case ShaderDataType::Int3:    return GL_INT;
-            case ShaderDataType::Int4:    return GL_INT;
-            case ShaderDataType::Uint:    return GL_UNSIGNED_INT;
-            case ShaderDataType::Uint2:   return GL_UNSIGNED_INT;
-            case ShaderDataType::Uint3:   return GL_UNSIGNED_INT;
-            case ShaderDataType::Uint4:   return GL_UNSIGNED_INT;
-            case ShaderDataType::Bool:    return GL_BOOL;
-        }
-
-        VKT_CORE_ASSERT(false, "Unknown ShaderDataType!");
-        return 0;
-    }
-
     Application::Application()
     {
         VKT_ASSERT(!s_Instance, "Application already exists!");
@@ -48,41 +23,29 @@ namespace Vulkitten
         m_ImGuiLayer = new ImGuiLayer();
         PushOverlay(m_ImGuiLayer);
 
-        // TEMPORARY: GL TRIANGLE
-        glGenVertexArrays(1, &m_VertexArray);
-        glBindVertexArray(m_VertexArray);
 
-        float vertices[3 * 7] = {
-            -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,1.0f,
-             0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,1.0f,
-             0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f,1.0f,
-        };
-        m_VBO.reset(VertexBuffer::Create(vertices, sizeof(vertices)));
-
-        unsigned int indices[3] = { 0, 1, 2 };
-        m_IBO.reset(IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t)));
-
+        m_VAO.reset(VertexArray::Create());
         {
+            float vertices[3 * 7] = {
+                -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,1.0f,
+                0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,1.0f,
+                0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f,1.0f,
+            };
+            std::shared_ptr<VertexBuffer> vertexBuffer;
+            vertexBuffer.reset(VertexBuffer::Create(vertices, sizeof(vertices)));
+
+            unsigned int indices[3] = { 0, 1, 2 };
+            std::shared_ptr<IndexBuffer> indexBuffer;
+            indexBuffer.reset(IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t)));
+
             BufferLayout layout = {
                 { ShaderDataType::Float3, "a_Position" },
                 { ShaderDataType::Float4, "a_Color" },
             };
-            m_VBO->SetLayout(layout);
+            vertexBuffer->SetLayout(layout);
+            m_VAO->AddVertexBuffer(vertexBuffer);
+            m_VAO->SetIndexBuffer(indexBuffer);
         }
-
-        uint32_t index = 0;
-        for (auto& element : m_VBO->GetLayout().GetElements())
-        {
-            glEnableVertexAttribArray(index);
-            glVertexAttribPointer(index,
-                element.GetComponentCount(),
-                ShaderDataTypeToOpenGLBaseType(element.Type),
-                element.Normalized ? GL_TRUE : GL_FALSE,
-                m_VBO->GetLayout().GetStride(),
-                (const void*)element.Offset);
-            index++;
-        }
-
         
         std::string vertexSrc = R"(
             #version 330 core
@@ -108,8 +71,54 @@ namespace Vulkitten
                 color = v_Color;
             }
         )";
-
         m_Shader = std::make_unique<Shader>(vertexSrc, fragmentSrc);
+
+        m_SquareVAO.reset(VertexArray::Create());
+        {
+            float vertices[4 * 3] = {
+                -0.75f, -0.75f, 0.0f,
+                0.75f, -0.75f, 0.0f,
+                0.75f,  0.75f, 0.0f,
+                -0.75f,  0.75f, 0.0f,
+            };
+            std::shared_ptr<VertexBuffer> vertexBuffer;
+            vertexBuffer.reset(VertexBuffer::Create(vertices, sizeof(vertices)));
+
+            unsigned int indices[6] = { 0, 1, 2, 2, 3, 0 };
+            std::shared_ptr<IndexBuffer> indexBuffer;
+            indexBuffer.reset(IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t)));
+
+            BufferLayout layout = {
+                { ShaderDataType::Float3, "a_Position" },
+            };
+            vertexBuffer->SetLayout(layout);
+            m_SquareVAO->AddVertexBuffer(vertexBuffer);
+            m_SquareVAO->SetIndexBuffer(indexBuffer);
+        }
+
+        std::string squareVertexSrc = R"(
+            #version 330 core
+
+            layout(location = 0) in vec3 a_Position;
+
+            void main()
+            {
+                gl_Position = vec4(a_Position, 1.0);
+            }
+        )";
+
+        std::string squareFragmentSrc = R"(
+            #version 330 core
+
+            layout(location = 0) out vec4 color;
+
+            void main()
+            {
+                color = vec4(0.2, 0.3, 0.8, 1.0);
+            }
+        )";
+
+        m_SquareShader = std::make_unique<Shader>(squareVertexSrc, squareFragmentSrc);
     }
 
     Application::~Application()
@@ -123,10 +132,14 @@ namespace Vulkitten
             glClearColor(0.1f, 0.1f, 0.1f, 1);
             glClear(GL_COLOR_BUFFER_BIT);
 
+            m_SquareShader->Bind();
+            m_SquareVAO->Bind();
+            glDrawElements(GL_TRIANGLES, m_SquareVAO->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
+            m_SquareShader->Unbind();
+
 			m_Shader->Bind();
-            m_VBO->Bind();
-            m_IBO->Bind();
-            glDrawElements(GL_TRIANGLES, m_IBO->GetCount(), GL_UNSIGNED_INT, nullptr);
+            m_VAO->Bind();
+            glDrawElements(GL_TRIANGLES, m_VAO->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
 			m_Shader->Unbind();
 
             for (Layer *layer : m_LayerStack)

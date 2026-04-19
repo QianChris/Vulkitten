@@ -7,6 +7,7 @@
 #include "Vulkitten/ImGui/ImGuiLayer.h"
 #include "Vulkitten/Renderer/Shader.h"
 #include "Vulkitten/Renderer/Buffer.h"
+#include "Vulkitten/Renderer/VertexArray.h"
 
 namespace Vulkitten
 {
@@ -33,10 +34,11 @@ namespace Vulkitten
         bool m_Running = true;
         LayerStack m_LayerStack;
 
-		unsigned int m_VertexArray, m_VertexBuffer, m_IndexBuffer;
-        std::unique_ptr<Shader> m_Shader;
-        std::unique_ptr<VertexBuffer> m_VBO;
-        std::unique_ptr<IndexBuffer> m_IBO;
+        std::shared_ptr<Shader> m_Shader;
+        std::shared_ptr<VertexArray> m_VAO;
+
+        std::shared_ptr<Shader> m_SquareShader;
+        std::shared_ptr<VertexArray> m_SquareVAO;
     private:
         static Application* s_Instance;
     };
