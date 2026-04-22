@@ -6,6 +6,9 @@
 #include "Vulkitten/Layer.h"
 #include "Vulkitten/Input.h"
 
+#include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/RenderCommand.h"
+
 #include <glm/glm.hpp>
 
 namespace Vulkitten
@@ -129,18 +132,19 @@ namespace Vulkitten
     {
         while (m_Running)
         {
-            glClearColor(0.1f, 0.1f, 0.1f, 1);
-            glClear(GL_COLOR_BUFFER_BIT);
+            RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
+            RenderCommand::Clear();
+
+            Renderer::BeginScene();
 
             m_SquareShader->Bind();
-            m_SquareVAO->Bind();
-            glDrawElements(GL_TRIANGLES, m_SquareVAO->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
-            m_SquareShader->Unbind();
+            Renderer::Submit(m_SquareVAO);
 
-			m_Shader->Bind();
-            m_VAO->Bind();
-            glDrawElements(GL_TRIANGLES, m_VAO->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
-			m_Shader->Unbind();
+            m_Shader->Bind();
+            Renderer::Submit(m_VAO);
+
+            Renderer::EndScene();
+
 
             for (Layer *layer : m_LayerStack)
                 layer->OnUpdate();
