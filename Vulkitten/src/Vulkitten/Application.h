@@ -8,6 +8,7 @@
 #include "Vulkitten/Renderer/Shader.h"
 #include "Vulkitten/Renderer/Buffer.h"
 #include "Vulkitten/Renderer/VertexArray.h"
+#include "Vulkitten/Renderer/OrthographicCamera.h"
 
 namespace Vulkitten
 {
@@ -39,6 +40,8 @@ namespace Vulkitten
 
         std::shared_ptr<Shader> m_SquareShader;
         std::shared_ptr<VertexArray> m_SquareVAO;
+
+        OrthographicCamera m_Camera;
     private:
         static Application* s_Instance;
     };
