@@ -4,7 +4,7 @@
 #include "Vulkitten/Renderer/Buffer.h"
 
 namespace Vulkitten {
-    class VertexArray
+    class VKT_API VertexArray
     {
     public:
         virtual ~VertexArray() = default;

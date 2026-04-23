@@ -111,7 +111,7 @@ namespace Vulkitten {
         uint32_t m_Stride = 0;
     };
 
-    class VertexBuffer
+    class VKT_API VertexBuffer
     {
     public:
         virtual ~VertexBuffer() {};
@@ -125,7 +125,7 @@ namespace Vulkitten {
         static VertexBuffer* Create(float* vertices, uint32_t size);
     };
 
-    class IndexBuffer
+    class VKT_API IndexBuffer
     {
     public:
         virtual ~IndexBuffer() {};

@@ -11,6 +11,12 @@
 #include "Vulkitten/KeyCode.h"
 #include "Vulkitten/MouseButtonCode.h"
 
+#include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/RenderCommand.h"
+#include "Vulkitten/Renderer/Buffer.h"
+#include "Vulkitten/Renderer/VertexArray.h"
+#include "Vulkitten/Renderer/Shader.h"
+
 #include "Vulkitten/ImGui/imguiLayer.h"
 
 // ---Entry point-----------------------

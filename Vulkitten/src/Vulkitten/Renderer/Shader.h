@@ -7,7 +7,7 @@
 
 namespace Vulkitten {
 
-    class Shader
+    class VKT_API Shader
     {
     public:
         Shader(const std::string& vertexSrc, const std::string& fragmentSrc);
