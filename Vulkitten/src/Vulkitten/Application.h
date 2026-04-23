@@ -3,12 +3,15 @@
 #include "Vulkitten/Window.h"
 #include "Vulkitten/LayerStack.h"
 #include "Vulkitten/Events/Event.h"
+#include "Vulkitten/Core/Timestep.h"
 
 #include "Vulkitten/ImGui/ImGuiLayer.h"
 #include "Vulkitten/Renderer/Shader.h"
 #include "Vulkitten/Renderer/Buffer.h"
 #include "Vulkitten/Renderer/VertexArray.h"
 #include "Vulkitten/Renderer/OrthographicCamera.h"
+
+#include <chrono>
 
 namespace Vulkitten
 {
@@ -34,6 +37,9 @@ namespace Vulkitten
         ImGuiLayer* m_ImGuiLayer;
         bool m_Running = true;
         LayerStack m_LayerStack;
+
+        std::chrono::high_resolution_clock::time_point m_LastFrameTime;
+
     private:
         static Application* s_Instance;
     };

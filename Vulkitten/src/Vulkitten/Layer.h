@@ -3,6 +3,7 @@
 #include "vktpch.h"
 #include "Vulkitten/Core.h"
 #include "Vulkitten/Events/Event.h"
+#include "Vulkitten/Core/Timestep.h"
 
 namespace Vulkitten
 {
@@ -14,7 +15,7 @@ namespace Vulkitten
 
         virtual void OnAttach() {}
         virtual void OnDetach() {}
-        virtual void OnUpdate() {}
+        virtual void OnUpdate(Timestep timestep) {}
         virtual void OnImguiRender() {}
         virtual void OnEvent(Event& event) {}
 

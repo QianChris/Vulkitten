@@ -110,7 +110,7 @@ public:
         m_SquareShader = std::make_unique<Vulkitten::Shader>(squareVertexSrc, squareFragmentSrc);
     }
 
-    void OnUpdate() override
+    void OnUpdate(Vulkitten::Timestep timestep) override
     {
         Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
         Vulkitten::RenderCommand::Clear();
@@ -125,20 +125,22 @@ public:
         Vulkitten::Renderer::EndScene();
 
         if (Vulkitten::Input::IsKeyPressed(VKT_KEY_UP)){
-            m_CameraPosition.y += m_CameraMoveSpeed;
+            m_CameraPosition.y += m_CameraMoveSpeed * timestep;
         } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_DOWN)){
-            m_CameraPosition.y -= m_CameraMoveSpeed;
+            m_CameraPosition.y -= m_CameraMoveSpeed * timestep;
         } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_LEFT)){
-            m_CameraPosition.x -= m_CameraMoveSpeed;
+            m_CameraPosition.x -= m_CameraMoveSpeed * timestep;
         } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_RIGHT)){
-            m_CameraPosition.x += m_CameraMoveSpeed;
+            m_CameraPosition.x += m_CameraMoveSpeed * timestep;
         }
 
         if (Vulkitten::Input::IsKeyPressed(VKT_KEY_Q)){
-            m_CameraRotation += m_CameraRotationSpeed;
+            m_CameraRotation += m_CameraRotationSpeed * timestep;
         } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_E)){
-            m_CameraRotation -= m_CameraRotationSpeed;
+            m_CameraRotation -= m_CameraRotationSpeed * timestep;
         }
+
+        VKT_INFO("timestep = {}", timestep.GetSeconds());
     }
 
     virtual void OnImguiRender() override
@@ -150,11 +152,12 @@ public:
 
     void OnEvent(Vulkitten::Event& event) override
     {
-        if (event.GetEventType() == Vulkitten::EventType::KeyPressed)
-        {
-            Vulkitten::KeyPressedEvent& e = (Vulkitten::KeyPressedEvent&)event;
-            VKT_TRACE("{0}", (char) e.GetKeyCode());
-		}
+        // Log key code
+        //if (event.GetEventType() == Vulkitten::EventType::KeyPressed)
+        //{
+            //Vulkitten::KeyPressedEvent& e = (Vulkitten::KeyPressedEvent&)event;
+            //VKT_TRACE("{0}", (char) e.GetKeyCode());
+		//}
     }
 
 private:

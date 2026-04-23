@@ -11,6 +11,8 @@
 #include "Vulkitten/KeyCode.h"
 #include "Vulkitten/MouseButtonCode.h"
 
+#include "Vulkitten/Core/Timestep.h"
+
 #include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Renderer/RenderCommand.h"
 #include "Vulkitten/Renderer/Buffer.h"

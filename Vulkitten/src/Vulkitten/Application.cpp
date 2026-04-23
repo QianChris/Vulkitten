@@ -1,8 +1,6 @@
 #include "vktpch.h"
 #include "Vulkitten/Application.h"
 
-#include <glad/glad.h>
-
 #include "Vulkitten/Layer.h"
 #include "Vulkitten/Input.h"
 
@@ -33,10 +31,16 @@ namespace Vulkitten
 
     void Application::Run()
     {
+        m_LastFrameTime = std::chrono::high_resolution_clock::now();
+
         while (m_Running)
         {
+            auto time = std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - m_LastFrameTime);
+            Timestep timestep(time.count());
+            m_LastFrameTime = std::chrono::high_resolution_clock::now();
+
             for (Layer *layer : m_LayerStack)
-                layer->OnUpdate();
+                layer->OnUpdate(timestep);
 
             m_ImGuiLayer->Begin();
             for (Layer *layer : m_LayerStack)
