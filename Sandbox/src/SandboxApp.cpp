@@ -39,13 +39,14 @@ public:
             layout(location = 1) in vec4 a_Color;
 
             uniform mat4 u_ViewProjection;
+            uniform mat4 u_Transform;
 
             out vec4 v_Color;
 
             void main()
             {
                 v_Color = a_Color;
-                gl_Position = u_ViewProjection * vec4(a_Position, 1.0);
+                gl_Position = u_ViewProjection * u_Transform * vec4(a_Position, 1.0);
             }
         )"; 
         std::string fragmentSrc = R"(
@@ -89,10 +90,11 @@ public:
 
             layout(location = 0) in vec3 a_Position;
             uniform mat4 u_ViewProjection;
+            uniform mat4 u_Transform;
 
             void main()
             {
-                gl_Position = u_ViewProjection * vec4(a_Position, 1.0);
+                gl_Position = u_ViewProjection * u_Transform * vec4(a_Position, 1.0);
             }
         )";
 
@@ -100,10 +102,11 @@ public:
             #version 330 core
 
             layout(location = 0) out vec4 color;
+            uniform vec4 u_Color;
 
             void main()
             {
-                color = vec4(0.2, 0.3, 0.8, 1.0);
+                color = u_Color;
             }
         )";
 
@@ -120,7 +123,28 @@ public:
         m_Camera.SetPosition(m_CameraPosition);
 
         Vulkitten::Renderer::BeginScene(m_Camera);
-        Vulkitten::Renderer::Submit(m_SquareShader, m_SquareVAO);
+
+		glm::vec3 redColor{ 0.8f, 0.2f, 0.3f };
+		glm::vec3 blueColor{ 0.2f, 0.3f, 0.8f };
+		glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+        for (int i =0; i<10; i++){
+            for (int j =0; j<20; j++){
+                glm::vec3 pos{ i * 0.21f, j * 0.21f, 0.0f };
+                pos += m_SquarePosition;
+                glm::mat4 transform = glm::translate(glm::mat4(1.0f), pos) * scale;
+                if ((i + j) % 2 == 0){
+                    m_SquareShader->Bind();
+                    m_SquareShader->UploadUniformFloat4("u_Color", glm::vec4(redColor, 0.f));
+                } else {
+                    m_SquareShader->Bind();
+                    m_SquareShader->UploadUniformFloat4("u_Color", glm::vec4(blueColor, 0.f));
+				}
+
+				Vulkitten::Renderer::Submit(m_SquareShader, m_SquareVAO, transform);
+            }
+		}
+        //Vulkitten::Renderer::Submit(m_SquareShader, m_SquareVAO, glm::translate(glm::mat4(1.0f), m_SquarePosition));
+
         Vulkitten::Renderer::Submit(m_Shader, m_VAO);
         Vulkitten::Renderer::EndScene();
 
@@ -140,7 +164,17 @@ public:
             m_CameraRotation -= m_CameraRotationSpeed * timestep;
         }
 
-        VKT_INFO("timestep = {}", timestep.GetSeconds());
+        if (Vulkitten::Input::IsKeyPressed(VKT_KEY_W)){
+            m_SquarePosition.y += m_CameraMoveSpeed * timestep;
+        } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_S)){
+            m_SquarePosition.y -= m_CameraMoveSpeed * timestep;
+        } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_A)){
+            m_SquarePosition.x -= m_CameraMoveSpeed * timestep;
+        } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_D)){
+            m_SquarePosition.x += m_CameraMoveSpeed * timestep;
+		}
+
+        //VKT_INFO("timestep = {}", timestep.GetSeconds());
     }
 
     virtual void OnImguiRender() override
@@ -172,6 +206,8 @@ private:
     glm::vec3 m_CameraPosition{ 0.0f, 0.0f, 0.0f };
     float m_CameraRotation = 0.0f;
     float m_CameraMoveSpeed = 1.0f, m_CameraRotationSpeed = 90.f; // degree per second
+
+	glm::vec3 m_SquarePosition{ 0.0f, 0.0f, 0.0f };
 };
 
 class Sandbox : public Vulkitten::Application {
