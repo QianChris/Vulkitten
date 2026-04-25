@@ -21,7 +21,7 @@ namespace Vulkitten {
             s_RendererAPI->Clear();
         };
 
-        static void DrawIndexed(const std::shared_ptr<VertexArray>& vertexArray)
+        static void DrawIndexed(const Ref<VertexArray>& vertexArray)
         {
             s_RendererAPI->DrawIndexed(vertexArray);
         };

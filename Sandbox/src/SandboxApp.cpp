@@ -18,11 +18,11 @@ public:
                 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,1.0f,
                 0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f,1.0f,
             };
-            std::shared_ptr<Vulkitten::VertexBuffer> vertexBuffer;
+            Vulkitten::Ref<Vulkitten::VertexBuffer> vertexBuffer;
             vertexBuffer.reset(Vulkitten::VertexBuffer::Create(vertices, sizeof(vertices)));
 
             unsigned int indices[3] = { 0, 1, 2 };
-            std::shared_ptr<Vulkitten::IndexBuffer> indexBuffer;
+            Vulkitten::Ref<Vulkitten::IndexBuffer> indexBuffer;
             indexBuffer.reset(Vulkitten::IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t)));
 
             Vulkitten::BufferLayout layout = {
@@ -72,11 +72,11 @@ public:
                 0.75f,  0.75f, 0.0f,
                 -0.75f,  0.75f, 0.0f,
             };
-            std::shared_ptr<Vulkitten::VertexBuffer> vertexBuffer;
+            Vulkitten::Ref<Vulkitten::VertexBuffer> vertexBuffer;
             vertexBuffer.reset(Vulkitten::VertexBuffer::Create(vertices, sizeof(vertices)));
 
             unsigned int indices[6] = { 0, 1, 2, 2, 3, 0 };
-            std::shared_ptr<Vulkitten::IndexBuffer> indexBuffer;
+            Vulkitten::Ref<Vulkitten::IndexBuffer> indexBuffer;
             indexBuffer.reset(Vulkitten::IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t)));
 
             Vulkitten::BufferLayout layout = {
@@ -197,11 +197,11 @@ public:
     }
 
 private:
-    std::shared_ptr<Vulkitten::Shader> m_Shader;
-    std::shared_ptr<Vulkitten::VertexArray> m_VAO;
+    Vulkitten::Ref<Vulkitten::Shader> m_Shader;
+    Vulkitten::Ref<Vulkitten::VertexArray> m_VAO;
 
-    std::shared_ptr<Vulkitten::Shader> m_SquareShader;
-    std::shared_ptr<Vulkitten::VertexArray> m_SquareVAO;
+    Vulkitten::Ref<Vulkitten::Shader> m_SquareShader;
+    Vulkitten::Ref<Vulkitten::VertexArray> m_SquareVAO;
 
     Vulkitten::OrthographicCamera m_Camera;
 
