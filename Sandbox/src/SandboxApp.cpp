@@ -2,6 +2,8 @@
 #include "imgui.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include "Platform/OpenGL/OpenGLShader.h"
 
 class ExampleLayer : public Vulkitten::Layer
 {
@@ -60,7 +62,7 @@ public:
                 color = v_Color;
             }
         )";
-        m_Shader = std::make_unique<Vulkitten::Shader>(vertexSrc, fragmentSrc);
+        m_Shader.reset(Vulkitten::Shader::Create(vertexSrc, fragmentSrc));
 
         m_SquareVAO.reset(Vulkitten::VertexArray::Create());
         {
@@ -109,8 +111,7 @@ public:
                 color = u_Color;
             }
         )";
-
-        m_SquareShader = std::make_unique<Vulkitten::Shader>(squareVertexSrc, squareFragmentSrc);
+        m_SquareShader.reset(Vulkitten::Shader::Create(squareVertexSrc, squareFragmentSrc));
     }
 
     void OnUpdate(Vulkitten::Timestep timestep) override
@@ -124,8 +125,6 @@ public:
 
         Vulkitten::Renderer::BeginScene(m_Camera);
 
-		glm::vec3 redColor{ 0.8f, 0.2f, 0.3f };
-		glm::vec3 blueColor{ 0.2f, 0.3f, 0.8f };
 		glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
         for (int i =0; i<10; i++){
             for (int j =0; j<20; j++){
@@ -134,10 +133,12 @@ public:
                 glm::mat4 transform = glm::translate(glm::mat4(1.0f), pos) * scale;
                 if ((i + j) % 2 == 0){
                     m_SquareShader->Bind();
-                    m_SquareShader->UploadUniformFloat4("u_Color", glm::vec4(redColor, 0.f));
+                    std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(m_SquareShader)
+                        ->UploadUniformFloat4("u_Color", glm::vec4(m_RedColor, 0.f));
                 } else {
                     m_SquareShader->Bind();
-                    m_SquareShader->UploadUniformFloat4("u_Color", glm::vec4(blueColor, 0.f));
+                    std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(m_SquareShader)
+                        ->UploadUniformFloat4("u_Color", glm::vec4(m_BlueColor, 0.f));
 				}
 
 				Vulkitten::Renderer::Submit(m_SquareShader, m_SquareVAO, transform);
@@ -180,7 +181,8 @@ public:
     virtual void OnImguiRender() override
     {
         ImGui::Begin("Test");
-        ImGui::Text("Hello World");
+		ImGui::ColorEdit3("Red Color", glm::value_ptr(m_RedColor));
+		ImGui::ColorEdit3("Blue Color", glm::value_ptr(m_BlueColor));
         ImGui::End();
 	}
 
@@ -208,6 +210,8 @@ private:
     float m_CameraMoveSpeed = 1.0f, m_CameraRotationSpeed = 90.f; // degree per second
 
 	glm::vec3 m_SquarePosition{ 0.0f, 0.0f, 0.0f };
+    glm::vec3 m_RedColor{ 0.8f, 0.2f, 0.3f };
+    glm::vec3 m_BlueColor{ 0.2f, 0.3f, 0.8f };
 };
 
 class Sandbox : public Vulkitten::Application {

@@ -3,23 +3,18 @@
 #include "Vulkitten/Core.h"
 
 #include <string>
-#include <glm/glm.hpp>
 
 namespace Vulkitten {
 
     class VKT_API Shader
     {
     public:
-        Shader(const std::string& vertexSrc, const std::string& fragmentSrc);
-        virtual ~Shader();
+        virtual ~Shader() = default;
 
-        virtual void Bind() const;
-        virtual void Unbind() const;
+        virtual void Bind() const = 0;
+        virtual void Unbind() const = 0;
 
-        void UploadUniformMat4(const std::string& name, const glm::mat4& matrix);
-		void UploadUniformFloat4(const std::string& name, const glm::vec4& vector);
-    private:
-        uint32_t m_RendererID;
+        static Shader* Create(const std::string& vertexSrc, const std::string& fragmentSrc); 
     };
 
 }
