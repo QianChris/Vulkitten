@@ -55,6 +55,9 @@ target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/
 # stb_image
 target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/stb_image")
 
+# nlohmann json
+target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nlohmann/include")
+
 # OpenGL (Windows system library)
 target_link_libraries(Vulkitten PUBLIC opengl32)
 

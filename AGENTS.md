@@ -18,25 +18,65 @@ This file provides guidelines for AI agents working on the Vulkitten Engine code
 VulkittenEngine/
 ├── CMakeLists.txt          # Root CMake configuration
 ├── build.bat               # Quick build script (VS2022 x64)
-├── bin/                    # Build outputs (Debug-x64/, Release-x64/)
-├── bin-int/                # Intermediate files (.pdb, .obj)
-├── Vulkitten/              # Engine core library
-│   ├── src/Vulkitten/      # Core headers and sources
-│   │   ├── Core.h          # Platform defines, API macros
-│   │   ├── Log.h           # Logging system
-│   │   ├── Assert.h        # Assert macros
-│   │   ├── Application.h   # Application base class
-│   │   ├── Window.h        # Window abstract class
-│   │   ├── Layer.h         # Layer base class
-│   │   ├── LayerStack.h    # Layer stack container
+├── AGENTS.md              # Development guide (this file)
+├── bin/                  # Build outputs (Debug-x64/, Release-x64/)
+├── bin-int/               # Intermediate files (.pdb, .obj)
+├── Vulkitten/            # Engine core library
+│   ├── src/Vulkitten/
+│   │   ├── Core.h           # Platform defines, API macros
+│   │   ├── Log.h            # Logging system
+│   │   ├── Assert.h         # Assert macros
+│   │   ├── Application.h    # Application base class
+│   │   ├── Window.h         # Window abstract class
+│   │   ├── Input.h          # Input abstraction
+│   │   ├── Layer.h          # Layer base class
+│   │   ├── LayerStack.h     # Layer stack container
 │   │   ├── EntryPoint.h    # Main entry point
 │   │   ├── vktpch.h        # Precompiled header
-│   │   ├── Events/         # Event system (Event.h, *Event.h)
-│   │   └── Platform/       # Platform implementations
-│   │       └── Windows/    # Windows-specific code
-│   └── vendor/             # Third-party (spdlog, glm, glfw)
-└── SandBox/                # Example/editor application
-    └── src/                # Application sources
+│   │   ├── KeyCode.h       # Keyboard key codes
+│   │   ├── MouseButtonCode.h # Mouse button codes
+│   │   ├── Core/            # Core utilities
+│   │   │   └── Timestep.h  # Time step for deltaTime
+│   │   ├── Events/          # Event system
+│   │   │   ├── Event.h         # Base event class
+│   │   │   ├── ApplicationEvent.h
+│   │   │   ├── KeyEvent.h
+│   │   │   └── MouseEvent.h
+│   │   ├── Renderer/        # Rendering subsystem
+│   │   │   ├── Renderer.h       # Renderer singleton
+│   │   │   ├── RendererAPI.h    # Abstract API
+│   │   │   ├── RenderCommand.h  # Render commands
+│   │   │   ├── Shader.h
+│   │   │   ├── Texture.h
+│   │   │   ├── Buffer.h       # Vertex/Index buffers
+│   │   │   ├── VertexArray.h
+│   │   │   ├── GraphicsContext.h
+│   │   │   └── OrthographicCamera.h
+│   │   ├── ImGui/           # ImGui integration
+│   │   │   ├── ImGuiLayer.h
+│   │   │   └── ImGuiBuild.cpp
+│   │   └── Platform/        # Platform implementations
+│   │       ├── OpenGL/      # OpenGL renderer
+│   │       │   ├── OpenGLContext.h
+│   │       │   ├── OpenGLShader.h
+│   │       │   ├── OpenGLTexture.h
+│   │       │   ├── OpenGLBuffer.h
+│   │       │   ├── OpenGLVertexArray.h
+│   │       │   ├── OpenGLRendererAPI.h
+│   │       │   └── OpenGLUtil.h
+│   │       └── Windows/     # Windows platform
+│   │           ├── WindowsWindow.h
+│   │           └── WindowsInput.h
+│   └── vendor/            # Third-party libraries
+│       ├── spdlog/        # Logging
+│       ├── glm/           # Math library
+│       ├── glfw/          # Window/input
+│       ├── glad/          # OpenGL loader
+│       ├── imgui/         # GUI library
+│       └── stb_image/     # Image loading
+└── Sandbox/              # Example application
+    └── src/
+        └── SandboxApp.cpp
 ```
 
 ---
@@ -92,7 +132,7 @@ cmake --build build --config Debug
 - **Indentation**: 4 spaces (no tabs)
 - **Column Limit**: 100 characters
 - **Line Endings**: Windows-style (CRLF) or auto-detected
-- A `.clang-format` style is vendored in `Vulkitten/vendor/spdlog/.clang-format`
+- A `.clang-format` style is vendored in `vendor/spdlog/.clang-format`
 
 ### File Organization
 
@@ -235,6 +275,11 @@ VKT_DEBUG("Debug: {}", details);
 VKT_TRACE("Trace: {}", details);
 ```
 
+### Notes
+
+- Do NOT pass raw pointers to logging (e.g., `c_str()`, `filesystem::path::c_str()`)
+- Use `.string()` or similar to convert to std::string before logging
+
 ---
 
 ## Assertions
@@ -288,6 +333,32 @@ struct WindowProps
 
 ---
 
+## Input System
+
+### Input Class (Vulkitten/Input.h)
+
+```cpp
+class Input
+{
+public:
+    static bool IsKeyPressed(KeyCode key);
+    static bool IsMouseButtonPressed(MouseCode button);
+    static std::pair<float, float> GetMousePosition();
+    static float GetMouseX();
+    static float GetMouseY();
+};
+```
+
+### Key Codes
+
+Key codes are defined in `Vulkitten/KeyCode.h` (e.g., `KeyCode::Space`, `KeyCode::A`, etc.)
+
+### Mouse Codes
+
+Mouse button codes are in `Vulkitten/MouseButtonCode.h` (e.g., `MouseButton::Left`, `MouseButton::Right`, etc.)
+
+---
+
 ## Layer System
 
 ### Layer Base Class
@@ -302,8 +373,8 @@ public:
     virtual ~Layer();
 
     virtual void OnAttach() {}      // Called when layer is added
-    virtual void OnDetach() {}      // Called when layer is removed
-    virtual void OnUpdate() {}      // Called every frame
+    virtual void OnDetach() {}    // Called when layer is removed
+    virtual void OnUpdate() {}   // Called every frame
     virtual void OnEvent(Event& event) {}  // Handle events
 
     inline const std::string& GetName() const { return m_DebugName; }
@@ -323,23 +394,117 @@ public:
 };
 ```
 
-### Layer Usage
+---
+
+## Renderer System
+
+### Renderer (Vulkitten/Renderer/Renderer.h)
+
+The Renderer is a singleton that manages rendering:
 
 ```cpp
-class ImGuiLayer : public Vulkitten::Layer
+class Renderer
 {
 public:
-    ImGuiLayer() : Layer("ImGui") {}
-    ~ImGuiLayer() {}
+    static void Init();
+    static void Shutdown();
+    static void BeginFrame();
+    static void EndFrame();
+    static void Submit(const Ref<VertexArray>& vertexArray);
+    static void OnWindowResize(uint32_t width, uint32_t height);
+    static RendererAPI GetAPI();
+};
+```
 
-    void OnAttach() override;
-    void OnDetach() override;
-    void OnUpdate() override;
-    void OnEvent(Vulkitten::Event& event) override;
+### RendererAPI
+
+Abstract rendering API. Currently supported:
+- `RendererAPI::OpenGL4`
+
+### Render Command
+
+```cpp
+class RenderCommand
+{
+public:
+    static void SetClearColor(const glm::vec4& color);
+    static void Clear();
+    static void DrawIndexed(const Ref<VertexArray>& va);
+};
+```
+
+### Shader (Vulkitten/Renderer/Shader.h)
+
+```cpp
+class Shader : public RefCounted
+{
+public:
+    static Ref<Shader> Create(const std::string& filepath);
+    static Ref<Shader> Create(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc);
+    virtual void Bind() const = 0;
+    virtual void UploadUniform(const std::string& name, int value) = 0;
+    virtual void UploadUniform(const std::string& name, const glm::mat4& matrix) = 0;
+};
+```
+
+### Texture (Vulkitten/Renderer/Texture.h)
+
+```cpp
+class Texture2D : public RefCounted
+{
+public:
+    virtual ~Texture2D() = default;
+    virtual void Bind(uint32_t slot = 0) const = 0;
+    virtual uint32_t GetWidth() const = 0;
+    virtual uint32_t GetHeight() const = 0;
+};
+```
+
+### VertexArray (Vulkitten/Renderer/VertexArray.h)
+
+```cpp
+class VertexArray : public RefCounted
+{
+public:
+    virtual ~VertexArray() = default;
+    virtual void Bind() const = 0;
+    virtual void Unbind() const = 0;
+    virtual void AddVertexBuffer(const Ref<VertexBuffer>& vb) = 0;
+    virtual void SetIndexBuffer(const Ref<IndexBuffer>& ib) = 0;
+};
+```
+
+### Buffer (Vulkitten/Renderer/Buffer.h)
+
+```cpp
+class VertexBuffer : public RefCounted
+{
+public:
+    static Ref<VertexBuffer> Create(float* vertices, uint32_t size);
+    virtual void Bind() const = 0;
 };
 
-// In Application
-PushLayer(new ImGuiLayer());
+class IndexBuffer : public RefCounted
+{
+public:
+    static Ref<IndexBuffer> Create(uint32_t* indices, uint32_t count);
+    virtual void Bind() const = 0;
+    virtual uint32_t GetCount() const = 0;
+};
+```
+
+### Orthographic Camera
+
+```cpp
+class OrthographicCamera
+{
+public:
+    OrthographicCamera(float left, float right, float bottom, float top);
+    void SetProjection(float left, float right, float bottom, float top);
+    const glm::mat4& GetProjectionMatrix() const;
+    const glm::mat4& GetViewMatrix() const;
+    void SetPosition(const glm::vec3& position);
+};
 ```
 
 ---
@@ -419,6 +584,19 @@ Vulkitten::Application* Vulkitten::CreateApplication()
 
 ---
 
+## Timestep
+
+Use `Timestep` for frame-time calculations:
+
+```cpp
+void Layer::OnUpdate(Timestep ts)
+{
+    float delta = ts.GetSeconds();
+}
+```
+
+---
+
 ## Third-Party Libraries
 
 | Library | Location | Purpose |
@@ -428,6 +606,7 @@ Vulkitten::Application* Vulkitten::CreateApplication()
 | glfw | `vendor/glfw/` | Window and input |
 | imgui | `vendor/imgui/` | GUI library |
 | glad | `vendor/glad/` | OpenGL function loader |
+| stb_image | `vendor/stb_image/` | Image loading |
 
 ---
 
@@ -445,6 +624,6 @@ Vulkitten::Application* Vulkitten::CreateApplication()
 ## Notes
 
 - No test framework configured yet
-- spdlog, glm, and glfw are vendored in `Vulkitten/vendor/`
+- Libraries are vendored in `Vulkitten/vendor/`
 - The engine entry point is defined in `EntryPoint.h`
-- Only Windows platform is currently supported
+- Only OpenGL (via GLAD) and Windows platforms are currently supported
