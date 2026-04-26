@@ -1,12 +1,12 @@
 #include "vktpch.h"
-#include "VertexArray.h"
+#include "Texture.h"
 
-#include "Platform/OpenGL/OpenGLVertexArray.h"
 #include "Vulkitten/Renderer/Renderer.h"
+#include "Platform/OpenGL/OpenGLTexture.h"
 
 namespace Vulkitten {
 
-    Ref<VertexArray> VertexArray::Create()
+    Ref<Texture2D> Texture2D::Create(const std::string& path)
     {
         switch (Renderer::GetAPI())
         {
@@ -14,7 +14,7 @@ namespace Vulkitten {
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
                 return nullptr;
             case RendererAPI::API::OpenGL:
-                return CreateRef<OpenGLVertexArray>();
+                return CreateRef<OpenGLTexture2D>(path);
         }
 
         VKT_CORE_ASSERT(false, "Unknown RendererAPI!");

@@ -18,6 +18,7 @@
 #include "Vulkitten/Renderer/Buffer.h"
 #include "Vulkitten/Renderer/VertexArray.h"
 #include "Vulkitten/Renderer/Shader.h"
+#include "Vulkitten/Renderer/Texture.h"
 
 #include "Vulkitten/ImGui/imguiLayer.h"
 

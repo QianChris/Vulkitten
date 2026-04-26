@@ -106,4 +106,9 @@ namespace Vulkitten {
         GLint location = glGetUniformLocation(m_RendererID, name.c_str());
 		glUniform4f(location, vector.x, vector.y, vector.z, vector.w);
     }
+    void OpenGLShader::UploadUniformInt(const std::string& name, int value)
+    {
+        GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+        glUniform1i(location, value);
+    }
 }

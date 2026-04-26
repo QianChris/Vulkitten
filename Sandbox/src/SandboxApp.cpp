@@ -11,7 +11,7 @@ public:
     ExampleLayer() : Layer("Example")
     , m_Camera(-1.6f, 1.6f, -0.9f, 0.9f)
     {
-        m_VAO.reset(Vulkitten::VertexArray::Create());
+        m_VAO = Vulkitten::VertexArray::Create();
         {
             float vertices[3 * 7] = {
                 -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,1.0f,
@@ -19,11 +19,11 @@ public:
                 0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f,1.0f,
             };
             Vulkitten::Ref<Vulkitten::VertexBuffer> vertexBuffer;
-            vertexBuffer.reset(Vulkitten::VertexBuffer::Create(vertices, sizeof(vertices)));
+            vertexBuffer = Vulkitten::VertexBuffer::Create(vertices, sizeof(vertices));
 
             unsigned int indices[3] = { 0, 1, 2 };
             Vulkitten::Ref<Vulkitten::IndexBuffer> indexBuffer;
-            indexBuffer.reset(Vulkitten::IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t)));
+            indexBuffer = Vulkitten::IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t));
 
             Vulkitten::BufferLayout layout = {
                 { Vulkitten::ShaderDataType::Float3, "a_Position" },
@@ -62,25 +62,26 @@ public:
                 color = v_Color;
             }
         )";
-        m_Shader.reset(Vulkitten::Shader::Create(vertexSrc, fragmentSrc));
+        m_Shader = Vulkitten::Shader::Create(vertexSrc, fragmentSrc);
 
-        m_SquareVAO.reset(Vulkitten::VertexArray::Create());
+        m_SquareVAO = Vulkitten::VertexArray::Create();
         {
-            float vertices[4 * 3] = {
-                -0.75f, -0.75f, 0.0f,
-                0.75f, -0.75f, 0.0f,
-                0.75f,  0.75f, 0.0f,
-                -0.75f,  0.75f, 0.0f,
+            float vertices[4 * 5] = {
+                -0.75f, -0.75f, 0.0f, 0.0f, 0.0f,
+                0.75f, -0.75f, 0.0f, 1.0f, 0.0f,
+                0.75f,  0.75f, 0.0f, 1.0f, 1.0f,
+                -0.75f,  0.75f, 0.0f, 0.0f, 1.0f,
             };
             Vulkitten::Ref<Vulkitten::VertexBuffer> vertexBuffer;
-            vertexBuffer.reset(Vulkitten::VertexBuffer::Create(vertices, sizeof(vertices)));
+            vertexBuffer = Vulkitten::VertexBuffer::Create(vertices, sizeof(vertices));
 
             unsigned int indices[6] = { 0, 1, 2, 2, 3, 0 };
             Vulkitten::Ref<Vulkitten::IndexBuffer> indexBuffer;
-            indexBuffer.reset(Vulkitten::IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t)));
+            indexBuffer = Vulkitten::IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t));
 
             Vulkitten::BufferLayout layout = {
                 { Vulkitten::ShaderDataType::Float3, "a_Position" },
+				{ Vulkitten::ShaderDataType::Float2, "a_TexCoord" },
             };
             vertexBuffer->SetLayout(layout);
             m_SquareVAO->AddVertexBuffer(vertexBuffer);
@@ -111,7 +112,44 @@ public:
                 color = u_Color;
             }
         )";
-        m_SquareShader.reset(Vulkitten::Shader::Create(squareVertexSrc, squareFragmentSrc));
+        m_SquareShader = Vulkitten::Shader::Create(squareVertexSrc, squareFragmentSrc);
+
+        std::string textureVertexSrc = R"(
+            #version 330 core
+
+            layout(location = 0) in vec3 a_Position;
+            layout(location = 1) in vec2 a_TexCoord;
+            uniform mat4 u_ViewProjection;
+            uniform mat4 u_Transform;
+
+            out vec2 v_TexCoord;
+
+            void main()
+            {
+                v_TexCoord = a_TexCoord;
+                gl_Position = u_ViewProjection * u_Transform * vec4(a_Position, 1.0);
+            }
+        )";
+        std::string textureFragmentSrc = R"(
+            #version 330 core
+
+            layout(location = 0) out vec4 color;
+            uniform sampler2D u_Texture;
+            in vec2 v_TexCoord;
+
+            void main()
+            {
+                color = texture(u_Texture, v_TexCoord);
+                // color = vec4(v_TexCoord, 0.0, 1.0);
+            }
+        )";
+        m_TextureShader = Vulkitten::Shader::Create(textureVertexSrc, textureFragmentSrc);
+
+        m_Texture = Vulkitten::Texture2D::Create("../../Sandbox/assets/textures/Checkerboard.png");
+        m_LogoTexture = Vulkitten::Texture2D::Create("../../Sandbox/assets/textures/ChernoLogo.png");
+
+        std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(m_TextureShader)->Bind();
+        std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(m_TextureShader)->UploadUniformInt("u_Texture", 0);
     }
 
     void OnUpdate(Vulkitten::Timestep timestep) override
@@ -134,11 +172,11 @@ public:
                 if ((i + j) % 2 == 0){
                     m_SquareShader->Bind();
                     std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(m_SquareShader)
-                        ->UploadUniformFloat4("u_Color", glm::vec4(m_RedColor, 0.f));
+                        ->UploadUniformFloat4("u_Color", glm::vec4(m_RedColor, 1.f));
                 } else {
                     m_SquareShader->Bind();
                     std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(m_SquareShader)
-                        ->UploadUniformFloat4("u_Color", glm::vec4(m_BlueColor, 0.f));
+                        ->UploadUniformFloat4("u_Color", glm::vec4(m_BlueColor, 1.f));
 				}
 
 				Vulkitten::Renderer::Submit(m_SquareShader, m_SquareVAO, transform);
@@ -146,7 +184,15 @@ public:
 		}
         //Vulkitten::Renderer::Submit(m_SquareShader, m_SquareVAO, glm::translate(glm::mat4(1.0f), m_SquarePosition));
 
-        Vulkitten::Renderer::Submit(m_Shader, m_VAO);
+        m_Texture->Bind();
+        Vulkitten::Renderer::Submit(m_TextureShader, m_SquareVAO, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+
+        m_LogoTexture->Bind();
+        Vulkitten::Renderer::Submit(m_TextureShader, m_SquareVAO, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+
+        // Triangle
+        //Vulkitten::Renderer::Submit(m_Shader, m_VAO);
+
         Vulkitten::Renderer::EndScene();
 
         if (Vulkitten::Input::IsKeyPressed(VKT_KEY_UP)){
@@ -202,6 +248,10 @@ private:
 
     Vulkitten::Ref<Vulkitten::Shader> m_SquareShader;
     Vulkitten::Ref<Vulkitten::VertexArray> m_SquareVAO;
+
+    Vulkitten::Ref<Vulkitten::Shader> m_TextureShader;
+    Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
+    Vulkitten::Ref<Vulkitten::Texture2D> m_LogoTexture;
 
     Vulkitten::OrthographicCamera m_Camera;
 
