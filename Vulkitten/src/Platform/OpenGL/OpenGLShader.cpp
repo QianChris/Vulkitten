@@ -3,22 +3,61 @@
 
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <fstream>
+#include <sstream>
+
+#include <nlohmann/json.hpp>
+#include "Vulkitten/Core/FileSystem.h"
 
 namespace Vulkitten {
 
-    OpenGLShader::OpenGLShader(const std::string& vertexSrc, const std::string& fragmentSrc)
+    OpenGLShader::OpenGLShader(const std::string& filepath)
+        : m_Name("unnamed")
     {
-        // Create an empty vertex shader handle
+        std::string fullPath = FileSystem::Resolve(filepath);
+
+        std::ifstream in(fullPath);
+        if (!in.is_open())
+        {
+            VKT_CORE_ERROR("Failed to open shader file: {0}", fullPath);
+            VKT_CORE_ASSERT(false, "Shader file not found");
+            return;
+        }
+
+        std::stringstream ss;
+        ss << in.rdbuf();
+        std::string jsonStr = ss.str();
+        in.close();
+
+        auto j = nlohmann::json::parse(jsonStr);
+
+        std::string vertPath = FileSystem::Resolve(j["vertex"].get<std::string>());
+        std::string fragPath = FileSystem::Resolve(j["fragment"].get<std::string>());
+
+        std::ifstream vertIn(vertPath);
+        std::stringstream vertSs;
+        vertSs << vertIn.rdbuf();
+        std::string vertexSrc = vertSs.str();
+        vertIn.close();
+
+        std::ifstream fragIn(fragPath);
+        std::stringstream fragSs;
+        fragSs << fragIn.rdbuf();
+        std::string fragmentSrc = fragSs.str();
+        fragIn.close();
+
+        Compile(vertexSrc, fragmentSrc);
+    }
+
+    void OpenGLShader::Compile(const std::string& vertexSrc, const std::string& fragmentSrc)
+    {
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
-        // Send the vertex shader source code to GL
         const char* source = vertexSrc.c_str();
         glShaderSource(vertexShader, 1, &source, nullptr);
 
-        // Compile the vertex shader
         glCompileShader(vertexShader);
 
-        // Check for compilation errors
         int isCompiled = 0;
         glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &isCompiled);
         if (isCompiled == GL_FALSE)
@@ -79,6 +118,12 @@ namespace Vulkitten {
 
         glDetachShader(m_RendererID, vertexShader);
         glDetachShader(m_RendererID, fragmentShader);
+    }
+
+    OpenGLShader::OpenGLShader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc)
+        : m_Name(name)
+    {
+        Compile(vertexSrc, fragmentSrc);
     }
 
     OpenGLShader::~OpenGLShader()

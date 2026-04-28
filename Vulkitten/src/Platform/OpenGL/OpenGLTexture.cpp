@@ -7,18 +7,17 @@
 #include <glad/glad.h>
 
 #include <filesystem>
+#include "Vulkitten/Core/FileSystem.h"
 
 namespace Vulkitten {
 
     OpenGLTexture2D::OpenGLTexture2D(const std::string& path)
         : m_Path(path)
     {
-        auto currPath = std::filesystem::current_path().string();
-        VKT_CORE_INFO("Current path is {0}, loading {1}", currPath, path);
-
+        std::string fullpath = FileSystem::Resolve(path);
         int width, height, channels;
         stbi_set_flip_vertically_on_load(1);
-        stbi_uc* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
+        stbi_uc* data = stbi_load(fullpath.c_str(), &width, &height, &channels, 0);
         VKT_CORE_ASSERT(data, "Failed to load image!");
 
         m_Width = width;

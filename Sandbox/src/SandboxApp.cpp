@@ -1,6 +1,7 @@
 #include <Vulkitten.h>
 #include "imgui.h"
 
+#include <filesystem>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "Platform/OpenGL/OpenGLShader.h"
@@ -11,6 +12,11 @@ public:
     ExampleLayer() : Layer("Example")
     , m_Camera(-1.6f, 1.6f, -0.9f, 0.9f)
     {
+        auto currPath = std::filesystem::current_path().string();
+        VKT_INFO("Current path is {0}", currPath);
+
+        Vulkitten::FileSystem::RegisterPath("../../Sandbox", "sandbox");
+
         m_VAO = Vulkitten::VertexArray::Create();
         {
             float vertices[3 * 7] = {
@@ -34,35 +40,7 @@ public:
             m_VAO->SetIndexBuffer(indexBuffer);
         }
         
-        std::string vertexSrc = R"(
-            #version 330 core
-
-            layout(location = 0) in vec3 a_Position;
-            layout(location = 1) in vec4 a_Color;
-
-            uniform mat4 u_ViewProjection;
-            uniform mat4 u_Transform;
-
-            out vec4 v_Color;
-
-            void main()
-            {
-                v_Color = a_Color;
-                gl_Position = u_ViewProjection * u_Transform * vec4(a_Position, 1.0);
-            }
-        )"; 
-        std::string fragmentSrc = R"(
-            #version 330 core
-
-            layout(location = 0) out vec4 color;
-            in vec4 v_Color;
-
-            void main()
-            {
-                color = v_Color;
-            }
-        )";
-        m_Shader = Vulkitten::Shader::Create(vertexSrc, fragmentSrc);
+        m_Shader = Vulkitten::Shader::Create("sandbox://assets/shaders/FlatColor.shader");
 
         m_SquareVAO = Vulkitten::VertexArray::Create();
         {
@@ -88,65 +66,12 @@ public:
             m_SquareVAO->SetIndexBuffer(indexBuffer);
         }
 
-        std::string squareVertexSrc = R"(
-            #version 330 core
+        m_SquareShader = Vulkitten::Shader::Create("sandbox://assets/shaders/SolidColor.shader");
 
-            layout(location = 0) in vec3 a_Position;
-            uniform mat4 u_ViewProjection;
-            uniform mat4 u_Transform;
+        m_TextureShader = Vulkitten::Shader::Create("sandbox://assets/shaders/Texture.shader");
 
-            void main()
-            {
-                gl_Position = u_ViewProjection * u_Transform * vec4(a_Position, 1.0);
-            }
-        )";
-
-        std::string squareFragmentSrc = R"(
-            #version 330 core
-
-            layout(location = 0) out vec4 color;
-            uniform vec4 u_Color;
-
-            void main()
-            {
-                color = u_Color;
-            }
-        )";
-        m_SquareShader = Vulkitten::Shader::Create(squareVertexSrc, squareFragmentSrc);
-
-        std::string textureVertexSrc = R"(
-            #version 330 core
-
-            layout(location = 0) in vec3 a_Position;
-            layout(location = 1) in vec2 a_TexCoord;
-            uniform mat4 u_ViewProjection;
-            uniform mat4 u_Transform;
-
-            out vec2 v_TexCoord;
-
-            void main()
-            {
-                v_TexCoord = a_TexCoord;
-                gl_Position = u_ViewProjection * u_Transform * vec4(a_Position, 1.0);
-            }
-        )";
-        std::string textureFragmentSrc = R"(
-            #version 330 core
-
-            layout(location = 0) out vec4 color;
-            uniform sampler2D u_Texture;
-            in vec2 v_TexCoord;
-
-            void main()
-            {
-                color = texture(u_Texture, v_TexCoord);
-                // color = vec4(v_TexCoord, 0.0, 1.0);
-            }
-        )";
-        m_TextureShader = Vulkitten::Shader::Create(textureVertexSrc, textureFragmentSrc);
-
-        m_Texture = Vulkitten::Texture2D::Create("../../Sandbox/assets/textures/Checkerboard.png");
-        m_LogoTexture = Vulkitten::Texture2D::Create("../../Sandbox/assets/textures/ChernoLogo.png");
+        m_Texture = Vulkitten::Texture2D::Create("sandbox://assets/textures/Checkerboard.png");
+        m_LogoTexture = Vulkitten::Texture2D::Create("sandbox://assets/textures/ChernoLogo.png");
 
         std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(m_TextureShader)->Bind();
         std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(m_TextureShader)->UploadUniformInt("u_Texture", 0);

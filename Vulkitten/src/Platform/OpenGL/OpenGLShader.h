@@ -10,7 +10,8 @@ namespace Vulkitten {
     class VKT_API OpenGLShader : public Shader
     {
     public:
-        OpenGLShader(const std::string& vertexSrc, const std::string& fragmentSrc);
+        OpenGLShader(const std::string& filepath);
+        OpenGLShader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc);
         virtual ~OpenGLShader() override;
 
         virtual void Bind() const override;
@@ -20,6 +21,9 @@ namespace Vulkitten {
 		void UploadUniformFloat4(const std::string& name, const glm::vec4& vector);
         void UploadUniformInt(const std::string& name, int value);
     private:
+        void Compile(const std::string& vertexSrc, const std::string& fragmentSrc);
+
+        std::string m_Name;
         uint32_t m_RendererID;
     };
 
