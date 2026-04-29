@@ -141,6 +141,11 @@ namespace Vulkitten {
         glUseProgram(0);
     }
 
+    const std::string& OpenGLShader::GetName() const
+    {
+        return m_Name;
+    }
+
     void OpenGLShader::UploadUniformMat4(const std::string& name, const glm::mat4& matrix)
     {
         GLint location = glGetUniformLocation(m_RendererID, name.c_str());

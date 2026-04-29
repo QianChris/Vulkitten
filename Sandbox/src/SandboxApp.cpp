@@ -17,6 +17,10 @@ public:
 
         Vulkitten::FileSystem::RegisterPath("../../Sandbox", "sandbox");
 
+        m_ShaderLibrary.Load("sandbox://assets/shaders/FlatColor.shader");
+        m_ShaderLibrary.Load("sandbox://assets/shaders/SolidColor.shader");
+        m_ShaderLibrary.Load("sandbox://assets/shaders/Texture.shader");
+
         m_VAO = Vulkitten::VertexArray::Create();
         {
             float vertices[3 * 7] = {
@@ -40,8 +44,6 @@ public:
             m_VAO->SetIndexBuffer(indexBuffer);
         }
         
-        m_Shader = Vulkitten::Shader::Create("sandbox://assets/shaders/FlatColor.shader");
-
         m_SquareVAO = Vulkitten::VertexArray::Create();
         {
             float vertices[4 * 5] = {
@@ -66,15 +68,12 @@ public:
             m_SquareVAO->SetIndexBuffer(indexBuffer);
         }
 
-        m_SquareShader = Vulkitten::Shader::Create("sandbox://assets/shaders/SolidColor.shader");
-
-        m_TextureShader = Vulkitten::Shader::Create("sandbox://assets/shaders/Texture.shader");
-
         m_Texture = Vulkitten::Texture2D::Create("sandbox://assets/textures/Checkerboard.png");
         m_LogoTexture = Vulkitten::Texture2D::Create("sandbox://assets/textures/ChernoLogo.png");
 
-        std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(m_TextureShader)->Bind();
-        std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(m_TextureShader)->UploadUniformInt("u_Texture", 0);
+		auto textureShader = m_ShaderLibrary.Get("Texture");
+        std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(textureShader)->Bind();
+        std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(textureShader)->UploadUniformInt("u_Texture", 0);
     }
 
     void OnUpdate(Vulkitten::Timestep timestep) override
@@ -89,31 +88,34 @@ public:
         Vulkitten::Renderer::BeginScene(m_Camera);
 
 		glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+        auto squareShader = m_ShaderLibrary.Get("SolidColor");
         for (int i =0; i<10; i++){
             for (int j =0; j<20; j++){
                 glm::vec3 pos{ i * 0.21f, j * 0.21f, 0.0f };
                 pos += m_SquarePosition;
                 glm::mat4 transform = glm::translate(glm::mat4(1.0f), pos) * scale;
                 if ((i + j) % 2 == 0){
-                    m_SquareShader->Bind();
-                    std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(m_SquareShader)
+                    squareShader->Bind();
+                    std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(squareShader)
                         ->UploadUniformFloat4("u_Color", glm::vec4(m_RedColor, 1.f));
                 } else {
-                    m_SquareShader->Bind();
-                    std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(m_SquareShader)
+                    squareShader->Bind();
+                    std::dynamic_pointer_cast<Vulkitten::OpenGLShader>(squareShader)
                         ->UploadUniformFloat4("u_Color", glm::vec4(m_BlueColor, 1.f));
 				}
 
-				Vulkitten::Renderer::Submit(m_SquareShader, m_SquareVAO, transform);
+				Vulkitten::Renderer::Submit(squareShader, m_SquareVAO, transform);
             }
 		}
         //Vulkitten::Renderer::Submit(m_SquareShader, m_SquareVAO, glm::translate(glm::mat4(1.0f), m_SquarePosition));
 
+		auto textureShader = m_ShaderLibrary.Get("Texture");
+
         m_Texture->Bind();
-        Vulkitten::Renderer::Submit(m_TextureShader, m_SquareVAO, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+        Vulkitten::Renderer::Submit(textureShader, m_SquareVAO, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
 
         m_LogoTexture->Bind();
-        Vulkitten::Renderer::Submit(m_TextureShader, m_SquareVAO, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+        Vulkitten::Renderer::Submit(textureShader, m_SquareVAO, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
 
         // Triangle
         //Vulkitten::Renderer::Submit(m_Shader, m_VAO);
@@ -168,13 +170,11 @@ public:
     }
 
 private:
-    Vulkitten::Ref<Vulkitten::Shader> m_Shader;
-    Vulkitten::Ref<Vulkitten::VertexArray> m_VAO;
+    Vulkitten::ShaderLibrary m_ShaderLibrary;
 
-    Vulkitten::Ref<Vulkitten::Shader> m_SquareShader;
+    Vulkitten::Ref<Vulkitten::VertexArray> m_VAO;
     Vulkitten::Ref<Vulkitten::VertexArray> m_SquareVAO;
 
-    Vulkitten::Ref<Vulkitten::Shader> m_TextureShader;
     Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
     Vulkitten::Ref<Vulkitten::Texture2D> m_LogoTexture;
 

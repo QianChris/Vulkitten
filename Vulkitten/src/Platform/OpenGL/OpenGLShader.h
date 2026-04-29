@@ -17,6 +17,8 @@ namespace Vulkitten {
         virtual void Bind() const override;
         virtual void Unbind() const override;
 
+        virtual const std::string& GetName() const override;
+
         void UploadUniformMat4(const std::string& name, const glm::mat4& matrix);
 		void UploadUniformFloat4(const std::string& name, const glm::vec4& vector);
         void UploadUniformInt(const std::string& name, int value);
