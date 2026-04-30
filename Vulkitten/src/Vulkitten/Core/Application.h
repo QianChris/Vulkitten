@@ -1,15 +1,11 @@
 #pragma once
-#include "Vulkitten/Core.h"
-#include "Vulkitten/Window.h"
-#include "Vulkitten/LayerStack.h"
+#include "Vulkitten/Core/Core.h"
+#include "Vulkitten/Core/Window.h"
+#include "Vulkitten/Core/LayerStack.h"
 #include "Vulkitten/Events/Event.h"
 #include "Vulkitten/Core/Timestep.h"
 
 #include "Vulkitten/ImGui/ImGuiLayer.h"
-#include "Vulkitten/Renderer/Shader.h"
-#include "Vulkitten/Renderer/Buffer.h"
-#include "Vulkitten/Renderer/VertexArray.h"
-#include "Vulkitten/Renderer/OrthographicCamera.h"
 
 #include <chrono>
 
@@ -32,10 +28,12 @@ namespace Vulkitten
         inline Window& GetWindow() { return *m_Window; }
     private:
         bool OnWindowClose(WindowCloseEvent& e);
+        bool OnWindowResize(WindowResizeEvent& e);
 
 		Scope<Window> m_Window;
         ImGuiLayer* m_ImGuiLayer;
         bool m_Running = true;
+        bool m_Minimized = false;
         LayerStack m_LayerStack;
 
         std::chrono::high_resolution_clock::time_point m_LastFrameTime;

@@ -1,8 +1,8 @@
 #include "vktpch.h"
-#include "Vulkitten/Application.h"
+#include "Vulkitten/Core/Application.h"
 
-#include "Vulkitten/Layer.h"
-#include "Vulkitten/Input.h"
+#include "Vulkitten/Core/Layer.h"
+#include "Vulkitten/Core/Input.h"
 
 #include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Renderer/RenderCommand.h"
@@ -41,9 +41,10 @@ namespace Vulkitten
             Timestep timestep(time.count());
             m_LastFrameTime = std::chrono::high_resolution_clock::now();
 
-            for (Layer *layer : m_LayerStack)
-                layer->OnUpdate(timestep);
-
+            if (!m_Minimized) {
+                for (Layer *layer : m_LayerStack)
+                    layer->OnUpdate(timestep);
+            }
             m_ImGuiLayer->Begin();
             for (Layer *layer : m_LayerStack)
                 layer->OnImguiRender();
@@ -60,7 +61,7 @@ namespace Vulkitten
     {
         EventDispatcher dispatcher(e);
         dispatcher.Dispatch<WindowCloseEvent>(VKT_BIND_EVENT_FN(Application::OnWindowClose));
-
+        dispatcher.Dispatch<WindowResizeEvent>(VKT_BIND_EVENT_FN(Application::OnWindowResize));
         for (auto it = m_LayerStack.end(); it != m_LayerStack.begin();)
         {
             (*--it)->OnEvent(e);
@@ -86,6 +87,19 @@ namespace Vulkitten
     bool Application::OnWindowClose(WindowCloseEvent &e)
     {
         m_Running = false;
+        return false;
+    }
+
+    bool Application::OnWindowResize(WindowResizeEvent &e)
+    {
+        if (e.GetWidth() == 0 || e.GetHeight() == 0)
+        {
+            m_Minimized = true;
+            return false;
+        }
+
+        m_Minimized = false;
+        Renderer::OnWindowResize(e.GetWidth(), e.GetHeight());
         return false;
     }
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vulkitten/Window.h"
+#include "Vulkitten/Core/Window.h"
 #include "Platform/OpenGL/OpenGLContext.h"
 
 #include <glad/glad.h>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "vktpch.h"
-#include "Vulkitten/Core.h"
+#include "Vulkitten/Core/Core.h"
 
 namespace Vulkitten {
     enum class ShaderDataType {

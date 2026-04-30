@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vulkitten/Core.h"
+#include "Vulkitten/Core/Core.h"
 #include "Vulkitten/Renderer/Texture.h"
 
 namespace Vulkitten {

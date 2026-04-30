@@ -5,12 +5,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "Platform/OpenGL/OpenGLShader.h"
+#include "Vulkitten/Renderer/CameraController.h"
 
 class ExampleLayer : public Vulkitten::Layer
 {
 public:
     ExampleLayer() : Layer("Example")
-    , m_Camera(-1.6f, 1.6f, -0.9f, 0.9f)
+    , m_CameraController(1280. / 720.)
     {
         auto currPath = std::filesystem::current_path().string();
         VKT_INFO("Current path is {0}", currPath);
@@ -81,11 +82,9 @@ public:
         Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
         Vulkitten::RenderCommand::Clear();
 
-        //m_Camera.SetRotation(m_Camera.GetRotation() + 1.f);
-        m_Camera.SetRotation(m_CameraRotation); // degree
-        m_Camera.SetPosition(m_CameraPosition);
+        m_CameraController.OnUpdate(timestep);
 
-        Vulkitten::Renderer::BeginScene(m_Camera);
+        Vulkitten::Renderer::BeginScene(m_CameraController.GetCamera());
 
 		glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
         auto squareShader = m_ShaderLibrary.Get("SolidColor");
@@ -123,29 +122,13 @@ public:
         Vulkitten::Renderer::EndScene();
 
         if (Vulkitten::Input::IsKeyPressed(VKT_KEY_UP)){
-            m_CameraPosition.y += m_CameraMoveSpeed * timestep;
+            m_SquarePosition.y += m_SquareMoveSpeed * timestep;
         } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_DOWN)){
-            m_CameraPosition.y -= m_CameraMoveSpeed * timestep;
+            m_SquarePosition.y -= m_SquareMoveSpeed * timestep;
         } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_LEFT)){
-            m_CameraPosition.x -= m_CameraMoveSpeed * timestep;
+            m_SquarePosition.x -= m_SquareMoveSpeed * timestep;
         } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_RIGHT)){
-            m_CameraPosition.x += m_CameraMoveSpeed * timestep;
-        }
-
-        if (Vulkitten::Input::IsKeyPressed(VKT_KEY_Q)){
-            m_CameraRotation += m_CameraRotationSpeed * timestep;
-        } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_E)){
-            m_CameraRotation -= m_CameraRotationSpeed * timestep;
-        }
-
-        if (Vulkitten::Input::IsKeyPressed(VKT_KEY_W)){
-            m_SquarePosition.y += m_CameraMoveSpeed * timestep;
-        } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_S)){
-            m_SquarePosition.y -= m_CameraMoveSpeed * timestep;
-        } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_A)){
-            m_SquarePosition.x -= m_CameraMoveSpeed * timestep;
-        } else if (Vulkitten::Input::IsKeyPressed(VKT_KEY_D)){
-            m_SquarePosition.x += m_CameraMoveSpeed * timestep;
+            m_SquarePosition.x += m_SquareMoveSpeed * timestep;
 		}
 
         //VKT_INFO("timestep = {}", timestep.GetSeconds());
@@ -161,12 +144,7 @@ public:
 
     void OnEvent(Vulkitten::Event& event) override
     {
-        // Log key code
-        //if (event.GetEventType() == Vulkitten::EventType::KeyPressed)
-        //{
-            //Vulkitten::KeyPressedEvent& e = (Vulkitten::KeyPressedEvent&)event;
-            //VKT_TRACE("{0}", (char) e.GetKeyCode());
-		//}
+        m_CameraController.OnEvent(event);
     }
 
 private:
@@ -178,13 +156,10 @@ private:
     Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
     Vulkitten::Ref<Vulkitten::Texture2D> m_LogoTexture;
 
-    Vulkitten::OrthographicCamera m_Camera;
-
-    glm::vec3 m_CameraPosition{ 0.0f, 0.0f, 0.0f };
-    float m_CameraRotation = 0.0f;
-    float m_CameraMoveSpeed = 1.0f, m_CameraRotationSpeed = 90.f; // degree per second
+    Vulkitten::CameraController m_CameraController;
 
 	glm::vec3 m_SquarePosition{ 0.0f, 0.0f, 0.0f };
+    float m_SquareMoveSpeed = 1.0f;
     glm::vec3 m_RedColor{ 0.8f, 0.2f, 0.3f };
     glm::vec3 m_BlueColor{ 0.2f, 0.3f, 0.8f };
 };

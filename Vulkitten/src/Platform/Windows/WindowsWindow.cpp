@@ -1,6 +1,6 @@
 #include "vktpch.h"
 #include "WindowsWindow.h"
-#include "Vulkitten/Assert.h"
+#include "Vulkitten/Core/Assert.h"
 
 #include "Vulkitten/Events/ApplicationEvent.h"
 #include "Vulkitten/Events/KeyEvent.h"

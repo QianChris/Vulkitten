@@ -3,15 +3,15 @@
 // For use by applications.
 
 // Framework
-#include "Vulkitten/Application.h"
-#include "Vulkitten/Log.h"
-#include "Vulkitten/Layer.h"
+#include "Vulkitten/Core/Application.h"
+#include "Vulkitten/Core/Log.h"
+#include "Vulkitten/Core/Layer.h"
 #include "Vulkitten/Events/Event.h"
 
 // IO
-#include "Vulkitten/Input.h"
-#include "Vulkitten/KeyCode.h"
-#include "Vulkitten/MouseButtonCode.h"
+#include "Vulkitten/Core/Input.h"
+#include "Vulkitten/Core/KeyCode.h"
+#include "Vulkitten/Core/MouseButtonCode.h"
 
 // Core
 #include "Vulkitten/Core/Timestep.h"
@@ -28,5 +28,5 @@
 #include "Vulkitten/ImGui/imguiLayer.h"
 
 // ---Entry point-----------------------
-#include "Vulkitten/EntryPoint.h"
+#include "Vulkitten/Core/EntryPoint.h"
 // -------------------------------------

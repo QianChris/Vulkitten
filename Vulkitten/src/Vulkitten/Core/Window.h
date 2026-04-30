@@ -2,7 +2,7 @@
 
 #include "vktpch.h"
 
-#include "Vulkitten/Core.h"
+#include "Vulkitten/Core/Core.h"
 #include "Vulkitten/Events/Event.h"
 
 namespace Vulkitten

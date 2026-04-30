@@ -3,7 +3,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include "Vulkitten/Application.h"
+#include "Vulkitten/Core/Application.h"
 
 namespace Vulkitten
 {

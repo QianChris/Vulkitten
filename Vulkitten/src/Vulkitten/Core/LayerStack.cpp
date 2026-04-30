@@ -1,6 +1,6 @@
 #include "vktpch.h"
-#include "Vulkitten/Layer.h"
-#include "Vulkitten/LayerStack.h"
+#include "Vulkitten/Core/Layer.h"
+#include "Vulkitten/Core/LayerStack.h"
 
 namespace Vulkitten
 {

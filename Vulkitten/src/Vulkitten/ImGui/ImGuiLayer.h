@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Vulkitten/Core.h"
+#include "Vulkitten/Core/Core.h"
 #include "Vulkitten/Events/Event.h"
-#include "Vulkitten/Layer.h"
+#include "Vulkitten/Core/Layer.h"
 
 namespace Vulkitten
 {

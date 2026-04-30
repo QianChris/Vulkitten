@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vulkitten/Core.h"
+#include "Vulkitten/Core/Core.h"
 #include "Vulkitten/Renderer/RendererAPI.h"
 #include "Vulkitten/Renderer/OrthographicCamera.h"
 
@@ -13,6 +13,7 @@ namespace Vulkitten {
     { 
     public:
         static void Init();
+        static void OnWindowResize(uint32_t width, uint32_t height);
         static void Shutdown();
         static void BeginScene(OrthographicCamera& camera);
         static void EndScene();

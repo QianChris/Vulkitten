@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vulkitten/Log.h"
+#include "Vulkitten/Core/Log.h"
 
 #ifdef VULKITTEN_ENABLE_ASSERTS
     #define VKT_ASSERT(x, ...) { if(!(x)) { VKT_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }

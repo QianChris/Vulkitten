@@ -36,4 +36,4 @@ namespace Vulkitten {
     }
 }
 
-#include "Vulkitten/Assert.h"
+#include "Vulkitten/Core/Assert.h"

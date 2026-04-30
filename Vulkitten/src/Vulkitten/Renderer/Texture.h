@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "Vulkitten/Core.h"
+#include "Vulkitten/Core/Core.h"
 
 namespace Vulkitten {
 
