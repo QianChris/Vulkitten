@@ -12,7 +12,6 @@ namespace Vulkitten {
     struct Renderer2DData
     {
         ShaderLibrary shaderLibrary;
-        Ref<VertexArray> quadVertexArray;
         Ref<VertexArray> texturedQuadVertexArray;
     };
 
@@ -24,29 +23,6 @@ namespace Vulkitten {
 
         s_Data->shaderLibrary.Load("sandbox://assets/shaders/SolidColor.shader");
         s_Data->shaderLibrary.Load("sandbox://assets/shaders/Texture.shader");
-
-        s_Data->quadVertexArray = VertexArray::Create();
-        {
-            float vertices[4 * 3] = {
-                -0.5f, -0.5f, 0.0f,
-                0.5f, -0.5f, 0.0f,
-                0.5f,  0.5f, 0.0f,
-                -0.5f,  0.5f, 0.0f,
-            };
-            Ref<VertexBuffer> vertexBuffer;
-            vertexBuffer = VertexBuffer::Create(vertices, sizeof(vertices));
-
-            unsigned int indices[6] = { 0, 1, 2, 2, 3, 0 };
-            Ref<IndexBuffer> indexBuffer;
-            indexBuffer = IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t));
-
-            BufferLayout layout = {
-                { ShaderDataType::Float3, "a_Position" },
-            };
-            vertexBuffer->SetLayout(layout);
-            s_Data->quadVertexArray->AddVertexBuffer(vertexBuffer);
-            s_Data->quadVertexArray->SetIndexBuffer(indexBuffer);
-        }
 
         s_Data->texturedQuadVertexArray = VertexArray::Create();
         {
@@ -112,8 +88,8 @@ namespace Vulkitten {
             * glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
         solidColorShader->SetUniformMat4("u_Transform", transform);
 
-        s_Data->quadVertexArray->Bind();
-        RenderCommand::DrawIndexed(s_Data->quadVertexArray);
+        s_Data->texturedQuadVertexArray->Bind();
+        RenderCommand::DrawIndexed(s_Data->texturedQuadVertexArray);
     }
 
     void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, const glm::vec4& tintColor)
