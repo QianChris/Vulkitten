@@ -9,12 +9,16 @@
 
 #include <glm/glm.hpp>
 
+#include "Vulkitten/Core/FileSystem.h"
+
 namespace Vulkitten
 {
     Application* Application::s_Instance = nullptr;
 
     Application::Application()
     {
+        Vulkitten::FileSystem::RegisterPath("../../Sandbox", "sandbox");
+
         VKT_ASSERT(!s_Instance, "Application already exists!");
         s_Instance = this;
 
@@ -29,6 +33,7 @@ namespace Vulkitten
 
     Application::~Application()
     {
+        Renderer::Shutdown();
     }
 
     void Application::Run()

@@ -47,14 +47,34 @@ endif()
 # 添加构建后事件: 复制Vulkitten.dll到SandBox输出目录 (解决DLL找不到问题)
 # 这样SandBox.exe和Vulkitten.dll在同一目录，运行时自动加载
 # 同时强制重新链接当DLL文件时间戳改变时
+# if(WIN32)
+#     add_custom_command(TARGET SandBox POST_BUILD
+#         COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#             $<TARGET_FILE:Vulkitten>
+#             $<TARGET_FILE_DIR:SandBox>
+#         DEPENDS $<TARGET_FILE:Vulkitten>
+#         COMMENT "Copying Vulkitten.dll to SandBox output directory"
+#     )
+# endif()
+
 if(WIN32)
-    add_custom_command(TARGET SandBox POST_BUILD
+    # 使用与 set_target_properties 中一致的目录变量
+    set(SANDBOX_DLL_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/SandBox)
+
+    # 删除原来的 POST_BUILD 事件，改用独立的自定义目标
+    add_custom_target(CopyVulkittenDLL ALL
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${SANDBOX_DLL_DIR}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:Vulkitten>
-            $<TARGET_FILE_DIR:SandBox>
-        DEPENDS $<TARGET_FILE:Vulkitten>
+            ${SANDBOX_DLL_DIR}
         COMMENT "Copying Vulkitten.dll to SandBox output directory"
     )
+    
+    # 确保 Vulkitten 先构建完，再执行复制
+    add_dependencies(CopyVulkittenDLL Vulkitten)
+    
+    # 确保 SandBox 在复制完成后才构建/运行
+    add_dependencies(SandBox CopyVulkittenDLL)
 endif()
 
 # 安装规则 (可选)

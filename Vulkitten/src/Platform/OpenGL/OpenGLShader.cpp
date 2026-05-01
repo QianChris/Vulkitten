@@ -141,11 +141,27 @@ namespace Vulkitten {
         glUseProgram(0);
     }
 
-    const std::string& OpenGLShader::GetName() const
+    void OpenGLShader::SetUniformInt(const std::string& name, int value)
     {
-        return m_Name;
+        UploadUniformInt(name, value);
     }
 
+    void OpenGLShader::SetUniformFloat3(const std::string& name, const glm::vec3& value)
+    {
+        UploadUniformFloat3(name, value);
+    }
+
+    void OpenGLShader::SetUniformFloat4(const std::string& name, const glm::vec4& value)
+    {
+        UploadUniformFloat4(name, value);
+    }
+
+    void OpenGLShader::SetUniformMat4(const std::string& name, const glm::mat4& value)
+    {
+        UploadUniformMat4(name, value);
+    }
+
+    // Raw OpenGL uniform upload functions
     void OpenGLShader::UploadUniformMat4(const std::string& name, const glm::mat4& matrix)
     {
         GLint location = glGetUniformLocation(m_RendererID, name.c_str());
@@ -155,6 +171,11 @@ namespace Vulkitten {
     {
         GLint location = glGetUniformLocation(m_RendererID, name.c_str());
 		glUniform4f(location, vector.x, vector.y, vector.z, vector.w);
+    }
+    void OpenGLShader::UploadUniformFloat3(const std::string& name, const glm::vec3& vector)
+    {
+        GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+        glUniform3f(location, vector.x, vector.y, vector.z);
     }
     void OpenGLShader::UploadUniformInt(const std::string& name, int value)
     {
