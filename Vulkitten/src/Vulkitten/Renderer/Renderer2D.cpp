@@ -92,7 +92,7 @@ namespace Vulkitten {
         RenderCommand::DrawIndexed(s_Data->texturedQuadVertexArray);
     }
 
-    void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, const glm::vec4& tintColor)
+    void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
     {
         texture->Bind();
 
@@ -103,6 +103,8 @@ namespace Vulkitten {
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), glm::vec3(position, 0.0f))
             * glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
         texturedShader->SetUniformMat4("u_Transform", transform);
+
+        texturedShader->SetUniformFloat("u_TilingFactor", tilingFactor);
 
         s_Data->texturedQuadVertexArray->Bind();
         RenderCommand::DrawIndexed(s_Data->texturedQuadVertexArray);

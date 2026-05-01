@@ -28,8 +28,8 @@ void Sandbox2D::OnUpdate(Vulkitten::Timestep timestep)
     Vulkitten::Renderer2D::BeginScene(m_CameraController.GetCamera());
     Vulkitten::Renderer2D::DrawQuad({ -1.0f, 0.0f }, { 0.8f, 0.8f }, m_Color1);
     Vulkitten::Renderer2D::DrawQuad({ 0.5f, -0.5f }, { 0.5f, 0.75f }, m_Color2);
-    Vulkitten::Renderer2D::DrawQuad({ 0.0f, 0.0f }, { 1.0f, 1.0f }, m_Texture, m_Color3);
-    Vulkitten::Renderer2D::DrawQuad({ 0.0f, 0.0f }, { 1.0f, 1.0f }, m_LogoTexture, m_Color4);
+    Vulkitten::Renderer2D::DrawQuad({ 0.0f, 0.0f }, { 10.0f, 10.0f }, m_Texture, 10.f, m_Color3);
+    Vulkitten::Renderer2D::DrawQuad({ 0.0f, 0.0f }, { 1.0f, 1.0f }, m_LogoTexture, 1.f, m_Color4);
     Vulkitten::Renderer2D::EndScene();
 }
 
@@ -45,4 +45,5 @@ void Sandbox2D::OnImguiRender()
 
 void Sandbox2D::OnEvent(Vulkitten::Event& event)
 {
+    m_CameraController.OnEvent(event);
 }
