@@ -12,7 +12,8 @@ namespace Vulkitten {
     struct Renderer2DData
     {
         ShaderLibrary shaderLibrary;
-        Ref<VertexArray> texturedQuadVertexArray;
+        Ref<VertexArray> quadVertexArray;
+        Ref<Texture2D> whiteTexture;
     };
 
     static Renderer2DData* s_Data;
@@ -21,10 +22,12 @@ namespace Vulkitten {
     {
         s_Data = new Renderer2DData();
 
-        s_Data->shaderLibrary.Load("sandbox://assets/shaders/SolidColor.shader");
         s_Data->shaderLibrary.Load("sandbox://assets/shaders/Texture.shader");
+        auto textureShader = s_Data->shaderLibrary.Get("Texture");
+        textureShader->Bind();
+        textureShader->SetUniformInt("u_Texture", 0);
 
-        s_Data->texturedQuadVertexArray = VertexArray::Create();
+        s_Data->quadVertexArray = VertexArray::Create();
         {
             float vertices[4 * 5] = {
                 -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
@@ -44,13 +47,13 @@ namespace Vulkitten {
 				{ ShaderDataType::Float2, "a_TexCoord" },
             };
             vertexBuffer->SetLayout(layout);
-            s_Data->texturedQuadVertexArray->AddVertexBuffer(vertexBuffer);
-            s_Data->texturedQuadVertexArray->SetIndexBuffer(indexBuffer);
+            s_Data->quadVertexArray->AddVertexBuffer(vertexBuffer);
+            s_Data->quadVertexArray->SetIndexBuffer(indexBuffer);
         }
 
-        auto textureShader = s_Data->shaderLibrary.Get("Texture");
-        textureShader->Bind();
-        textureShader->SetUniformInt("u_Texture", 0);
+        s_Data->whiteTexture = Texture2D::Create(1, 1);
+        uint32_t whiteTextureData = 0xffffffff;
+        s_Data->whiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
     }
 
     void Renderer2D::Shutdown()
@@ -60,10 +63,6 @@ namespace Vulkitten {
 
     void Renderer2D::BeginScene(const OrthographicCamera& camera)
     {
-        auto solidColorShader = s_Data->shaderLibrary.Get("SolidColor");
-        solidColorShader->Bind();
-        solidColorShader->SetUniformMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
-
         auto textureShader = s_Data->shaderLibrary.Get("Texture");
         textureShader->Bind();
         textureShader->SetUniformMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
@@ -80,16 +79,18 @@ namespace Vulkitten {
 
     void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color)
     {
-        auto solidColorShader = s_Data->shaderLibrary.Get("SolidColor");
-        solidColorShader->Bind();
-        solidColorShader->SetUniformFloat4("u_Color", color);
+        s_Data->whiteTexture->Bind();
+
+        auto texturedShader = s_Data->shaderLibrary.Get("Texture");
+        texturedShader->Bind();
+        texturedShader->SetUniformFloat4("u_TintColor", color);
 
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), position)
             * glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
-        solidColorShader->SetUniformMat4("u_Transform", transform);
+        texturedShader->SetUniformMat4("u_Transform", transform);
 
-        s_Data->texturedQuadVertexArray->Bind();
-        RenderCommand::DrawIndexed(s_Data->texturedQuadVertexArray);
+        s_Data->quadVertexArray->Bind();
+        RenderCommand::DrawIndexed(s_Data->quadVertexArray);
     }
 
     void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
@@ -106,8 +107,8 @@ namespace Vulkitten {
 
         texturedShader->SetUniformFloat("u_TilingFactor", tilingFactor);
 
-        s_Data->texturedQuadVertexArray->Bind();
-        RenderCommand::DrawIndexed(s_Data->texturedQuadVertexArray);
+        s_Data->quadVertexArray->Bind();
+        RenderCommand::DrawIndexed(s_Data->quadVertexArray);
     }
 
 }
