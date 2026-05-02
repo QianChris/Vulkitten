@@ -111,13 +111,74 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
+        DrawQuad(glm::vec3(position, 0.0f), size, texture, tilingFactor, tintColor);
+    }
+
+    void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
+    {
+        VKT_PROFILE_FUNCTION();
+
         texture->Bind();
 
         auto texturedShader = s_Data->shaderLibrary.Get("Texture");
         texturedShader->Bind();
         texturedShader->SetUniformFloat4("u_TintColor", tintColor);
 
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), glm::vec3(position, 0.0f))
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position)
+            * glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
+        texturedShader->SetUniformMat4("u_Transform", transform);
+
+        texturedShader->SetUniformFloat("u_TilingFactor", tilingFactor);
+
+        s_Data->quadVertexArray->Bind();
+        RenderCommand::DrawIndexed(s_Data->quadVertexArray);
+    }
+
+    void Renderer2D::DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, float rotation, const glm::vec4& color)
+    {
+        VKT_PROFILE_FUNCTION();
+
+        DrawRotatedQuad(glm::vec3(position, 0.0f), size, rotation, color);
+    }
+
+    void Renderer2D::DrawRotatedQuad(const glm::vec3& position, const glm::vec2& size, float rotation, const glm::vec4& color)
+    {
+        VKT_PROFILE_FUNCTION();
+
+        s_Data->whiteTexture->Bind();
+
+        auto texturedShader = s_Data->shaderLibrary.Get("Texture");
+        texturedShader->Bind();
+        texturedShader->SetUniformFloat4("u_TintColor", color);
+
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position)
+            * glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0.0f, 0.0f, 1.0f))
+            * glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
+        texturedShader->SetUniformMat4("u_Transform", transform);
+
+        s_Data->quadVertexArray->Bind();
+        RenderCommand::DrawIndexed(s_Data->quadVertexArray);
+    }
+
+    void Renderer2D::DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
+    {
+        VKT_PROFILE_FUNCTION();
+
+        DrawRotatedQuad(glm::vec3(position, 0.0f), size, rotation, texture, tilingFactor, tintColor);
+    }
+
+    void Renderer2D::DrawRotatedQuad(const glm::vec3& position, const glm::vec2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
+    {
+        VKT_PROFILE_FUNCTION();
+
+        texture->Bind();
+
+        auto texturedShader = s_Data->shaderLibrary.Get("Texture");
+        texturedShader->Bind();
+        texturedShader->SetUniformFloat4("u_TintColor", tintColor);
+
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position)
+            * glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0.0f, 0.0f, 1.0f))
             * glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
         texturedShader->SetUniformMat4("u_Transform", transform);
 
