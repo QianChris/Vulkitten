@@ -8,6 +8,8 @@
 
 #include "Platform/OpenGL/OpenGLContext.h"
 
+#include "Vulkitten/Perf/Instrumentor.h"
+
 namespace Vulkitten {
     static bool s_GLFWInitialized = false;
 
@@ -23,16 +25,22 @@ namespace Vulkitten {
 
     WindowsWindow::WindowsWindow(const WindowProps& props)
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         Init(props);
     }
 
     WindowsWindow::~WindowsWindow()
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         Shutdown();
     }
 
     void WindowsWindow::Init(const WindowProps& props)
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         m_Data.Title = props.Title;
         m_Data.Width = props.Width;
         m_Data.Height = props.Height;
@@ -41,13 +49,19 @@ namespace Vulkitten {
 
         if (!s_GLFWInitialized)
         {
-            int success = glfwInit();
-            VKT_CORE_ASSERT(success, "Could not initialize GLFW!");
+            {
+                VKT_PROFILE_SCOPE("[RENDER] glfwInit");
+                int success = glfwInit();
+                VKT_CORE_ASSERT(success, "Could not initialize GLFW!");
+            }
             glfwSetErrorCallback(GLFWErrorCallback);
             s_GLFWInitialized = true;
         }
 
-        m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
+        {
+            VKT_PROFILE_SCOPE("[RENDER] glfwCreateWindow");
+            m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
+        }
         
         m_Context = new OpenGLContext(m_Window);
         m_Context->Init();
@@ -55,6 +69,7 @@ namespace Vulkitten {
         glfwSetWindowUserPointer(m_Window, &m_Data);
         SetVSync(true);
 
+        VKT_PROFILE_SCOPE("[RENDER] glfw set callbacks");
 
         // Set GLFW callbacks
         glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height) {
@@ -139,6 +154,8 @@ namespace Vulkitten {
 
     void WindowsWindow::Shutdown()
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         glfwDestroyWindow(m_Window);
     }
 

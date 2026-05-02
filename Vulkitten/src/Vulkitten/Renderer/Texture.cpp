@@ -4,10 +4,14 @@
 #include "Vulkitten/Renderer/Renderer.h"
 #include "Platform/OpenGL/OpenGLTexture.h"
 
+#include "Vulkitten/Perf/Instrumentor.h"
+
 namespace Vulkitten {
 
     Ref<Texture2D> Texture2D::Create(uint32_t width, uint32_t height)
     {
+        VKT_PROFILE_FUNCTION();
+
         switch (Renderer::GetAPI())
         {
             case RendererAPI::API::None:
@@ -23,6 +27,8 @@ namespace Vulkitten {
 
     Ref<Texture2D> Texture2D::Create(const std::string& path)
     {
+        VKT_PROFILE_FUNCTION();
+
         switch (Renderer::GetAPI())
         {
             case RendererAPI::API::None:

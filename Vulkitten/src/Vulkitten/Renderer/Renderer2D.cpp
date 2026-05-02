@@ -5,6 +5,8 @@
 #include "VertexArray.h"
 #include "RenderCommand.h"
 
+#include "Vulkitten/Perf/Instrumentor.h"
+
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace Vulkitten {
@@ -20,6 +22,8 @@ namespace Vulkitten {
 
     void Renderer2D::Init()
     {
+        VKT_PROFILE_FUNCTION();
+
         s_Data = new Renderer2DData();
 
         s_Data->shaderLibrary.Load("sandbox://assets/shaders/Texture.shader");
@@ -58,11 +62,15 @@ namespace Vulkitten {
 
     void Renderer2D::Shutdown()
     {
+        VKT_PROFILE_FUNCTION();
+
         delete s_Data;
     }
 
     void Renderer2D::BeginScene(const OrthographicCamera& camera)
     {
+        VKT_PROFILE_FUNCTION();
+
         auto textureShader = s_Data->shaderLibrary.Get("Texture");
         textureShader->Bind();
         textureShader->SetUniformMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
@@ -70,15 +78,21 @@ namespace Vulkitten {
 
     void Renderer2D::EndScene()
     {
+        VKT_PROFILE_FUNCTION();
+
     }
 
     void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color)
     {
+        VKT_PROFILE_FUNCTION();
+
         DrawQuad(glm::vec3(position, 0.0f), size, color);
     }
 
     void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color)
     {
+        VKT_PROFILE_FUNCTION();
+
         s_Data->whiteTexture->Bind();
 
         auto texturedShader = s_Data->shaderLibrary.Get("Texture");
@@ -95,6 +109,8 @@ namespace Vulkitten {
 
     void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
     {
+        VKT_PROFILE_FUNCTION();
+
         texture->Bind();
 
         auto texturedShader = s_Data->shaderLibrary.Get("Texture");

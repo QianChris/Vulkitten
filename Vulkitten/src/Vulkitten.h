@@ -17,6 +17,10 @@
 #include "Vulkitten/Core/Timestep.h"
 #include "Vulkitten/Core/FileSystem.h"
 
+// Performance
+#include "Vulkitten/Perf/Instrumentor.h"
+#include "Vulkitten/Perf/Timer.h"
+
 // Renderer
 #include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Renderer/Renderer2D.h"

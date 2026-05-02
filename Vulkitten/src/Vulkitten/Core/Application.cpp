@@ -10,6 +10,7 @@
 #include <glm/glm.hpp>
 
 #include "Vulkitten/Core/FileSystem.h"
+#include "Vulkitten/Perf/Instrumentor.h"
 
 namespace Vulkitten
 {
@@ -17,6 +18,8 @@ namespace Vulkitten
 
     Application::Application()
     {
+        VKT_PROFILE_FUNCTION();
+
         Vulkitten::FileSystem::RegisterPath("../../Sandbox", "sandbox");
 
         VKT_ASSERT(!s_Instance, "Application already exists!");
@@ -33,11 +36,15 @@ namespace Vulkitten
 
     Application::~Application()
     {
+        VKT_PROFILE_FUNCTION();
+
         Renderer::Shutdown();
     }
 
     void Application::Run()
     {
+        VKT_PROFILE_FUNCTION();
+
         m_LastFrameTime = std::chrono::high_resolution_clock::now();
 
         while (m_Running)
@@ -47,15 +54,22 @@ namespace Vulkitten
             m_LastFrameTime = std::chrono::high_resolution_clock::now();
 
             if (!m_Minimized) {
-                for (Layer *layer : m_LayerStack)
+                for (Layer *layer : m_LayerStack) {
+                    VKT_PROFILE_SCOPE("Layer update");
                     layer->OnUpdate(timestep);
+                }
             }
-            m_ImGuiLayer->Begin();
-            for (Layer *layer : m_LayerStack)
-                layer->OnImguiRender();
-            m_ImGuiLayer->End();
-
-            m_Window->OnUpdate();
+            {
+                VKT_PROFILE_SCOPE("Imgui update");
+                m_ImGuiLayer->Begin();
+                for (Layer* layer : m_LayerStack)
+                    layer->OnImguiRender();
+                m_ImGuiLayer->End();
+            }
+            {
+                VKT_PROFILE_SCOPE("Window update");
+                m_Window->OnUpdate();
+            }
 
             //auto [mouseX, mouseY] = Input::GetMousePosition();
             //VKT_CORE_TRACE("{0}, {1}", mouseX, mouseY);
@@ -64,6 +78,8 @@ namespace Vulkitten
 
     void Application::OnEvent(Event &e)
     {
+        VKT_PROFILE_FUNCTION();
+
         EventDispatcher dispatcher(e);
         dispatcher.Dispatch<WindowCloseEvent>(VKT_BIND_EVENT_FN(Application::OnWindowClose));
         dispatcher.Dispatch<WindowResizeEvent>(VKT_BIND_EVENT_FN(Application::OnWindowResize));
@@ -79,12 +95,16 @@ namespace Vulkitten
 
     void Application::PushLayer(Layer *layer)
     {
+        VKT_PROFILE_FUNCTION();
+
         m_LayerStack.PushLayer(layer);
         layer->OnAttach();
     }
 
     void Application::PushOverlay(Layer *overlay)
     {
+        VKT_PROFILE_FUNCTION();
+
         m_LayerStack.PushOverlay(overlay);
         overlay->OnAttach();
     }

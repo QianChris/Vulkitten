@@ -6,6 +6,8 @@
 #include "Vulkitten/Core/Timestep.h"
 #include "Vulkitten/Events/ApplicationEvent.h"
 
+#include "Vulkitten/Perf/Instrumentor.h"
+
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace Vulkitten {
@@ -19,6 +21,8 @@ namespace Vulkitten {
 
     void CameraController::OnUpdate(Timestep ts)
     {
+        VKT_PROFILE_FUNCTION();
+
         if (Vulkitten::Input::IsKeyPressed(VKT_KEY_W))
         {
             m_Camera.SetPosition(m_Camera.GetPosition() + glm::vec3(0.0f, m_CameraTranslationSpeed * ts, 0.0f));
@@ -52,6 +56,8 @@ namespace Vulkitten {
 
     bool CameraController::OnEvent(Event& e)
     {
+        VKT_PROFILE_FUNCTION();
+
         EventDispatcher dispatcher(e);
         dispatcher.Dispatch<Vulkitten::MouseScrolledEvent>(VKT_BIND_EVENT_FN(CameraController::OnMouseScrolled));
         dispatcher.Dispatch<Vulkitten::WindowResizeEvent>(VKT_BIND_EVENT_FN(CameraController::OnWindowResized));
@@ -60,6 +66,8 @@ namespace Vulkitten {
 
     bool CameraController::OnMouseScrolled(MouseScrolledEvent& e)
     {
+        VKT_PROFILE_FUNCTION();
+
         m_ZoomLevel -= e.GetYOffset() * 0.25f;
         m_ZoomLevel = std::max(m_ZoomLevel, 0.25f);
         RecalculateView();
@@ -68,6 +76,8 @@ namespace Vulkitten {
 
     bool CameraController::OnWindowResized(WindowResizeEvent& e)
     {
+        VKT_PROFILE_FUNCTION();
+
         m_AspectRatio = (float)e.GetWidth() / (float)e.GetHeight();
         RecalculateView();
         return false;
@@ -75,6 +85,8 @@ namespace Vulkitten {
 
     void CameraController::RecalculateView()
     {
+        VKT_PROFILE_FUNCTION();
+
         float bounds = 1.0f * m_ZoomLevel;
         m_Camera = OrthographicCamera(-m_AspectRatio * bounds, m_AspectRatio * bounds, -bounds, bounds);
     }

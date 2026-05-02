@@ -6,6 +6,7 @@
 #include "backends/imgui_impl_glfw.h"
 
 #include "Vulkitten/Core/Application.h"
+#include "Vulkitten/Perf/Instrumentor.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -152,6 +153,8 @@ namespace Vulkitten
 
     void ImGuiLayer::OnAttach()
     {
+        VKT_PROFILE_FUNCTION();
+
         // Setup Dear ImGui context
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
@@ -185,6 +188,8 @@ namespace Vulkitten
 
     void ImGuiLayer::OnDetach()
     {
+        VKT_PROFILE_FUNCTION();
+
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
@@ -192,6 +197,8 @@ namespace Vulkitten
 
     void ImGuiLayer::OnImguiRender()
     {
+        VKT_PROFILE_FUNCTION();
+
         // Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         static bool show = true;
         ImGui::ShowDemoWindow(&show);
@@ -199,6 +206,8 @@ namespace Vulkitten
 
     void ImGuiLayer::Begin()
     {
+        VKT_PROFILE_FUNCTION();
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -206,6 +215,8 @@ namespace Vulkitten
 
     void ImGuiLayer::End()
     {
+        VKT_PROFILE_FUNCTION();
+
         ImGuiIO& io = ImGui::GetIO();
         Application& app = Application::Get();
         io.DisplaySize = ImVec2((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());

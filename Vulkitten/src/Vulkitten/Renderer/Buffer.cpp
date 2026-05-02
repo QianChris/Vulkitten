@@ -3,10 +3,14 @@
 #include "Renderer.h"
 #include "Platform/OpenGL/OpenGLBuffer.h"
 
+#include "Vulkitten/Perf/Instrumentor.h"
+
 namespace Vulkitten {
 
     Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
     {
+        VKT_PROFILE_FUNCTION();
+
         switch (Renderer::GetAPI())
         {
             case RendererAPI::API::None:
@@ -22,6 +26,8 @@ namespace Vulkitten {
 
     Ref<IndexBuffer> IndexBuffer::Create(uint32_t* indices, uint32_t count)
     {
+        VKT_PROFILE_FUNCTION();
+
         switch (Renderer::GetAPI())
         {
             case RendererAPI::API::None:

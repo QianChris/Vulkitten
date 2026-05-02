@@ -4,10 +4,14 @@
 #include "Platform/OpenGL/OpenGLVertexArray.h"
 #include "Vulkitten/Renderer/Renderer.h"
 
+#include "Vulkitten/Perf/Instrumentor.h"
+
 namespace Vulkitten {
 
     Ref<VertexArray> VertexArray::Create()
     {
+        VKT_PROFILE_FUNCTION();
+
         switch (Renderer::GetAPI())
         {
             case RendererAPI::API::None:

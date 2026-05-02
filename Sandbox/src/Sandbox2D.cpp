@@ -3,6 +3,10 @@
 #include "imgui.h"
 #include <glm/gtc/type_ptr.hpp>
 
+
+#define VKT_TIMER(name) Vulkitten::Timer timer##__LINE__([&](float elapsed) { \
+        m_ProfileResults.emplace_back(name, elapsed); });
+
 Sandbox2D::Sandbox2D()
     : Layer("Sandbox2D"), m_CameraController(1280.0f / 720.0f)
 {
@@ -20,17 +24,25 @@ void Sandbox2D::OnDetach()
 
 void Sandbox2D::OnUpdate(Vulkitten::Timestep timestep)
 {
-    Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
-    Vulkitten::RenderCommand::Clear();
+    VKT_TIMER("Sandbox2D::OnUpdate");
+
+    {
+        VKT_TIMER("Render Prep");
+        Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
+        Vulkitten::RenderCommand::Clear();
+    }
 
     m_CameraController.OnUpdate(timestep);
 
-    Vulkitten::Renderer2D::BeginScene(m_CameraController.GetCamera());
-    Vulkitten::Renderer2D::DrawQuad({ 0.0f, 0.0f }, { 10.0f, 10.0f }, m_Texture, 10.f, m_Color3);
-    Vulkitten::Renderer2D::DrawQuad({ -1.0f, 0.0f }, { 0.8f, 0.8f }, m_Color1);
-    Vulkitten::Renderer2D::DrawQuad({ 0.5f, -0.5f }, { 0.5f, 0.75f }, m_Color2);
-    Vulkitten::Renderer2D::DrawQuad({ 0.0f, 0.0f }, { 1.0f, 1.0f }, m_LogoTexture, 1.f, m_Color4);
-    Vulkitten::Renderer2D::EndScene();
+    {
+        VKT_TIMER("Render Scene");
+        Vulkitten::Renderer2D::BeginScene(m_CameraController.GetCamera());
+        Vulkitten::Renderer2D::DrawQuad({ 0.0f, 0.0f }, { 10.0f, 10.0f }, m_Texture, 10.f, m_Color3);
+        Vulkitten::Renderer2D::DrawQuad({ -1.0f, 0.0f }, { 0.8f, 0.8f }, m_Color1);
+        Vulkitten::Renderer2D::DrawQuad({ 0.5f, -0.5f }, { 0.5f, 0.75f }, m_Color2);
+        Vulkitten::Renderer2D::DrawQuad({ 0.0f, 0.0f }, { 1.0f, 1.0f }, m_LogoTexture, 1.f, m_Color4);
+        Vulkitten::Renderer2D::EndScene();
+    }
 }
 
 void Sandbox2D::OnImguiRender()
@@ -40,6 +52,13 @@ void Sandbox2D::OnImguiRender()
     ImGui::ColorEdit4("Color2", glm::value_ptr(m_Color2));
     ImGui::ColorEdit4("Color3", glm::value_ptr(m_Color3));
     ImGui::ColorEdit4("Color4", glm::value_ptr(m_Color4));
+
+    ImGui::Text("Profile Results:");
+    for (auto& result : m_ProfileResults) {
+        ImGui::Text("%s: %.3fms", result.first.c_str(), result.second);
+    }
+    m_ProfileResults.clear();
+
     ImGui::End();
 }
 

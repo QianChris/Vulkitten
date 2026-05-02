@@ -5,15 +5,18 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
 #include <sstream>
-
 #include <nlohmann/json.hpp>
+
 #include "Vulkitten/Core/FileSystem.h"
+#include "Vulkitten/Perf/Instrumentor.h"
 
 namespace Vulkitten {
 
     OpenGLShader::OpenGLShader(const std::string& filepath)
         : m_Name("unnamed")
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         std::string fullPath = FileSystem::Resolve(filepath);
 
         std::ifstream in(fullPath);
@@ -51,6 +54,8 @@ namespace Vulkitten {
 
     void OpenGLShader::Compile(const std::string& vertexSrc, const std::string& fragmentSrc)
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
         const char* source = vertexSrc.c_str();
@@ -123,6 +128,8 @@ namespace Vulkitten {
     OpenGLShader::OpenGLShader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc)
         : m_Name(name)
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         Compile(vertexSrc, fragmentSrc);
     }
 
@@ -133,36 +140,50 @@ namespace Vulkitten {
 
     void OpenGLShader::Bind() const
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         glUseProgram(m_RendererID);
     }
 
     void OpenGLShader::Unbind() const
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         glUseProgram(0);
     }
 
     void OpenGLShader::SetUniformInt(const std::string& name, int value)
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         UploadUniformInt(name, value);
     }
 
     void OpenGLShader::SetUniformFloat(const std::string& name, float value)
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         UploadUniformFloat(name, value);
     }
 
     void OpenGLShader::SetUniformFloat3(const std::string& name, const glm::vec3& value)
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         UploadUniformFloat3(name, value);
     }
 
     void OpenGLShader::SetUniformFloat4(const std::string& name, const glm::vec4& value)
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         UploadUniformFloat4(name, value);
     }
 
     void OpenGLShader::SetUniformMat4(const std::string& name, const glm::mat4& value)
     {
+        VKT_PROFILE_RENDER_FUNCTION();
+
         UploadUniformMat4(name, value);
     }
 
