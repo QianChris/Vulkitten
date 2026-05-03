@@ -15,6 +15,7 @@ namespace Vulkitten {
     {
         auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 
+        // Reverse order of creating entity
         for (auto entity : group) {
             auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
