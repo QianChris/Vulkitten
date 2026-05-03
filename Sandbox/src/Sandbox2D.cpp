@@ -33,10 +33,10 @@ void Sandbox2D::CreateTestScene()
     m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity1);
     auto& transform1 = m_Scene.GetRegistry().get<TransformComponent>(entity1);
     auto& sprite1 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity1);
-    sprite1.Color = m_Color1;
+    sprite1.Color = { 0.8f, 0.2f, 0.3f, 1.0f };
     sprite1.Texture = nullptr;
     sprite1.TilingFactor = 1.0f;
-    transform1.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f)) *
+    transform1.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.1f)) *
                        glm::scale(glm::mat4(1.0f), glm::vec3(0.8f, 0.8f, 1.0f));
 
     auto entity2 = m_Scene.CreateEntity();
@@ -44,10 +44,10 @@ void Sandbox2D::CreateTestScene()
     m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity2);
     auto& transform2 = m_Scene.GetRegistry().get<TransformComponent>(entity2);
     auto& sprite2 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity2);
-    sprite2.Color = m_Color2;
+    sprite2.Color = { 0.2f, 0.8f, 0.3f, 1.0f };
     sprite2.Texture = nullptr;
     sprite2.TilingFactor = 1.0f;
-    transform2.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.5f, 0.0f)) *
+    transform2.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.5f, 0.1f)) *
                        glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.75f, 1.0f));
 
     auto entity3 = m_Scene.CreateEntity();
@@ -55,10 +55,10 @@ void Sandbox2D::CreateTestScene()
     m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity3);
     auto& transform3 = m_Scene.GetRegistry().get<TransformComponent>(entity3);
     auto& sprite3 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity3);
-    sprite3.Color = m_Color3;
+    sprite3.Color = { 1.0f, 1.0f, 1.0f, 1.0f };
     sprite3.Texture = m_Texture;
     sprite3.TilingFactor = 10.0f;
-    transform3.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f)) *
+    transform3.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) *
                        glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 1.0f));
 
     auto entity4 = m_Scene.CreateEntity();
@@ -66,10 +66,10 @@ void Sandbox2D::CreateTestScene()
     m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity4);
     auto& transform4 = m_Scene.GetRegistry().get<TransformComponent>(entity4);
     auto& sprite4 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity4);
-    sprite4.Color = m_Color4;
+    sprite4.Color = { 1.0f, 1.0f, 1.0f, 1.0f };
     sprite4.Texture = m_LogoTexture;
     sprite4.TilingFactor = 1.0f;
-    transform4.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.1f)) *
+    transform4.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.2f)) *
                        glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
 
     auto entity5 = m_Scene.CreateEntity();
@@ -77,7 +77,7 @@ void Sandbox2D::CreateTestScene()
     m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity5);
     auto& transform5 = m_Scene.GetRegistry().get<TransformComponent>(entity5);
     auto& sprite5 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity5);
-    sprite5.Color = m_Color3;
+    sprite5.Color = { 1.0f, 1.0f, 1.0f, 1.0f };
     sprite5.Texture = m_Texture;
     sprite5.TilingFactor = 10.0f;
     transform5.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.2f)) *
@@ -101,6 +101,13 @@ void Sandbox2D::OnUpdate(Vulkitten::Timestep timestep)
     }
 
     m_CameraController.OnUpdate(timestep);
+
+    static float rotation = 0.0f;
+    rotation -= timestep * 50.;
+    auto& transform = m_Scene.GetRegistry().get<Vulkitten::TransformComponent>(m_Entities[4]);
+    transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.2f)) *
+        glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0.0f, 0.0f, 1.0f)) *
+        glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
 
     {
         VKT_TIMER("Render Scene");

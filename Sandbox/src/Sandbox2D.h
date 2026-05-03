@@ -29,9 +29,4 @@ private:
     std::vector<entt::entity> m_Entities;
 
     std::vector<std::pair<std::string, float>> m_ProfileResults;
-
-    glm::vec4 m_Color1{ 0.8f, 0.2f, 0.3f, 1.0f };
-    glm::vec4 m_Color2{ 0.3f, 0.2f, 0.8f, 1.0f };
-    glm::vec4 m_Color3{ 1.0f, 1.0f, 1.0f, 1.0f };
-    glm::vec4 m_Color4{ 1.0f, 1.0f, 1.0f, 1.0f };
 };
