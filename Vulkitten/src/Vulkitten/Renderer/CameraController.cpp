@@ -88,7 +88,16 @@ namespace Vulkitten {
         VKT_PROFILE_FUNCTION();
 
         float bounds = 1.0f * m_ZoomLevel;
-        m_Camera = OrthographicCamera(-m_AspectRatio * bounds, m_AspectRatio * bounds, -bounds, bounds);
+        float left = -m_AspectRatio * bounds;
+        float right = m_AspectRatio * bounds;
+        float bottom = -bounds;
+        float top = bounds;
+
+        glm::vec3 position = m_Camera.GetPosition();
+        float rotation = m_Camera.GetRotation();
+        m_Camera = OrthographicCamera(left, right, bottom, top);
+        m_Camera.SetPosition(position);
+        m_Camera.SetRotation(rotation);
     }
 
 }

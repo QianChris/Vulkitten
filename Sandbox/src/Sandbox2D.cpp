@@ -66,6 +66,7 @@ auto& stats = Vulkitten::Renderer2D::GetStats();
     ImGui::Text("Vertices: %u", stats.Vertices);
     ImGui::Text("Texture Count: %u / %u", stats.TextureCount, Vulkitten::Renderer2D::GetMaxTextureSlots());
 
+    ImGui::Text("Color control");
     ImGui::ColorEdit4("Color1", glm::value_ptr(m_Color1));
     ImGui::ColorEdit4("Color2", glm::value_ptr(m_Color2));
     ImGui::ColorEdit4("Color3", glm::value_ptr(m_Color3));
