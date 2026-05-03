@@ -48,6 +48,12 @@ void Sandbox2D::OnUpdate(Vulkitten::Timestep timestep)
 void Sandbox2D::OnImguiRender()
 {
     ImGui::Begin("Test");
+
+    float fps = Vulkitten::Application::Get().GetFPS();
+    float frameTime = Vulkitten::Application::Get().GetFrameTime();
+    ImGui::Text("Actual FPS: %.1f", fps);
+    ImGui::Text("Frame Time: %.3f ms ( FPS: %.3f )", frameTime * 1000.0f, 1. / frameTime);
+
     ImGui::ColorEdit4("Color1", glm::value_ptr(m_Color1));
     ImGui::ColorEdit4("Color2", glm::value_ptr(m_Color2));
     ImGui::ColorEdit4("Color3", glm::value_ptr(m_Color3));

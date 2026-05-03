@@ -49,9 +49,19 @@ namespace Vulkitten
 
         while (m_Running)
         {
-            auto time = std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - m_LastFrameTime);
+            auto startTime = std::chrono::high_resolution_clock::now();
+
+            auto time = std::chrono::duration<float>(startTime - m_LastFrameTime);
             Timestep timestep(time.count());
             m_LastFrameTime = std::chrono::high_resolution_clock::now();
+
+            m_FrameCount += 1.0f;
+            m_FrameTimeAccumulator += timestep.GetSeconds();
+            if (m_FrameTimeAccumulator >= 1.0f) {
+                m_FPS = m_FrameCount / m_FrameTimeAccumulator;
+                m_FrameCount = 0.0f;
+                m_FrameTimeAccumulator = 0.0f;
+            }
 
             if (!m_Minimized) {
                 for (Layer *layer : m_LayerStack) {
@@ -66,6 +76,10 @@ namespace Vulkitten
                     layer->OnImguiRender();
                 m_ImGuiLayer->End();
             }
+
+            auto frameEndTime = std::chrono::high_resolution_clock::now();
+            m_FrameTime = std::chrono::duration<float>(frameEndTime - startTime).count();
+
             {
                 VKT_PROFILE_SCOPE("Window update");
                 m_Window->OnUpdate();
