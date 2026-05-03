@@ -3,22 +3,43 @@
 
 #include "Shader.h"
 #include "VertexArray.h"
+#include "Buffer.h"
 #include "RenderCommand.h"
 
 #include "Vulkitten/Perf/Instrumentor.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <array>
+#include <algorithm>
 
 namespace Vulkitten {
 
+    static uint32_t s_MaxQuads = 10000;
+    static uint32_t s_MaxTextureSlots = 32;
+
     struct Renderer2DData
     {
-        ShaderLibrary shaderLibrary;
         Ref<VertexArray> quadVertexArray;
+        Ref<VertexBuffer> quadVertexBuffer;
+        Ref<Shader> textureShader;
         Ref<Texture2D> whiteTexture;
+
+        uint32_t quadCount = 0;
+        BatchVertex* vertexBufferBase = nullptr;
+        BatchVertex* vertexBufferPtr = nullptr;
+
+        std::vector<Ref<Texture2D>> textureSlots;
+        uint32_t textureSlotIndex = 1;
+
+        Renderer2DStats stats;
     };
 
     static Renderer2DData* s_Data;
+
+    static glm::vec4 GetColorQuadPositions(const glm::vec2& position, const glm::vec2& size)
+    {
+        return glm::vec4(position.x, position.y, position.x + size.x, position.y + size.y);
+    }
 
     void Renderer2D::Init()
     {
@@ -26,44 +47,57 @@ namespace Vulkitten {
 
         s_Data = new Renderer2DData();
 
-        s_Data->shaderLibrary.Load("sandbox://assets/shaders/Texture.shader");
-        auto textureShader = s_Data->shaderLibrary.Get("Texture");
-        textureShader->Bind();
-        textureShader->SetUniformInt("u_Texture", 0);
+        s_Data->textureSlots.resize(s_MaxTextureSlots);
+
+        s_Data->textureShader = Shader::Create("sandbox://assets/shaders/Texture.shader");
+        s_Data->textureShader->Bind();
+        for (uint32_t i = 0; i < s_MaxTextureSlots; i++)
+        {
+            s_Data->textureShader->SetUniformInt(("u_Textures[" + std::to_string(i) + "]").c_str(), i);
+        }
 
         s_Data->quadVertexArray = VertexArray::Create();
+
+        uint32_t maxVertices = s_MaxQuads * 4;
+        uint32_t maxIndices = s_MaxQuads * 6;
+        s_Data->quadVertexBuffer = VertexBuffer::Create(maxVertices * sizeof(BatchVertex));
+        s_Data->quadVertexBuffer->SetLayout({
+            { ShaderDataType::Float3, "a_Position" },
+            { ShaderDataType::Float4, "a_Color" },
+            { ShaderDataType::Float2, "a_TexCoord" },
+            { ShaderDataType::Float, "a_TexIndex" },
+            { ShaderDataType::Float, "a_TilingFactor" }
+        });
+        s_Data->quadVertexArray->AddVertexBuffer(s_Data->quadVertexBuffer);
+
+        std::vector<uint32_t> indices(maxIndices);
+        uint32_t offset = 0;
+        for (uint32_t i = 0; i < maxIndices; i += 6)
         {
-            float vertices[4 * 5] = {
-                -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-                0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-                0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
-                -0.5f,  0.5f, 0.0f, 0.0f, 1.0f,
-            };
-            Ref<VertexBuffer> vertexBuffer;
-            vertexBuffer = VertexBuffer::Create(vertices, sizeof(vertices));
-
-            unsigned int indices[6] = { 0, 1, 2, 2, 3, 0 };
-            Ref<IndexBuffer> indexBuffer;
-            indexBuffer = IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t));
-
-            BufferLayout layout = {
-                { ShaderDataType::Float3, "a_Position" },
-				{ ShaderDataType::Float2, "a_TexCoord" },
-            };
-            vertexBuffer->SetLayout(layout);
-            s_Data->quadVertexArray->AddVertexBuffer(vertexBuffer);
-            s_Data->quadVertexArray->SetIndexBuffer(indexBuffer);
+            indices[i + 0] = offset + 0;
+            indices[i + 1] = offset + 1;
+            indices[i + 2] = offset + 2;
+            indices[i + 3] = offset + 2;
+            indices[i + 4] = offset + 3;
+            indices[i + 5] = offset + 0;
+            offset += 4;
         }
+        Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indices.data(), maxIndices);
+        s_Data->quadVertexArray->SetIndexBuffer(indexBuffer);
+
+        s_Data->vertexBufferBase = new BatchVertex[maxVertices];
 
         s_Data->whiteTexture = Texture2D::Create(1, 1);
         uint32_t whiteTextureData = 0xffffffff;
         s_Data->whiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
+        s_Data->textureSlots[0] = s_Data->whiteTexture;
     }
 
     void Renderer2D::Shutdown()
     {
         VKT_PROFILE_FUNCTION();
 
+        delete[] s_Data->vertexBufferBase;
         delete s_Data;
     }
 
@@ -71,21 +105,107 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        auto textureShader = s_Data->shaderLibrary.Get("Texture");
-        textureShader->Bind();
-        textureShader->SetUniformMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
+        s_Data->textureShader->Bind();
+        s_Data->textureShader->SetUniformMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
+
+        s_Data->quadCount = 0;
+        s_Data->vertexBufferPtr = s_Data->vertexBufferBase;
+        s_Data->textureSlotIndex = 1;
+
+        s_Data->stats.DrawCalls = 0;
+        s_Data->stats.Quads = 0;
+        s_Data->stats.Vertices = 0;
+        s_Data->stats.TextureCount = 1;
     }
 
     void Renderer2D::EndScene()
     {
         VKT_PROFILE_FUNCTION();
 
+        Flush();
+    }
+
+    void Renderer2D::Flush()
+    {
+        if (s_Data->quadCount == 0)
+            return;
+
+        uint32_t dataSize = (uint32_t)((uint8_t*)s_Data->vertexBufferPtr - (uint8_t*)s_Data->vertexBufferBase);
+        s_Data->quadVertexBuffer->SetData(s_Data->vertexBufferBase, dataSize);
+
+        for (uint32_t i = 0; i < s_Data->textureSlotIndex; i++)
+        {
+            s_Data->textureSlots[i]->Bind(i);
+        }
+
+        s_Data->quadVertexArray->Bind();
+        RenderCommand::DrawIndexed(s_Data->quadVertexArray, s_Data->quadCount * 6);
+
+        s_Data->stats.DrawCalls++;
+        s_Data->stats.Quads += s_Data->quadCount;
+        s_Data->stats.Vertices += s_Data->quadCount * 4;
+        s_Data->stats.TextureCount = std::max(s_Data->stats.TextureCount, s_Data->textureSlotIndex);
+
+        s_Data->quadCount = 0;
+        s_Data->vertexBufferPtr = s_Data->vertexBufferBase;
+        s_Data->textureSlotIndex = 1;
+    }
+
+    Renderer2DStats& Renderer2D::GetStats()
+    {
+        return s_Data->stats;
+    }
+
+    uint32_t Renderer2D::GetMaxQuads()
+    {
+        return s_MaxQuads;
+    }
+
+    uint32_t Renderer2D::GetMaxTextureSlots()
+    {
+        return s_MaxTextureSlots;
+    }
+
+    void Renderer2D::SetMaxQuads(uint32_t maxQuads)
+    {
+        s_MaxQuads = maxQuads;
+    }
+
+    void Renderer2D::SetMaxTextureSlots(uint32_t maxSlots)
+    {
+        s_MaxTextureSlots = maxSlots;
+    }
+
+    static uint32_t GetTextureSlot(const Ref<Texture2D>& texture)
+    {
+        for (uint32_t i = 1; i < s_Data->textureSlotIndex; i++)
+        {
+            if (s_Data->textureSlots[i].get() == texture.get())
+                return i;
+        }
+
+        if (s_Data->textureSlotIndex >= s_MaxTextureSlots)
+        {
+            Renderer2D::Flush();
+        }
+
+        uint32_t slot = s_Data->textureSlotIndex;
+        s_Data->textureSlots[slot] = texture;
+        s_Data->textureSlotIndex++;
+        s_Data->stats.TextureCount++;
+        return slot;
+    }
+
+    static void CheckQuadCountOverflow()
+    {
+        if (s_Data->quadCount >= s_MaxQuads)
+        {
+            Renderer2D::Flush();
+        }
     }
 
     void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color)
     {
-        VKT_PROFILE_FUNCTION();
-
         DrawQuad(glm::vec3(position, 0.0f), size, color);
     }
 
@@ -93,24 +213,37 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        s_Data->whiteTexture->Bind();
+        CheckQuadCountOverflow();
 
-        auto texturedShader = s_Data->shaderLibrary.Get("Texture");
-        texturedShader->Bind();
-        texturedShader->SetUniformFloat4("u_TintColor", color);
+        glm::vec3 vertexPositions[4] = {
+            glm::vec3(position.x, position.y, position.z),
+            glm::vec3(position.x + size.x, position.y, position.z),
+            glm::vec3(position.x + size.x, position.y + size.y, position.z),
+            glm::vec3(position.x, position.y + size.y, position.z)
+        };
 
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position)
-            * glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
-        texturedShader->SetUniformMat4("u_Transform", transform);
+        glm::vec2 texCoords[4] = {
+            { 0.0f, 0.0f },
+            { 1.0f, 0.0f },
+            { 1.0f, 1.0f },
+            { 0.0f, 1.0f }
+        };
 
-        s_Data->quadVertexArray->Bind();
-        RenderCommand::DrawIndexed(s_Data->quadVertexArray);
+        for (int i = 0; i < 4; i++)
+        {
+            s_Data->vertexBufferPtr->Position = vertexPositions[i];
+            s_Data->vertexBufferPtr->Color = color;
+            s_Data->vertexBufferPtr->TexCoord = texCoords[i];
+            s_Data->vertexBufferPtr->TexIndex = 0.0f;
+            s_Data->vertexBufferPtr->TilingFactor = 1.0f;
+            s_Data->vertexBufferPtr++;
+        }
+
+        s_Data->quadCount++;
     }
 
     void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
     {
-        VKT_PROFILE_FUNCTION();
-
         DrawQuad(glm::vec3(position, 0.0f), size, texture, tilingFactor, tintColor);
     }
 
@@ -118,26 +251,39 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        texture->Bind();
+        CheckQuadCountOverflow();
 
-        auto texturedShader = s_Data->shaderLibrary.Get("Texture");
-        texturedShader->Bind();
-        texturedShader->SetUniformFloat4("u_TintColor", tintColor);
+        glm::vec3 vertexPositions[4] = {
+            glm::vec3(position.x - size.x * 0.5f, position.y - size.y * 0.5f, position.z),
+            glm::vec3(position.x + size.x * 0.5f, position.y - size.y * 0.5f, position.z),
+            glm::vec3(position.x + size.x * 0.5f, position.y + size.y * 0.5f, position.z),
+            glm::vec3(position.x - size.x * 0.5f, position.y + size.y * 0.5f, position.z)
+        };
 
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position)
-            * glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
-        texturedShader->SetUniformMat4("u_Transform", transform);
+        glm::vec2 texCoords[4] = {
+            { 0.0f, 0.0f },
+            { 1.0f, 0.0f },
+            { 1.0f, 1.0f },
+            { 0.0f, 1.0f }
+        };
 
-        texturedShader->SetUniformFloat("u_TilingFactor", tilingFactor);
+        uint32_t texSlot = GetTextureSlot(texture);
 
-        s_Data->quadVertexArray->Bind();
-        RenderCommand::DrawIndexed(s_Data->quadVertexArray);
+        for (int i = 0; i < 4; i++)
+        {
+            s_Data->vertexBufferPtr->Position = vertexPositions[i];
+            s_Data->vertexBufferPtr->Color = tintColor;
+            s_Data->vertexBufferPtr->TexCoord = texCoords[i];
+            s_Data->vertexBufferPtr->TexIndex = (float)texSlot;
+            s_Data->vertexBufferPtr->TilingFactor = tilingFactor;
+            s_Data->vertexBufferPtr++;
+        }
+
+        s_Data->quadCount++;
     }
 
     void Renderer2D::DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, float rotation, const glm::vec4& color)
     {
-        VKT_PROFILE_FUNCTION();
-
         DrawRotatedQuad(glm::vec3(position, 0.0f), size, rotation, color);
     }
 
@@ -145,25 +291,41 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        s_Data->whiteTexture->Bind();
-
-        auto texturedShader = s_Data->shaderLibrary.Get("Texture");
-        texturedShader->Bind();
-        texturedShader->SetUniformFloat4("u_TintColor", color);
+        CheckQuadCountOverflow();
 
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), position)
             * glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0.0f, 0.0f, 1.0f))
             * glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
-        texturedShader->SetUniformMat4("u_Transform", transform);
 
-        s_Data->quadVertexArray->Bind();
-        RenderCommand::DrawIndexed(s_Data->quadVertexArray);
+        glm::vec2 texCoords[4] = {
+            { 0.0f, 0.0f },
+            { 1.0f, 0.0f },
+            { 1.0f, 1.0f },
+            { 0.0f, 1.0f }
+        };
+
+        glm::vec3 localPositions[4] = {
+            glm::vec3(-0.5f, -0.5f, 0.0f),
+            glm::vec3( 0.5f, -0.5f, 0.0f),
+            glm::vec3( 0.5f,  0.5f, 0.0f),
+            glm::vec3(-0.5f,  0.5f, 0.0f)
+        };
+
+        for (int i = 0; i < 4; i++)
+        {
+            s_Data->vertexBufferPtr->Position = transform * glm::vec4(localPositions[i], 1.0f);
+            s_Data->vertexBufferPtr->Color = color;
+            s_Data->vertexBufferPtr->TexCoord = texCoords[i];
+            s_Data->vertexBufferPtr->TexIndex = 0.0f;
+            s_Data->vertexBufferPtr->TilingFactor = 1.0f;
+            s_Data->vertexBufferPtr++;
+        }
+
+        s_Data->quadCount++;
     }
 
     void Renderer2D::DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
     {
-        VKT_PROFILE_FUNCTION();
-
         DrawRotatedQuad(glm::vec3(position, 0.0f), size, rotation, texture, tilingFactor, tintColor);
     }
 
@@ -171,21 +333,39 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        texture->Bind();
-
-        auto texturedShader = s_Data->shaderLibrary.Get("Texture");
-        texturedShader->Bind();
-        texturedShader->SetUniformFloat4("u_TintColor", tintColor);
+        CheckQuadCountOverflow();
 
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), position)
             * glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0.0f, 0.0f, 1.0f))
             * glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
-        texturedShader->SetUniformMat4("u_Transform", transform);
 
-        texturedShader->SetUniformFloat("u_TilingFactor", tilingFactor);
+        glm::vec2 texCoords[4] = {
+            { 0.0f, 0.0f },
+            { 1.0f, 0.0f },
+            { 1.0f, 1.0f },
+            { 0.0f, 1.0f }
+        };
 
-        s_Data->quadVertexArray->Bind();
-        RenderCommand::DrawIndexed(s_Data->quadVertexArray);
+        glm::vec3 localPositions[4] = {
+            glm::vec3(-0.5f, -0.5f, 0.0f),
+            glm::vec3( 0.5f, -0.5f, 0.0f),
+            glm::vec3( 0.5f,  0.5f, 0.0f),
+            glm::vec3(-0.5f,  0.5f, 0.0f)
+        };
+
+        uint32_t texSlot = GetTextureSlot(texture);
+
+        for (int i = 0; i < 4; i++)
+        {
+            s_Data->vertexBufferPtr->Position = transform * glm::vec4(localPositions[i], 1.0f);
+            s_Data->vertexBufferPtr->Color = tintColor;
+            s_Data->vertexBufferPtr->TexCoord = texCoords[i];
+            s_Data->vertexBufferPtr->TexIndex = (float)texSlot;
+            s_Data->vertexBufferPtr->TilingFactor = tilingFactor;
+            s_Data->vertexBufferPtr++;
+        }
+
+        s_Data->quadCount++;
     }
 
 }

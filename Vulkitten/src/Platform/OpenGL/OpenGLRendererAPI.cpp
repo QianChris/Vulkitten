@@ -31,10 +31,17 @@ namespace Vulkitten {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    void OpenGLRendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray)
+void OpenGLRendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray)
     {
         VKT_PROFILE_RENDER_FUNCTION();
 
         glDrawElements(GL_TRIANGLES, vertexArray->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
+    }
+
+    void OpenGLRendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t count)
+    {
+        VKT_PROFILE_RENDER_FUNCTION();
+
+        glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
     }
 }
