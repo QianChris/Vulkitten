@@ -16,10 +16,78 @@ void Sandbox2D::OnAttach()
 {
     m_Texture = Vulkitten::Texture2D::Create("sandbox://assets/textures/Checkerboard.png");
     m_LogoTexture = Vulkitten::Texture2D::Create("sandbox://assets/textures/ChernoLogo.png");
+
+    CreateTestScene();
 }
 
 void Sandbox2D::OnDetach()
 {
+}
+
+void Sandbox2D::CreateTestScene()
+{
+    using namespace Vulkitten;
+
+    auto entity1 = m_Scene.CreateEntity();
+    m_Scene.GetRegistry().emplace<TransformComponent>(entity1);
+    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity1);
+    auto& transform1 = m_Scene.GetRegistry().get<TransformComponent>(entity1);
+    auto& sprite1 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity1);
+    sprite1.Color = m_Color1;
+    sprite1.Texture = nullptr;
+    sprite1.TilingFactor = 1.0f;
+    transform1.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f)) *
+                       glm::scale(glm::mat4(1.0f), glm::vec3(0.8f, 0.8f, 1.0f));
+
+    auto entity2 = m_Scene.CreateEntity();
+    m_Scene.GetRegistry().emplace<TransformComponent>(entity2);
+    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity2);
+    auto& transform2 = m_Scene.GetRegistry().get<TransformComponent>(entity2);
+    auto& sprite2 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity2);
+    sprite2.Color = m_Color2;
+    sprite2.Texture = nullptr;
+    sprite2.TilingFactor = 1.0f;
+    transform2.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.5f, 0.0f)) *
+                       glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.75f, 1.0f));
+
+    auto entity3 = m_Scene.CreateEntity();
+    m_Scene.GetRegistry().emplace<TransformComponent>(entity3);
+    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity3);
+    auto& transform3 = m_Scene.GetRegistry().get<TransformComponent>(entity3);
+    auto& sprite3 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity3);
+    sprite3.Color = m_Color3;
+    sprite3.Texture = m_Texture;
+    sprite3.TilingFactor = 10.0f;
+    transform3.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f)) *
+                       glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 1.0f));
+
+    auto entity4 = m_Scene.CreateEntity();
+    m_Scene.GetRegistry().emplace<TransformComponent>(entity4);
+    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity4);
+    auto& transform4 = m_Scene.GetRegistry().get<TransformComponent>(entity4);
+    auto& sprite4 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity4);
+    sprite4.Color = m_Color4;
+    sprite4.Texture = m_LogoTexture;
+    sprite4.TilingFactor = 1.0f;
+    transform4.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.1f)) *
+                       glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+
+    auto entity5 = m_Scene.CreateEntity();
+    m_Scene.GetRegistry().emplace<TransformComponent>(entity5);
+    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity5);
+    auto& transform5 = m_Scene.GetRegistry().get<TransformComponent>(entity5);
+    auto& sprite5 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity5);
+    sprite5.Color = m_Color3;
+    sprite5.Texture = m_Texture;
+    sprite5.TilingFactor = 10.0f;
+    transform5.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.2f)) *
+                       glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+
+    m_Entities.push_back(entity1);
+    m_Entities.push_back(entity2);
+    m_Entities.push_back(entity3);
+    m_Entities.push_back(entity4);
+    m_Entities.push_back(entity5);
 }
 
 void Sandbox2D::OnUpdate(Vulkitten::Timestep timestep)
@@ -35,16 +103,9 @@ void Sandbox2D::OnUpdate(Vulkitten::Timestep timestep)
     m_CameraController.OnUpdate(timestep);
 
     {
-        static float rotation = 0.f;
-        rotation += timestep * 50.;
-
         VKT_TIMER("Render Scene");
         Vulkitten::Renderer2D::BeginScene(m_CameraController.GetCamera());
-        Vulkitten::Renderer2D::DrawRotatedQuad({ 0.0f, 0.0f }, { 10.0f, 10.0f }, -30., m_Texture, 10.f, m_Color3);
-        Vulkitten::Renderer2D::DrawQuad({ -1.0f, 0.0f }, { 0.8f, 0.8f }, m_Color1);
-        Vulkitten::Renderer2D::DrawQuad({ 0.5f, -0.5f }, { 0.5f, 0.75f }, m_Color2);
-        Vulkitten::Renderer2D::DrawRotatedQuad({ 0.0f, 0.0f }, { 1.0f, 1.0f }, 60., m_LogoTexture, 1.f, m_Color4);
-        Vulkitten::Renderer2D::DrawRotatedQuad({ -2.0f, 0.0f, 0.1f}, { 1.0f, 1.0f }, rotation, m_Texture, 10.f, m_Color3);
+        m_Scene.OnUpdate(timestep);
         Vulkitten::Renderer2D::EndScene();
     }
 }
@@ -67,10 +128,12 @@ auto& stats = Vulkitten::Renderer2D::GetStats();
     ImGui::Text("Texture Count: %u / %u", stats.TextureCount, Vulkitten::Renderer2D::GetMaxTextureSlots());
 
     ImGui::Text("Color control");
-    ImGui::ColorEdit4("Color1", glm::value_ptr(m_Color1));
-    ImGui::ColorEdit4("Color2", glm::value_ptr(m_Color2));
-    ImGui::ColorEdit4("Color3", glm::value_ptr(m_Color3));
-    ImGui::ColorEdit4("Color4", glm::value_ptr(m_Color4));
+    auto& reg = m_Scene.GetRegistry();
+    ImGui::ColorEdit4("Color1", glm::value_ptr(reg.get<Vulkitten::SpriteRendererComponent>(m_Entities[0]).Color));
+    ImGui::ColorEdit4("Color2", glm::value_ptr(reg.get<Vulkitten::SpriteRendererComponent>(m_Entities[1]).Color));
+    ImGui::ColorEdit4("Color3", glm::value_ptr(reg.get<Vulkitten::SpriteRendererComponent>(m_Entities[2]).Color));
+    ImGui::ColorEdit4("Color4", glm::value_ptr(reg.get<Vulkitten::SpriteRendererComponent>(m_Entities[3]).Color));
+    ImGui::ColorEdit4("Color5", glm::value_ptr(reg.get<Vulkitten::SpriteRendererComponent>(m_Entities[4]).Color));
 
     //ImGui::Text("Profile Results:");
     //for (auto& result : m_ProfileResults) {

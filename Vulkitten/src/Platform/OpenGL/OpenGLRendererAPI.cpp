@@ -22,6 +22,7 @@ namespace Vulkitten {
         VKT_PROFILE_RENDER_FUNCTION();
 
         glClearColor(color.r, color.g, color.b, color.a);
+        glClearDepth(1.0f);
     }
 
     void OpenGLRendererAPI::Clear()

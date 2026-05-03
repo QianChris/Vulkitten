@@ -21,6 +21,10 @@
 #include "Vulkitten/Perf/Instrumentor.h"
 #include "Vulkitten/Perf/Timer.h"
 
+// Scene
+#include "Vulkitten/Scene/Scene.h"
+#include "Vulkitten/Scene/Components.h"
+
 // Renderer
 #include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Renderer/Renderer2D.h"

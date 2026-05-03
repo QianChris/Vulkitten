@@ -10,3 +10,6 @@
 [submodule "Vulkitten/vendor/imgui"]
 	path = Vulkitten/vendor/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "Vulkitten/vendor/entt"]
+	path = Vulkitten/vendor/entt
+	url = https://github.com/skypjack/entt.git

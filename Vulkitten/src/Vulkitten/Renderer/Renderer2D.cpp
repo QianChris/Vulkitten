@@ -211,16 +211,14 @@ namespace Vulkitten {
 
     void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color)
     {
+        DrawQuad(glm::mat4(1.0f), color);
+    }
+
+    void Renderer2D::DrawQuad(const glm::mat4& transform, const glm::vec4& color)
+    {
         VKT_PROFILE_FUNCTION();
 
         CheckQuadCountOverflow();
-
-        glm::vec3 vertexPositions[4] = {
-            glm::vec3(position.x, position.y, position.z),
-            glm::vec3(position.x + size.x, position.y, position.z),
-            glm::vec3(position.x + size.x, position.y + size.y, position.z),
-            glm::vec3(position.x, position.y + size.y, position.z)
-        };
 
         glm::vec2 texCoords[4] = {
             { 0.0f, 0.0f },
@@ -229,9 +227,16 @@ namespace Vulkitten {
             { 0.0f, 1.0f }
         };
 
+        glm::vec3 localPositions[4] = {
+            glm::vec3(-0.5f, -0.5f, 0.0f),
+            glm::vec3( 0.5f, -0.5f, 0.0f),
+            glm::vec3( 0.5f,  0.5f, 0.0f),
+            glm::vec3(-0.5f,  0.5f, 0.0f)
+        };
+
         for (int i = 0; i < 4; i++)
         {
-            s_Data->vertexBufferPtr->Position = vertexPositions[i];
+            s_Data->vertexBufferPtr->Position = transform * glm::vec4(localPositions[i], 1.0f);
             s_Data->vertexBufferPtr->Color = color;
             s_Data->vertexBufferPtr->TexCoord = texCoords[i];
             s_Data->vertexBufferPtr->TexIndex = 0.0f;
@@ -272,6 +277,41 @@ namespace Vulkitten {
         for (int i = 0; i < 4; i++)
         {
             s_Data->vertexBufferPtr->Position = vertexPositions[i];
+            s_Data->vertexBufferPtr->Color = tintColor;
+            s_Data->vertexBufferPtr->TexCoord = texCoords[i];
+            s_Data->vertexBufferPtr->TexIndex = (float)texSlot;
+            s_Data->vertexBufferPtr->TilingFactor = tilingFactor;
+            s_Data->vertexBufferPtr++;
+        }
+
+        s_Data->quadCount++;
+    }
+
+    void Renderer2D::DrawQuad(const glm::mat4& transform, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
+    {
+        VKT_PROFILE_FUNCTION();
+
+        CheckQuadCountOverflow();
+
+        glm::vec2 texCoords[4] = {
+            { 0.0f, 0.0f },
+            { 1.0f, 0.0f },
+            { 1.0f, 1.0f },
+            { 0.0f, 1.0f }
+        };
+
+        glm::vec3 localPositions[4] = {
+            glm::vec3(-0.5f, -0.5f, 0.0f),
+            glm::vec3( 0.5f, -0.5f, 0.0f),
+            glm::vec3( 0.5f,  0.5f, 0.0f),
+            glm::vec3(-0.5f,  0.5f, 0.0f)
+        };
+
+        uint32_t texSlot = GetTextureSlot(texture);
+
+        for (int i = 0; i < 4; i++)
+        {
+            s_Data->vertexBufferPtr->Position = transform * glm::vec4(localPositions[i], 1.0f);
             s_Data->vertexBufferPtr->Color = tintColor;
             s_Data->vertexBufferPtr->TexCoord = texCoords[i];
             s_Data->vertexBufferPtr->TexIndex = (float)texSlot;

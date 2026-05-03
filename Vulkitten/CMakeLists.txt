@@ -6,6 +6,7 @@ add_subdirectory(vendor/spdlog)
 add_subdirectory(vendor/glm)
 add_subdirectory(vendor/glfw)
 add_subdirectory(vendor/glad)
+add_subdirectory(vendor/entt)
 # add_subdirectory(vendor/imgui)
 
 # 宏开关
@@ -47,6 +48,9 @@ target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vendor
 
 # glad (OpenGL function loader)
 target_link_libraries(Vulkitten PUBLIC glad)
+
+# EnTT (ECS library) - include without linking to bypass C++20 requirement
+target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/entt/single_include/")
 
 # imgui (GUI library)
 # target_link_libraries(Vulkitten PUBLIC imgui)
