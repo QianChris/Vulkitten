@@ -93,11 +93,7 @@ namespace Vulkitten {
         float bottom = -bounds;
         float top = bounds;
 
-        glm::vec3 position = m_Camera.GetPosition();
-        float rotation = m_Camera.GetRotation();
-        m_Camera = OrthographicCamera(left, right, bottom, top);
-        m_Camera.SetPosition(position);
-        m_Camera.SetRotation(rotation);
+        m_Camera.SetProjection(left, right, bottom, top);
     }
 
 }
