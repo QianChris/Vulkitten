@@ -66,3 +66,4 @@ endif()
 # 添加子工程
 add_subdirectory(Vulkitten)
 add_subdirectory(SandBox)
+add_subdirectory(VulkittenEditor)
