@@ -90,6 +90,11 @@ namespace Vulkitten
         }
     }
 
+    void Application::SetClose()
+    {
+        m_Running = false;
+    }
+
     void Application::OnEvent(Event &e)
     {
         VKT_PROFILE_FUNCTION();

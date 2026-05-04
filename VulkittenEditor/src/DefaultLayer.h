@@ -19,6 +19,7 @@ public:
 
 private:
     void CreateTestScene();
+    void ImGuiTest();
 
     Vulkitten::CameraController m_CameraController;
 

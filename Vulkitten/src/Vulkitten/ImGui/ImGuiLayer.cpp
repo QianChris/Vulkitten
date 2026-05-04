@@ -200,8 +200,8 @@ namespace Vulkitten
         VKT_PROFILE_FUNCTION();
 
         // Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        static bool show = true;
-        ImGui::ShowDemoWindow(&show);
+        //static bool show = true;
+        //ImGui::ShowDemoWindow(&show);
     }
 
     void ImGuiLayer::Begin()

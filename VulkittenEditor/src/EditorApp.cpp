@@ -3,6 +3,7 @@
 
 #include <filesystem>
 
+#include "DefaultLayer.h"
 
 class EditorApp : public Vulkitten::Application {
 public:
@@ -11,9 +12,9 @@ public:
         VKT_INFO("Current path is {0}", currPath);
         
         Vulkitten::FileSystem::RegisterPath("../../VulkittenEditor", "editor");
+        Vulkitten::FileSystem::RegisterPath("../../Sandbox", "sandbox");
 
-        //PushLayer(new ExampleLayer());
-        // PushLayer(new Sandbox2D());
+        PushLayer(new DefaultLayer());
     }
     ~EditorApp() {}
 };

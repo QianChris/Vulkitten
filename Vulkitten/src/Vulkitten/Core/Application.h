@@ -18,13 +18,14 @@ namespace Vulkitten
         virtual ~Application();
 
         void Run();
+        void SetClose();
 
 		void OnEvent(Event& e);
 
         void PushLayer(Layer* layer);
         void PushOverlay(Layer* overlay);
 
-static Application& Get() { return *s_Instance; }
+        static Application& Get() { return *s_Instance; }
         inline Window& GetWindow() { return *m_Window; }
         inline float GetFPS() const { return m_FPS; }
         inline float GetFrameTime() const { return m_FrameTime; }
