@@ -28,27 +28,6 @@ void Sandbox2D::CreateTestScene()
 {
     using namespace Vulkitten;
 
-    auto entity4 = m_Scene.CreateEntity();
-    m_Scene.GetRegistry().emplace<TransformComponent>(entity4);
-    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity4);
-    auto& transform4 = m_Scene.GetRegistry().get<TransformComponent>(entity4);
-    auto& sprite4 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity4);
-    sprite4.Color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    sprite4.Texture = m_LogoTexture;
-    sprite4.TilingFactor = 1.0f;
-    transform4.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.2f)) *
-                       glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-
-    auto entity5 = m_Scene.CreateEntity();
-    m_Scene.GetRegistry().emplace<TransformComponent>(entity5);
-    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity5);
-    auto& transform5 = m_Scene.GetRegistry().get<TransformComponent>(entity5);
-    auto& sprite5 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity5);
-    sprite5.Color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    sprite5.Texture = m_Texture;
-    sprite5.TilingFactor = 10.0f;
-    transform5.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.2f)) *
-                       glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
 
     auto entity1 = m_Scene.CreateEntity();
     m_Scene.GetRegistry().emplace<TransformComponent>(entity1);
@@ -83,6 +62,27 @@ void Sandbox2D::CreateTestScene()
     transform3.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) *
                        glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 1.0f));
 
+    auto entity4 = m_Scene.CreateEntity();
+    m_Scene.GetRegistry().emplace<TransformComponent>(entity4);
+    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity4);
+    auto& transform4 = m_Scene.GetRegistry().get<TransformComponent>(entity4);
+    auto& sprite4 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity4);
+    sprite4.Color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    sprite4.Texture = m_LogoTexture;
+    sprite4.TilingFactor = 1.0f;
+    transform4.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.2f)) *
+                       glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+
+    auto entity5 = m_Scene.CreateEntity();
+    m_Scene.GetRegistry().emplace<TransformComponent>(entity5);
+    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity5);
+    auto& transform5 = m_Scene.GetRegistry().get<TransformComponent>(entity5);
+    auto& sprite5 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity5);
+    sprite5.Color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    sprite5.Texture = m_Texture;
+    sprite5.TilingFactor = 10.0f;
+    transform5.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.2f)) *
+                       glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     m_Entities.push_back(entity1);
     m_Entities.push_back(entity2);
     m_Entities.push_back(entity3);

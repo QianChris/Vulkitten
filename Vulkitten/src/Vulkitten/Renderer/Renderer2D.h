@@ -58,5 +58,7 @@ namespace Vulkitten {
         static void SetMaxQuads(uint32_t maxQuads);
         static void SetMaxTextureSlots(uint32_t maxSlots);
         static void Flush();
+    private:
+        static void SortAndFlush();
     };
 }
