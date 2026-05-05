@@ -16,21 +16,14 @@ namespace Vulkitten {
             return m_Entity.GetComponent<T>();
         }
 
-        template<typename T>
-        void BindComponent()
-        {
-            m_Entity.AddComponent<T>();
-        }
-
 	protected:
 		virtual void OnCreate() {}
 		virtual void OnDestroy() {}
 		virtual void OnUpdate(Timestep ts) {}
 
-protected:
+    private:
         Entity m_Entity;
 		friend class Scene;
-		friend struct ScriptComponent;
     };
 
 }

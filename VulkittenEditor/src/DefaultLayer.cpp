@@ -79,7 +79,7 @@ void DefaultLayer::CreateTestScene()
         float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
         cameraComponent.Camera.SetOrthographicProjection(-aspectRatio * 1.0f, aspectRatio * 1.0f, -1.0f, 1.0f);
 
-        m_CameraEntity.AddComponent<ScriptComponent>().BindComponent<CameraController>();
+        m_CameraEntity.AddComponent<NativeScriptComponent>().Bind<CameraController>();
     }
 
     {
@@ -332,7 +332,7 @@ void DefaultLayer::DrawComponentView()
         "TransformComponent",
         "SpriteRendererComponent",
         "CameraComponent",
-        "ScriptComponent"
+        "NativeScriptComponent"
     };
 
     for (int i = 0; i < IM_ARRAYSIZE(componentTypes); i++)
@@ -364,7 +364,7 @@ void DefaultLayer::DrawComponentView()
                 case 1: hasComponent = e.HasComponent<Vulkitten::TransformComponent>(); break;
                 case 2: hasComponent = e.HasComponent<Vulkitten::SpriteRendererComponent>(); break;
                 case 3: hasComponent = e.HasComponent<Vulkitten::CameraComponent>(); break;
-                case 4: hasComponent = e.HasComponent<Vulkitten::ScriptComponent>(); break;
+                case 4: hasComponent = e.HasComponent<Vulkitten::NativeScriptComponent>(); break;
             }
 
             if (hasComponent)
@@ -429,10 +429,10 @@ void DefaultLayer::DrawEntityComponents(Vulkitten::Entity entity)
         ImGui::Checkbox("FixedAspectRatio", &camera.FixedAspectRatio);
     }
 
-    if (entity.HasComponent<Vulkitten::ScriptComponent>())
+    if (entity.HasComponent<Vulkitten::NativeScriptComponent>())
     {
-        auto& script = entity.GetComponent<Vulkitten::ScriptComponent>();
-        ImGui::Text("ScriptComponent:");
+        auto& script = entity.GetComponent<Vulkitten::NativeScriptComponent>();
+        ImGui::Text("NativeScriptComponent:");
         ImGui::Text("ClassName: %s", script.ClassName.c_str());
     }
 }

@@ -47,10 +47,21 @@ namespace Vulkitten {
 
     void Scene::TickScripts(Timestep ts)
     {
-        auto scriptView = m_Registry.view<ScriptComponent>();
+        auto scriptView = m_Registry.view<NativeScriptComponent>();
         for (auto entity : scriptView)
         {
-            auto& scriptComponent = scriptView.get<ScriptComponent>(entity);
+            auto& scriptComponent = scriptView.get<NativeScriptComponent>(entity);
+            
+            if (scriptComponent.Instance == nullptr)
+            {
+                if (scriptComponent.InstantiateScript)
+                {
+                    scriptComponent.Instance = scriptComponent.InstantiateScript();
+                    scriptComponent.Instance->m_Entity = Entity(entity, this);
+                    scriptComponent.Instance->OnCreate();
+                }
+            }
+
             if (scriptComponent.Instance)
             {
                 scriptComponent.Instance->m_Entity = Entity(entity, this);

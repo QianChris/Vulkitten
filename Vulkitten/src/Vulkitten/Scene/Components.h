@@ -90,21 +90,24 @@ namespace Vulkitten {
         bool FixedAspectRatio = false;
     };
 
-struct ScriptComponent
+struct NativeScriptComponent
     {
-        std::string ClassName;
-        ScriptableEntity* Instance = nullptr;
+        std::string ClassName {};
+		ScriptableEntity* Instance = nullptr;
 
-        ScriptComponent() = default;
-        ScriptComponent(const ScriptComponent&) = default;
+		ScriptableEntity*(*InstantiateScript)();
+		void (*DestroyScript)(NativeScriptComponent*);
 
-        template<typename T>
-        void BindComponent()
-        {
-            Instance = new T();
-            Instance->m_Entity = Entity(entt::null, nullptr);
+		template<typename T>
+		void Bind()
+		{
+			InstantiateScript = []() { return static_cast<ScriptableEntity*>(new T()); };
+			DestroyScript = [](NativeScriptComponent* nsc) { delete nsc->Instance; nsc->Instance = nullptr; };
             ClassName = typeid(T).name();
-        }
+		}
+
+        NativeScriptComponent() = default;
+        ~NativeScriptComponent() { if (Instance) DestroyScript(this); Instance = nullptr; };
     };
 
 }
