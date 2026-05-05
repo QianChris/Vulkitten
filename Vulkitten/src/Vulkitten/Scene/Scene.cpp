@@ -1,5 +1,6 @@
 #include "vktpch.h"
 #include "Scene.h"
+#include "ScriptableEntity.h"
 
 namespace Vulkitten {
 
@@ -22,28 +23,58 @@ namespace Vulkitten {
     void Scene::OnUpdate(Timestep ts)
     {
         TickScripts(ts);
-        RenderScene();
+
+        Entity cameraEntity(entt::null, this);
+        auto cameraView = m_Registry.view<CameraComponent>();
+        for (auto entity : cameraView)
+        {
+            if (cameraView.get<CameraComponent>(entity).Primary)
+            {
+                cameraEntity = Entity(entity, this);
+                break;
+            }
+        }
+
+        if (cameraEntity)
+        {
+            auto& cameraComponent = cameraEntity.GetComponent<CameraComponent>();
+            auto& transform = cameraEntity.GetComponent<TransformComponent>();
+            glm::mat4 viewMatrix = glm::inverse(transform.GetTransform());
+            cameraComponent.Camera.SetViewMatrix(viewMatrix);
+            RenderScene(cameraComponent.Camera);
+        }
     }
 
     void Scene::TickScripts(Timestep ts)
     {
-
+        auto scriptView = m_Registry.view<ScriptComponent>();
+        for (auto entity : scriptView)
+        {
+            auto& scriptComponent = scriptView.get<ScriptComponent>(entity);
+            if (scriptComponent.Instance)
+            {
+                scriptComponent.Instance->m_Entity = Entity(entity, this);
+                scriptComponent.Instance->OnUpdate(ts);
+            }
+        }
     }
 
-    void Scene::RenderScene()
+    void Scene::RenderScene(Camera& camera)
     {
+        Renderer2D::BeginScene(camera);
         auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 
-        // Reverse order of creating entity
         for (auto entity : group) {
             auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
             if (sprite.Texture) {
-                Renderer2D::DrawQuad(transform.Transform, sprite.Texture, sprite.TilingFactor, sprite.Color);
+                Renderer2D::DrawQuad(transform.GetTransform(), sprite.Texture, sprite.TilingFactor, sprite.Color);
             } else {
-                Renderer2D::DrawQuad(transform.Transform, sprite.Color);
+                Renderer2D::DrawQuad(transform.GetTransform(), sprite.Color);
             }
         }
+
+        Renderer2D::EndScene();
     }
 
     void Scene::OnEvent(Event& event)

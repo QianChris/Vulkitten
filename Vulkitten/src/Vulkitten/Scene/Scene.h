@@ -23,9 +23,11 @@ namespace Vulkitten {
 
         Entity CreateEntity(std::string name = "UnnamedEntity");
 
+        entt::registry& GetRegistry() { return m_Registry; }
+
     private:
         void TickScripts(Timestep ts);
-        void RenderScene();
+        void RenderScene(Camera& camera);
 
     private:
         entt::registry m_Registry;

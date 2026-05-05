@@ -131,6 +131,24 @@ namespace Vulkitten {
         s_Data->stats.TextureCount = 1;
     }
 
+void Renderer2D::BeginScene(const Camera& camera)
+    {
+        VKT_PROFILE_FUNCTION();
+
+        s_Data->textureShader->Bind();
+        s_Data->textureShader->SetUniformMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
+
+        s_Data->quadCount = 0;
+        s_Data->vertexBufferPtr = s_Data->vertexBufferBase;
+        s_Data->textureSlotIndex = 1;
+        s_Data->quadQueue.clear();
+
+        s_Data->stats.DrawCalls = 0;
+        s_Data->stats.Quads = 0;
+        s_Data->stats.Vertices = 0;
+        s_Data->stats.TextureCount = 1;
+    }
+
     void Renderer2D::EndScene()
     {
         VKT_PROFILE_FUNCTION();

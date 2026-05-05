@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Entity.h"
+#include "Vulkitten/Core/Timestep.h"
 
 namespace Vulkitten {
 
@@ -26,9 +27,10 @@ namespace Vulkitten {
 		virtual void OnDestroy() {}
 		virtual void OnUpdate(Timestep ts) {}
 
-    protected:
+protected:
         Entity m_Entity;
 		friend class Scene;
+		friend struct ScriptComponent;
     };
 
 }

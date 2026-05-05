@@ -24,6 +24,8 @@
 // Scene
 #include "Vulkitten/Scene/Scene.h"
 #include "Vulkitten/Scene/Components.h"
+#include "Vulkitten/Scene/Entity.h"
+#include "Vulkitten/Scene/ScriptableEntity.h"
 
 // Renderer
 #include "Vulkitten/Renderer/Renderer.h"

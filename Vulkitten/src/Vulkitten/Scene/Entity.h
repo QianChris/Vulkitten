@@ -15,6 +15,10 @@ namespace Vulkitten {
         Entity(entt::entity handle, Scene* scene);
         Entity(const Entity& other) = default;
 
+        bool operator==(const Entity& other) const { return m_EntityHandle == other.m_EntityHandle; }
+        bool operator!=(const Entity& other) const { return !(*this == other); }
+        operator bool() const { return m_EntityHandle != entt::null; }
+
         template<typename T, typename... Args>
         T& AddComponent(Args&&... args)
         {
@@ -38,6 +42,8 @@ namespace Vulkitten {
     private:
         entt::entity m_EntityHandle{ entt::null };
         Scene* m_Scene = nullptr;
+
+        friend class Scene;
     };
 
 }

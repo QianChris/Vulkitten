@@ -25,8 +25,6 @@ private:
     void ImGuiTest();
     void UpdateViewportFramebuffer(uint32_t width, uint32_t height);
 
-    Vulkitten::CameraController m_CameraController;
-
     Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
     Vulkitten::Ref<Vulkitten::Texture2D> m_LogoTexture;
 
@@ -36,6 +34,7 @@ private:
 
     Vulkitten::Scene m_Scene;
     std::vector<Vulkitten::Entity> m_Entities;
+    Vulkitten::Entity m_CameraEntity;
 
     std::vector<std::pair<std::string, float>> m_ProfileResults;
 };

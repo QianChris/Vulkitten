@@ -11,7 +11,7 @@
         m_ProfileResults.emplace_back(name, elapsed); });
 
 DefaultLayer::DefaultLayer()
-    : Layer("DefaultLayer"), m_CameraController(1280.0f / 720.0f)
+    : Layer("DefaultLayer")
 {
     Vulkitten::FrameBufferSpecification fbSpec;
     fbSpec.Width = m_ViewportWidth;
@@ -49,48 +49,81 @@ void DefaultLayer::CreateTestScene()
 {
     using namespace Vulkitten;
 
+    class CameraController : public ScriptableEntity
+    {
+        void OnUpdate(Timestep ts) override
+        {
+            float moveSpeed = 1.0f;
+            float rotationSpeed = 50.0f;
+            if (Input::IsKeyPressed(VKT_KEY_W))
+                GetComponent<TransformComponent>().SetDeltaPosition({ 0.0f, ts * moveSpeed, 0.0f });
+			if (Input::IsKeyPressed(VKT_KEY_S))
+                GetComponent<TransformComponent>().SetDeltaPosition({ 0.0f, -ts * moveSpeed, 0.0f });
+            if (Input::IsKeyPressed(VKT_KEY_A))
+                GetComponent<TransformComponent>().SetDeltaPosition({ -ts * moveSpeed, 0.0f, 0.0f });
+            if (Input::IsKeyPressed(VKT_KEY_D))
+                GetComponent<TransformComponent>().SetDeltaPosition({ ts * moveSpeed, 0.0f, 0.0f });
+            if (Input::IsKeyPressed(VKT_KEY_Q))
+                GetComponent<TransformComponent>().SetDeltaRotation({ 0.0f, 0.0f, ts * rotationSpeed });
+            if (Input::IsKeyPressed(VKT_KEY_E))
+                GetComponent<TransformComponent>().SetDeltaRotation({ 0.0f, 0.0f, -ts * rotationSpeed });
+        }
+    };
+
+    {
+        m_CameraEntity = m_Scene.CreateEntity("Camera");
+        auto& cameraComponent = m_CameraEntity.AddComponent<CameraComponent>();
+        cameraComponent.Primary = true;
+        cameraComponent.FixedAspectRatio = true;
+
+        float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
+        cameraComponent.Camera.SetOrthographicProjection(-aspectRatio * 1.0f, aspectRatio * 1.0f, -1.0f, 1.0f);
+
+        m_CameraEntity.AddComponent<ScriptComponent>().BindComponent<CameraController>();
+    }
+
     {
         Entity entity = m_Scene.CreateEntity("Green Quad");
-        auto& transform = entity.GetComponent<TransformComponent>();
-        transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.5f, 0.1f)) *
-                            glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.75f, 1.0f));
         entity.AddComponent<SpriteRendererComponent>(glm::vec4(0.2f, 0.8f, 0.3f, 1.0f), nullptr, 1.0f);
+        auto& transform = entity.GetComponent<TransformComponent>();
+        transform.SetPosition({ 0.5f, -0.5f, 0.1f });
+        transform.SetScale({ 0.5f, 0.75f, 1.0f });
         m_Entities.push_back(entity);
     }
 
     {
         Entity entity = m_Scene.CreateEntity("Red Quad");
-        auto& transform = entity.GetComponent<TransformComponent>();
-        transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, 0.0f, 0.1f)) *
-                            glm::scale(glm::mat4(1.0f), glm::vec3(0.75f, 0.75f, 1.0f));
         entity.AddComponent<SpriteRendererComponent>(glm::vec4(0.8f, 0.2f, 0.3f, 1.0f), nullptr, 1.0f);
+        auto& transform = entity.GetComponent<TransformComponent>();
+        transform.SetPosition({ -0.5f, 0.0f, 0.1f });
+        transform.SetScale({ 0.75f, 0.75f, 1.0f });
         m_Entities.push_back(entity);
     }
 
     {
         Entity entity = m_Scene.CreateEntity("Background Quad");
-        auto& transform = entity.GetComponent<TransformComponent>();
-        transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) *
-                            glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 1.0f));
         entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_Texture, 10.0f);
+        auto& transform = entity.GetComponent<TransformComponent>();
+        transform.SetPosition({ 0.0f, 0.0f, 0.0f });
+        transform.SetScale({ 10.0f, 10.0f, 1.0f });
         m_Entities.push_back(entity);
     }
 
     {
         Entity entity = m_Scene.CreateEntity("Logo");
-        auto& transform = entity.GetComponent<TransformComponent>();
-        transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.2f)) *
-            glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
         entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_LogoTexture, 1.0f);
+        auto& transform = entity.GetComponent<TransformComponent>();
+        transform.SetPosition({ 0.0f, 0.0f, 0.2f });
+        transform.SetScale({ 1.0f, 1.0f, 1.0f });
         m_Entities.push_back(entity);
     }
 
     {
         Entity entity = m_Scene.CreateEntity("Rotating Quad");
-        auto& transform = entity.GetComponent<TransformComponent>();
-        transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.2f)) *
-            glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
         entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_Texture, 10.0f);
+        auto& transform = entity.GetComponent<TransformComponent>();
+        transform.SetPosition({ -2.0f, 0.0f, 0.2f });
+        transform.SetScale({ 1.0f, 1.0f, 1.0f });
         m_Entities.push_back(entity);
     }
 }
@@ -103,26 +136,26 @@ void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
     Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
     Vulkitten::RenderCommand::Clear();
 
-    float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
-    m_CameraController.GetCamera().SetProjection(-aspectRatio * m_CameraController.GetZoomLevel(),
-        aspectRatio * m_CameraController.GetZoomLevel(),
-        -m_CameraController.GetZoomLevel(),
-        m_CameraController.GetZoomLevel());
-
-    m_CameraController.OnUpdate(timestep);
+    {
+        auto& cameraComponent = m_CameraEntity.GetComponent<Vulkitten::CameraComponent>();
+        if (!cameraComponent.FixedAspectRatio)
+        {
+            float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
+            float orthoSize = cameraComponent.Camera.GetZoomLevel();
+            cameraComponent.Camera.SetOrthographicProjection(-aspectRatio * orthoSize, aspectRatio * orthoSize, -orthoSize, orthoSize);
+        }
+    }
 
     static float rotation = 0.0f;
-    rotation -= timestep * 50.;
+    rotation -= timestep * 50.0f;
     auto& transform = m_Entities[4].GetComponent<Vulkitten::TransformComponent>();
-    transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.2f)) *
-        glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0.0f, 0.0f, 1.0f)) *
-        glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    transform.SetPosition({ -2.0f, 0.0f, 0.2f });
+    transform.SetRotation({ 0.0f, 0.0f, rotation });
+    transform.SetScale({ 1.0f, 1.0f, 1.0f });
 
     {
         VKT_TIMER("Render Scene");
-        Vulkitten::Renderer2D::BeginScene(m_CameraController.GetCamera());
         m_Scene.OnUpdate(timestep);
-        Vulkitten::Renderer2D::EndScene();
     }
 
     m_Framebuffer->Unbind();
@@ -165,7 +198,7 @@ void DefaultLayer::OnImguiRender()
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
-if (ImGui::BeginMenuBar())
+    if (ImGui::BeginMenuBar())
     {
         if (ImGui::BeginMenu("Files"))
         {
@@ -229,5 +262,14 @@ void DefaultLayer::ImGuiTest() {
 
 void DefaultLayer::OnEvent(Vulkitten::Event& event)
 {
-    m_CameraController.OnEvent(event);
+    if (event.GetEventType() == Vulkitten::EventType::MouseScrolled)
+    {
+        auto& mouseScrolledEvent = (Vulkitten::MouseScrolledEvent&)event;
+        if (m_CameraEntity){
+            auto& cameraComponent = m_CameraEntity.GetComponent<Vulkitten::CameraComponent>();
+            auto zl = cameraComponent.Camera.GetZoomLevel();
+            cameraComponent.Camera.SetZoomLevel( zl + mouseScrolledEvent.GetYOffset() * 0.25f);
+            VKT_INFO("Camera zoom level: {}", cameraComponent.Camera.GetZoomLevel());
+        }
+    }
 }

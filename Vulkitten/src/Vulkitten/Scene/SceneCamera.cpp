@@ -28,6 +28,12 @@ namespace Vulkitten {
 
             m_ProjectionMatrix = glm::ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, m_OrthographicNear, m_OrthographicFar);
         }
+        RecalculateViewProjectionMatrix();
+    }
+
+    void SceneCamera::RecalculateViewProjectionMatrix()
+    {
+        m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
     }
 
 }
