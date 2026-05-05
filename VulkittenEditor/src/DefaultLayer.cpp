@@ -74,7 +74,7 @@ void DefaultLayer::CreateTestScene()
         m_CameraEntity = m_Scene.CreateEntity("Camera");
         auto& cameraComponent = m_CameraEntity.AddComponent<CameraComponent>();
         cameraComponent.Primary = true;
-        cameraComponent.FixedAspectRatio = true;
+        cameraComponent.FixedAspectRatio = false;
 
         float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
         cameraComponent.Camera.SetOrthographicProjection(-aspectRatio * 1.0f, aspectRatio * 1.0f, -1.0f, 1.0f);
@@ -141,7 +141,7 @@ void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
         if (!cameraComponent.FixedAspectRatio)
         {
             float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
-            float orthoSize = cameraComponent.Camera.GetZoomLevel();
+            float orthoSize = cameraComponent.Camera.GetZoomLevel() / 2.;
             cameraComponent.Camera.SetOrthographicProjection(-aspectRatio * orthoSize, aspectRatio * orthoSize, -orthoSize, orthoSize);
         }
     }
@@ -222,7 +222,7 @@ void DefaultLayer::OnImguiRender()
     ImGui::Image((void*)(intptr_t)textureID, viewportPanelSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
     ImGui::End();
 
-    ImGuiTest();
+DrawSceneHierarchy();
 
     ImGui::End();
 }
@@ -251,13 +251,204 @@ void DefaultLayer::ImGuiTest() {
     ImGui::ColorEdit4("Color4", glm::value_ptr(m_Entities[3].GetComponent<Vulkitten::SpriteRendererComponent>().Color));
     ImGui::ColorEdit4("Color5", glm::value_ptr(m_Entities[4].GetComponent<Vulkitten::SpriteRendererComponent>().Color));
 
-    //ImGui::Text("Profile Results:");
-    //for (auto& result : m_ProfileResults) {
-        //ImGui::Text("%s: %.3fms", result.first.c_str(), result.second);
-    //}
     m_ProfileResults.clear();
 
     ImGui::End();
+}
+
+void DefaultLayer::DrawSceneHierarchy()
+{
+    ImGui::Begin("Scene Hierarchy");
+
+    ImGui::RadioButton("Entity View", &m_SelectedEntityView, 0);
+    ImGui::SameLine();
+    ImGui::RadioButton("Component View", &m_SelectedEntityView, 1);
+
+    ImGui::Separator();
+
+    if (m_SelectedEntityView == 0)
+    {
+        DrawEntityView();
+    }
+    else
+    {
+        DrawComponentView();
+    }
+
+    ImGui::End();
+}
+
+void DefaultLayer::DrawEntityView()
+{
+    auto& registry = m_Scene.GetRegistry();
+
+    ImGui::Text("All Entities:");
+    ImGui::Separator();
+
+    std::vector<std::pair<uint32_t, Vulkitten::Entity>> entityList;
+
+    auto view = registry.view<entt::entity>();
+    for (auto entity : view)
+    {
+        uint32_t id = static_cast<uint32_t>(entity);
+        entityList.push_back({ id, Vulkitten::Entity(entity, &m_Scene) });
+    }
+
+    if (entityList.empty())
+    {
+        ImGui::Text("No entities in scene");
+        return;
+    }
+
+    for (auto& [id, entity] : entityList)
+    {
+        std::string label = "Entity " + std::to_string(id);
+        if (ImGui::Selectable(label.c_str(), m_SelectedEntityID == id))
+        {
+            m_SelectedEntityID = id;
+        }
+    }
+
+    ImGui::Separator();
+    ImGui::Text("Components of Entity %u:", m_SelectedEntityID);
+
+    for (auto& [id, entity] : entityList)
+    {
+        if (id == m_SelectedEntityID)
+        {
+            DrawEntityComponents(entity);
+            break;
+        }
+    }
+}
+
+void DefaultLayer::DrawComponentView()
+{
+    ImGui::Text("All Component Types:");
+    ImGui::Separator();
+
+    const char* componentTypes[] = {
+        "TagComponent",
+        "TransformComponent",
+        "SpriteRendererComponent",
+        "CameraComponent",
+        "ScriptComponent"
+    };
+
+    for (int i = 0; i < IM_ARRAYSIZE(componentTypes); i++)
+    {
+        if (ImGui::Selectable(componentTypes[i], m_SelectedComponentIndex == i))
+        {
+            m_SelectedComponentIndex = i;
+            m_SelectedComponentType = componentTypes[i];
+        }
+    }
+
+    if (m_SelectedComponentIndex >= 0)
+    {
+        ImGui::Separator();
+        ImGui::Text("Entities with %s:", componentTypes[m_SelectedComponentIndex]);
+
+        std::vector<std::pair<uint32_t, Vulkitten::Entity>> entitiesWithComponent;
+
+        auto& registry = m_Scene.GetRegistry();
+        auto view = registry.view<entt::entity>();
+        for (auto entity : view)
+        {
+            Vulkitten::Entity e(entity, &m_Scene);
+            bool hasComponent = false;
+
+            switch (m_SelectedComponentIndex)
+            {
+                case 0: hasComponent = e.HasComponent<Vulkitten::TagComponent>(); break;
+                case 1: hasComponent = e.HasComponent<Vulkitten::TransformComponent>(); break;
+                case 2: hasComponent = e.HasComponent<Vulkitten::SpriteRendererComponent>(); break;
+                case 3: hasComponent = e.HasComponent<Vulkitten::CameraComponent>(); break;
+                case 4: hasComponent = e.HasComponent<Vulkitten::ScriptComponent>(); break;
+            }
+
+            if (hasComponent)
+            {
+                uint32_t id = static_cast<uint32_t>(entity);
+                entitiesWithComponent.push_back({ id, e });
+            }
+        }
+
+        if (entitiesWithComponent.empty())
+        {
+            ImGui::Text("No entities have this component");
+        }
+        else
+        {
+            DrawComponentEntities(componentTypes[m_SelectedComponentIndex], entitiesWithComponent);
+        }
+    }
+}
+
+void DefaultLayer::DrawEntityComponents(Vulkitten::Entity entity)
+{
+    if (!entity)
+        return;
+
+    ImGui::Separator();
+
+    if (entity.HasComponent<Vulkitten::TagComponent>())
+    {
+        auto& tag = entity.GetComponent<Vulkitten::TagComponent>();
+        ImGui::Text("TagComponent:");
+        static char tagBuffer[256] = {};
+        strcpy_s(tagBuffer, tag.Tag.c_str());
+        if (ImGui::InputText("Tag", tagBuffer, IM_ARRAYSIZE(tagBuffer)))
+        {
+            tag.Tag = tagBuffer;
+        }
+    }
+
+    if (entity.HasComponent<Vulkitten::TransformComponent>())
+    {
+        auto& transform = entity.GetComponent<Vulkitten::TransformComponent>();
+        ImGui::Text("TransformComponent:");
+        ImGui::DragFloat3("Position", glm::value_ptr(transform.Position), 0.1f);
+        ImGui::DragFloat3("Rotation", glm::value_ptr(transform.Rotation), 1.0f);
+        ImGui::DragFloat3("Scale", glm::value_ptr(transform.Scale), 0.1f);
+    }
+
+    if (entity.HasComponent<Vulkitten::SpriteRendererComponent>())
+    {
+        auto& sprite = entity.GetComponent<Vulkitten::SpriteRendererComponent>();
+        ImGui::Text("SpriteRendererComponent:");
+        ImGui::ColorEdit4("Color", glm::value_ptr(sprite.Color));
+        ImGui::DragFloat("TilingFactor", &sprite.TilingFactor, 0.1f);
+    }
+
+    if (entity.HasComponent<Vulkitten::CameraComponent>())
+    {
+        auto& camera = entity.GetComponent<Vulkitten::CameraComponent>();
+        ImGui::Text("CameraComponent:");
+        ImGui::Checkbox("Primary", &camera.Primary);
+        ImGui::Checkbox("FixedAspectRatio", &camera.FixedAspectRatio);
+    }
+
+    if (entity.HasComponent<Vulkitten::ScriptComponent>())
+    {
+        auto& script = entity.GetComponent<Vulkitten::ScriptComponent>();
+        ImGui::Text("ScriptComponent:");
+        ImGui::Text("ClassName: %s", script.ClassName.c_str());
+    }
+}
+
+void DefaultLayer::DrawComponentEntities(const char* componentName, std::vector<std::pair<uint32_t, Vulkitten::Entity>>& entities)
+{
+    for (auto& [id, entity] : entities)
+    {
+        std::string label = "Entity " + std::to_string(id);
+
+        if (ImGui::Selectable(label.c_str(), m_SelectedEntityID == id))
+        {
+            m_SelectedEntityID = id;
+            DrawEntityComponents(entity);
+        }
+    }
 }
 
 void DefaultLayer::OnEvent(Vulkitten::Event& event)

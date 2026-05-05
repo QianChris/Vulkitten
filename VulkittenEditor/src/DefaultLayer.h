@@ -24,6 +24,16 @@ private:
     void CreateTestScene();
     void ImGuiTest();
     void UpdateViewportFramebuffer(uint32_t width, uint32_t height);
+    void DrawSceneHierarchy();
+
+    void DrawEntityView();
+    void DrawComponentView();
+
+    void DrawEntityComponents(Vulkitten::Entity entity);
+    void DrawComponentEntities(const char* componentName, std::vector<std::pair<uint32_t, Vulkitten::Entity>>& entities);
+
+    template<typename T>
+    void DrawComponentData(T& component);
 
     Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
     Vulkitten::Ref<Vulkitten::Texture2D> m_LogoTexture;
@@ -37,4 +47,9 @@ private:
     Vulkitten::Entity m_CameraEntity;
 
     std::vector<std::pair<std::string, float>> m_ProfileResults;
+
+    int m_SelectedEntityView = 0;
+    uint32_t m_SelectedEntityID = 0;
+    int m_SelectedComponentIndex = -1;
+    std::string m_SelectedComponentType;
 };
