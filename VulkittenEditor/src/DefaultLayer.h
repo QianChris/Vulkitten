@@ -5,6 +5,9 @@
 #include <glm/glm.hpp>
 #include <entt/entt.hpp>
 
+#include "Vulkitten/Scene/Entity.h"
+#include "Vulkitten/Scene/SceneCamera.h"
+
 class DefaultLayer : public Vulkitten::Layer
 {
 public:
@@ -20,14 +23,19 @@ public:
 private:
     void CreateTestScene();
     void ImGuiTest();
+    void UpdateViewportFramebuffer(uint32_t width, uint32_t height);
 
     Vulkitten::CameraController m_CameraController;
 
     Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
     Vulkitten::Ref<Vulkitten::Texture2D> m_LogoTexture;
 
+    Vulkitten::Ref<Vulkitten::FrameBuffer> m_Framebuffer;
+    uint32_t m_ViewportWidth = 1280;
+    uint32_t m_ViewportHeight = 720;
+
     Vulkitten::Scene m_Scene;
-    std::vector<entt::entity> m_Entities;
+    std::vector<Vulkitten::Entity> m_Entities;
 
     std::vector<std::pair<std::string, float>> m_ProfileResults;
 };

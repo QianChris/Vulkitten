@@ -1,9 +1,13 @@
 #pragma once
 
 #include "Vulkitten/Core/Core.h"
+#include "Vulkitten/Core/Timestep.h"
 #include "Vulkitten/Events/Event.h"
 #include "Vulkitten/Renderer/Renderer2D.h"
-#include "Vulkitten/Scene/Components.h"
+
+#include "Components.h"
+#include "Entity.h"
+
 #include "entt/entt.hpp"
 
 namespace Vulkitten {
@@ -14,15 +18,19 @@ namespace Vulkitten {
         Scene();
         ~Scene();
 
-        void OnUpdate(float deltaTime);
+        void OnUpdate(Timestep ts);
         void OnEvent(Event& event);
 
-        entt::entity CreateEntity() { return m_Registry.create(); }
+        Entity CreateEntity(std::string name = "UnnamedEntity");
 
-        entt::registry& GetRegistry() { return m_Registry; }
+    private:
+        void TickScripts(Timestep ts);
+        void RenderScene();
 
     private:
         entt::registry m_Registry;
+
+        friend class Entity;
     };
 
 }

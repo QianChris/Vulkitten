@@ -30,6 +30,7 @@
 #include "Vulkitten/Renderer/Renderer2D.h"
 #include "Vulkitten/Renderer/RenderCommand.h"
 #include "Vulkitten/Renderer/Buffer.h"
+#include "Vulkitten/Renderer/Framebuffer.h"
 #include "Vulkitten/Renderer/VertexArray.h"
 #include "Vulkitten/Renderer/Shader.h"
 #include "Vulkitten/Renderer/Texture.h"

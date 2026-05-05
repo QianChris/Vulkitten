@@ -11,7 +11,26 @@ namespace Vulkitten {
     {
     }
 
-    void Scene::OnUpdate(float deltaTime)
+    Entity Scene::CreateEntity(std::string name)
+    {
+        auto entity = m_Registry.create();
+        m_Registry.emplace<TransformComponent>(entity);
+        m_Registry.emplace<TagComponent>(entity, name);
+        return Entity(entity, this);
+    }
+
+    void Scene::OnUpdate(Timestep ts)
+    {
+        TickScripts(ts);
+        RenderScene();
+    }
+
+    void Scene::TickScripts(Timestep ts)
+    {
+
+    }
+
+    void Scene::RenderScene()
     {
         auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 

@@ -3,6 +3,9 @@
 #include "imgui.h"
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Vulkitten/Scene/Entity.h"
+#include "Vulkitten/Scene/SceneCamera.h"
+
 
 #define VKT_TIMER(name) Vulkitten::Timer timer##__LINE__([&](float elapsed) { \
         m_ProfileResults.emplace_back(name, elapsed); });
@@ -10,6 +13,24 @@
 DefaultLayer::DefaultLayer()
     : Layer("DefaultLayer"), m_CameraController(1280.0f / 720.0f)
 {
+    Vulkitten::FrameBufferSpecification fbSpec;
+    fbSpec.Width = m_ViewportWidth;
+    fbSpec.Height = m_ViewportHeight;
+    m_Framebuffer = Vulkitten::FrameBuffer::Create(fbSpec);
+}
+
+void DefaultLayer::UpdateViewportFramebuffer(uint32_t width, uint32_t height)
+{
+    if (m_ViewportWidth != width || m_ViewportHeight != height)
+    {
+        m_ViewportWidth = width;
+        m_ViewportHeight = height;
+
+        Vulkitten::FrameBufferSpecification fbSpec;
+        fbSpec.Width = width;
+        fbSpec.Height = height;
+        m_Framebuffer = Vulkitten::FrameBuffer::Create(fbSpec);
+    }
 }
 
 void DefaultLayer::OnAttach()
@@ -28,83 +49,71 @@ void DefaultLayer::CreateTestScene()
 {
     using namespace Vulkitten;
 
-    auto entity4 = m_Scene.CreateEntity();
-    m_Scene.GetRegistry().emplace<TransformComponent>(entity4);
-    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity4);
-    auto& transform4 = m_Scene.GetRegistry().get<TransformComponent>(entity4);
-    auto& sprite4 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity4);
-    sprite4.Color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    sprite4.Texture = m_LogoTexture;
-    sprite4.TilingFactor = 1.0f;
-    transform4.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.2f)) *
-                       glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    {
+        Entity entity = m_Scene.CreateEntity("Green Quad");
+        auto& transform = entity.GetComponent<TransformComponent>();
+        transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.5f, 0.1f)) *
+                            glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.75f, 1.0f));
+        entity.AddComponent<SpriteRendererComponent>(glm::vec4(0.2f, 0.8f, 0.3f, 1.0f), nullptr, 1.0f);
+        m_Entities.push_back(entity);
+    }
 
-    auto entity5 = m_Scene.CreateEntity();
-    m_Scene.GetRegistry().emplace<TransformComponent>(entity5);
-    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity5);
-    auto& transform5 = m_Scene.GetRegistry().get<TransformComponent>(entity5);
-    auto& sprite5 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity5);
-    sprite5.Color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    sprite5.Texture = m_Texture;
-    sprite5.TilingFactor = 10.0f;
-    transform5.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.2f)) *
-                       glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    {
+        Entity entity = m_Scene.CreateEntity("Red Quad");
+        auto& transform = entity.GetComponent<TransformComponent>();
+        transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, 0.0f, 0.1f)) *
+                            glm::scale(glm::mat4(1.0f), glm::vec3(0.75f, 0.75f, 1.0f));
+        entity.AddComponent<SpriteRendererComponent>(glm::vec4(0.8f, 0.2f, 0.3f, 1.0f), nullptr, 1.0f);
+        m_Entities.push_back(entity);
+    }
 
-    auto entity1 = m_Scene.CreateEntity();
-    m_Scene.GetRegistry().emplace<TransformComponent>(entity1);
-    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity1);
-    auto& transform1 = m_Scene.GetRegistry().get<TransformComponent>(entity1);
-    auto& sprite1 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity1);
-    sprite1.Color = { 0.8f, 0.2f, 0.3f, 1.0f };
-    sprite1.Texture = nullptr;
-    sprite1.TilingFactor = 1.0f;
-    transform1.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.1f)) *
-                       glm::scale(glm::mat4(1.0f), glm::vec3(0.8f, 0.8f, 1.0f));
+    {
+        Entity entity = m_Scene.CreateEntity("Background Quad");
+        auto& transform = entity.GetComponent<TransformComponent>();
+        transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) *
+                            glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 1.0f));
+        entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_Texture, 10.0f);
+        m_Entities.push_back(entity);
+    }
 
-    auto entity2 = m_Scene.CreateEntity();
-    m_Scene.GetRegistry().emplace<TransformComponent>(entity2);
-    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity2);
-    auto& transform2 = m_Scene.GetRegistry().get<TransformComponent>(entity2);
-    auto& sprite2 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity2);
-    sprite2.Color = { 0.2f, 0.8f, 0.3f, 1.0f };
-    sprite2.Texture = nullptr;
-    sprite2.TilingFactor = 1.0f;
-    transform2.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.5f, 0.1f)) *
-                       glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.75f, 1.0f));
+    {
+        Entity entity = m_Scene.CreateEntity("Logo");
+        auto& transform = entity.GetComponent<TransformComponent>();
+        transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.2f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+        entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_LogoTexture, 1.0f);
+        m_Entities.push_back(entity);
+    }
 
-    auto entity3 = m_Scene.CreateEntity();
-    m_Scene.GetRegistry().emplace<TransformComponent>(entity3);
-    m_Scene.GetRegistry().emplace<SpriteRendererComponent>(entity3);
-    auto& transform3 = m_Scene.GetRegistry().get<TransformComponent>(entity3);
-    auto& sprite3 = m_Scene.GetRegistry().get<SpriteRendererComponent>(entity3);
-    sprite3.Color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    sprite3.Texture = m_Texture;
-    sprite3.TilingFactor = 10.0f;
-    transform3.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) *
-                       glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 1.0f));
-
-    m_Entities.push_back(entity1);
-    m_Entities.push_back(entity2);
-    m_Entities.push_back(entity3);
-    m_Entities.push_back(entity4);
-    m_Entities.push_back(entity5);
+    {
+        Entity entity = m_Scene.CreateEntity("Rotating Quad");
+        auto& transform = entity.GetComponent<TransformComponent>();
+        transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.2f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+        entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_Texture, 10.0f);
+        m_Entities.push_back(entity);
+    }
 }
 
 void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
 {
     VKT_TIMER("DefaultLayer::OnUpdate");
 
-    {
-        VKT_TIMER("Render Prep");
-        Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
-        Vulkitten::RenderCommand::Clear();
-    }
+    m_Framebuffer->Bind();
+    Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
+    Vulkitten::RenderCommand::Clear();
+
+    float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
+    m_CameraController.GetCamera().SetProjection(-aspectRatio * m_CameraController.GetZoomLevel(),
+        aspectRatio * m_CameraController.GetZoomLevel(),
+        -m_CameraController.GetZoomLevel(),
+        m_CameraController.GetZoomLevel());
 
     m_CameraController.OnUpdate(timestep);
 
     static float rotation = 0.0f;
     rotation -= timestep * 50.;
-    auto& transform = m_Scene.GetRegistry().get<Vulkitten::TransformComponent>(m_Entities[4]);
+    auto& transform = m_Entities[4].GetComponent<Vulkitten::TransformComponent>();
     transform.Transform = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.2f)) *
         glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0.0f, 0.0f, 1.0f)) *
         glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
@@ -115,6 +124,8 @@ void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
         m_Scene.OnUpdate(timestep);
         Vulkitten::Renderer2D::EndScene();
     }
+
+    m_Framebuffer->Unbind();
 }
 
 void DefaultLayer::OnImguiRender()
@@ -154,7 +165,7 @@ void DefaultLayer::OnImguiRender()
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
-    if (ImGui::BeginMenuBar())
+if (ImGui::BeginMenuBar())
     {
         if (ImGui::BeginMenu("Files"))
         {
@@ -166,6 +177,17 @@ void DefaultLayer::OnImguiRender()
         }
         ImGui::EndMenuBar();
     }
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("Viewport");
+    ImGui::PopStyleVar();
+
+    uint32_t textureID = m_Framebuffer->GetColorAttachmentRendererID();
+    ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+    UpdateViewportFramebuffer((uint32_t)viewportPanelSize.x, (uint32_t)viewportPanelSize.y);
+
+    ImGui::Image((void*)(intptr_t)textureID, viewportPanelSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+    ImGui::End();
 
     ImGuiTest();
 
@@ -190,12 +212,11 @@ void DefaultLayer::ImGuiTest() {
     ImGui::Text("Texture Count: %u / %u", stats.TextureCount, Vulkitten::Renderer2D::GetMaxTextureSlots());
 
     ImGui::Text("Color control");
-    auto& reg = m_Scene.GetRegistry();
-    ImGui::ColorEdit4("Color1", glm::value_ptr(reg.get<Vulkitten::SpriteRendererComponent>(m_Entities[0]).Color));
-    ImGui::ColorEdit4("Color2", glm::value_ptr(reg.get<Vulkitten::SpriteRendererComponent>(m_Entities[1]).Color));
-    ImGui::ColorEdit4("Color3", glm::value_ptr(reg.get<Vulkitten::SpriteRendererComponent>(m_Entities[2]).Color));
-    ImGui::ColorEdit4("Color4", glm::value_ptr(reg.get<Vulkitten::SpriteRendererComponent>(m_Entities[3]).Color));
-    ImGui::ColorEdit4("Color5", glm::value_ptr(reg.get<Vulkitten::SpriteRendererComponent>(m_Entities[4]).Color));
+    ImGui::ColorEdit4("Color1", glm::value_ptr(m_Entities[0].GetComponent<Vulkitten::SpriteRendererComponent>().Color));
+    ImGui::ColorEdit4("Color2", glm::value_ptr(m_Entities[1].GetComponent<Vulkitten::SpriteRendererComponent>().Color));
+    ImGui::ColorEdit4("Color3", glm::value_ptr(m_Entities[2].GetComponent<Vulkitten::SpriteRendererComponent>().Color));
+    ImGui::ColorEdit4("Color4", glm::value_ptr(m_Entities[3].GetComponent<Vulkitten::SpriteRendererComponent>().Color));
+    ImGui::ColorEdit4("Color5", glm::value_ptr(m_Entities[4].GetComponent<Vulkitten::SpriteRendererComponent>().Color));
 
     //ImGui::Text("Profile Results:");
     //for (auto& result : m_ProfileResults) {
