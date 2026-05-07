@@ -8,6 +8,7 @@
 #include "Vulkitten/Scene/Entity.h"
 #include "Vulkitten/Scene/SceneCamera.h"
 #include "Panel/SceneHierarchyPanel.h"
+#include "Panel/PropertyPanel.h"
 #include "Panel/PerformancePanel.h"
 
 class DefaultLayer : public Vulkitten::Layer
@@ -24,7 +25,6 @@ public:
 
 private:
     void CreateTestScene();
-    void ImGuiTest();
     void UpdateViewportFramebuffer(uint32_t width, uint32_t height);
 
     Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
@@ -41,5 +41,6 @@ private:
     std::vector<std::pair<std::string, float>> m_ProfileResults;
 
     Vulkitten::SceneHierarchyPanel m_SceneHierarchyPanel;
+    Vulkitten::PropertyPanel m_PropertyPanel;
     Vulkitten::PerformancePanel m_PerformancePanel;
 };

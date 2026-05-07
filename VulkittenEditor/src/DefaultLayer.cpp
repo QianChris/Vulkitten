@@ -41,7 +41,8 @@ void DefaultLayer::OnAttach()
 
     CreateTestScene();
 
-    m_SceneHierarchyPanel.SetContext(m_Scene);
+m_SceneHierarchyPanel.SetContext(m_Scene);
+    m_PropertyPanel.SetContext(m_Scene);
     m_PerformancePanel.SetContext(m_Scene);
 }
 
@@ -145,17 +146,12 @@ void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
         if (!cameraComponent.FixedAspectRatio)
         {
             float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
-            float orthoSize = cameraComponent.Camera.GetZoomLevel() / 2.;
-            cameraComponent.Camera.SetOrthographicProjection(-aspectRatio * orthoSize, aspectRatio * orthoSize, -orthoSize, orthoSize);
+            cameraComponent.Camera.SetAspectRatio(aspectRatio);
         }
     }
 
-    static float rotation = 0.0f;
-    rotation -= timestep * 50.0f;
     auto& transform = m_Entities[4].GetComponent<Vulkitten::TransformComponent>();
-    transform.SetPosition({ -2.0f, 0.0f, 0.2f });
-    transform.SetRotation({ 0.0f, 0.0f, rotation });
-    transform.SetScale({ 1.0f, 1.0f, 1.0f });
+    transform.SetDeltaRotation({ 0.0f, 0.0f, timestep * 50.0f });
 
     {
         VKT_TIMER("Render Scene");
@@ -227,9 +223,13 @@ void DefaultLayer::OnImguiRender()
     ImGui::End();
 
     m_SceneHierarchyPanel.OnImGuiRender();
+    m_PropertyPanel.SetSelectedEntity(m_SceneHierarchyPanel.GetSelectedEntity());
+    m_PropertyPanel.OnImGuiRender();
     m_PerformancePanel.OnImGuiRender();
 
     ImGui::End();
+
+    ImGui::ShowDemoWindow();
 }
 
 void DefaultLayer::OnEvent(Vulkitten::Event& event)

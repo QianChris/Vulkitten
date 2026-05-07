@@ -11,9 +11,17 @@ namespace Vulkitten {
         SetContext(scene);
     }
 
-    void SceneHierarchyPanel::SetContext(const Ref<Scene>& scene)
+void SceneHierarchyPanel::SetContext(const Ref<Scene>& scene)
     {
         m_Context = scene;
+    }
+
+    Entity SceneHierarchyPanel::GetSelectedEntity() const
+    {
+        if (m_SelectedEntityID == INVALID_SELECT)
+            return Entity();
+
+        return Entity(static_cast<entt::entity>(m_SelectedEntityID), m_Context.get());
     }
 
     void SceneHierarchyPanel::OnImGuiRender()
@@ -34,19 +42,21 @@ namespace Vulkitten {
 
 void SceneHierarchyPanel::DrawSceneHierarchy()
     {
-        ImGui::RadioButton("Entity View", &m_SelectedEntityView, 0);
-        ImGui::SameLine();
-        ImGui::RadioButton("Component View", &m_SelectedEntityView, 1);
-
-        ImGui::Separator();
-
-        if (m_SelectedEntityView == 0)
+        if (ImGui::BeginTabBar("SceneHierarchyTabs"))
         {
-            DrawEntityView();
-        }
-        else
-        {
-            DrawComponentView();
+            if (ImGui::BeginTabItem("Entity View"))
+            {
+                DrawEntityView();
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Component View"))
+            {
+                DrawComponentView();
+                ImGui::EndTabItem();
+            }
+
+            ImGui::EndTabBar();
         }
     }
 
@@ -69,29 +79,30 @@ void SceneHierarchyPanel::DrawSceneHierarchy()
             return;
         }
 
+        bool selectionChanged = false;
         for (auto& [id, entity] : entityList)
         {
-            std::string label = "Entity " + std::to_string(id);
+            std::string label = entity.HasComponent<TagComponent>() 
+                ? entity.GetComponent<TagComponent>().Tag 
+                : "Entity " + std::to_string(id);
+            
             bool isSelected = (m_SelectedEntityID == id);
 
-            if (ImGui::TreeNodeEx(label.c_str(), isSelected ? ImGuiTreeNodeFlags_Selected : 0))
+            if (ImGui::Selectable(label.c_str(), isSelected))
             {
-                if (ImGui::IsItemClicked())
-                {
-                    m_SelectedEntityID = id;
-                }
-
-                DrawEntityComponents(entity);
-                ImGui::TreePop();
+                m_SelectedEntityID = id;
+                selectionChanged = true;
             }
+        }
+
+        if (!selectionChanged && ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0))
+        {
+            m_SelectedEntityID = INVALID_SELECT;
         }
     }
 
     void SceneHierarchyPanel::DrawComponentView()
     {
-        ImGui::Text("All Component Types:");
-        ImGui::Separator();
-
         const char* componentTypes[] = {
             "TagComponent",
             "TransformComponent",
@@ -100,30 +111,19 @@ void SceneHierarchyPanel::DrawSceneHierarchy()
             "NativeScriptComponent"
         };
 
+        auto& registry = m_Context->GetRegistry();
+        auto view = registry.view<entt::entity>();
+
         for (int i = 0; i < IM_ARRAYSIZE(componentTypes); i++)
         {
-            if (ImGui::Selectable(componentTypes[i], m_SelectedComponentIndex == i))
-            {
-                m_SelectedComponentIndex = i;
-                m_SelectedComponentType = componentTypes[i];
-            }
-        }
-
-        if (m_SelectedComponentIndex >= 0)
-        {
-            ImGui::Separator();
-            ImGui::Text("Entities with %s:", componentTypes[m_SelectedComponentIndex]);
-
             std::vector<std::pair<uint32_t, Entity>> entitiesWithComponent;
 
-            auto& registry = m_Context->GetRegistry();
-            auto view = registry.view<entt::entity>();
             for (auto entity : view)
             {
                 Entity e(entity, m_Context.get());
                 bool hasComponent = false;
 
-                switch (m_SelectedComponentIndex)
+                switch (i)
                 {
                     case 0: hasComponent = e.HasComponent<TagComponent>(); break;
                     case 1: hasComponent = e.HasComponent<TransformComponent>(); break;
@@ -139,87 +139,28 @@ void SceneHierarchyPanel::DrawSceneHierarchy()
                 }
             }
 
-            if (entitiesWithComponent.empty())
+            if (!entitiesWithComponent.empty())
             {
-                ImGui::Text("No entities have this component");
-            }
-            else
-            {
-                DrawComponentEntities(componentTypes[m_SelectedComponentIndex], entitiesWithComponent);
-            }
-        }
-    }
-
-    void SceneHierarchyPanel::DrawEntityComponents(Entity entity)
-    {
-        if (!entity)
-            return;
-
-        ImGui::Separator();
-
-        if (entity.HasComponent<TagComponent>())
-        {
-            auto& tag = entity.GetComponent<TagComponent>();
-            ImGui::Text("TagComponent:");
-            static char tagBuffer[256] = {};
-            strcpy_s(tagBuffer, tag.Tag.c_str());
-            if (ImGui::InputText("Tag", tagBuffer, IM_ARRAYSIZE(tagBuffer)))
-            {
-                tag.Tag = tagBuffer;
-            }
-        }
-
-        if (entity.HasComponent<TransformComponent>())
-        {
-            auto& transform = entity.GetComponent<TransformComponent>();
-            ImGui::Text("TransformComponent:");
-            ImGui::DragFloat3("Position", glm::value_ptr(transform.Position), 0.1f);
-            ImGui::DragFloat3("Rotation", glm::value_ptr(transform.Rotation), 1.0f);
-            ImGui::DragFloat3("Scale", glm::value_ptr(transform.Scale), 0.1f);
-        }
-
-        if (entity.HasComponent<SpriteRendererComponent>())
-        {
-            auto& sprite = entity.GetComponent<SpriteRendererComponent>();
-            ImGui::Text("SpriteRendererComponent:");
-            ImGui::ColorEdit4("Color", glm::value_ptr(sprite.Color));
-            ImGui::DragFloat("TilingFactor", &sprite.TilingFactor, 0.1f);
-        }
-
-        if (entity.HasComponent<CameraComponent>())
-        {
-            auto& camera = entity.GetComponent<CameraComponent>();
-            ImGui::Text("CameraComponent:");
-            ImGui::Checkbox("Primary", &camera.Primary);
-            ImGui::Checkbox("FixedAspectRatio", &camera.FixedAspectRatio);
-        }
-
-        if (entity.HasComponent<NativeScriptComponent>())
-        {
-            auto& script = entity.GetComponent<NativeScriptComponent>();
-            ImGui::Text("NativeScriptComponent:");
-            ImGui::Text("ClassName: %s", script.ClassName.c_str());
-        }
-    }
-
-    void SceneHierarchyPanel::DrawComponentEntities(const char* componentName, std::vector<std::pair<uint32_t, Entity>>& entities)
-    {
-        for (auto& [id, entity] : entities)
-        {
-            std::string label = "Entity " + std::to_string(id);
-            bool isSelected = (m_SelectedEntityID == id);
-
-            if (ImGui::TreeNodeEx(label.c_str(), isSelected ? ImGuiTreeNodeFlags_Selected : 0))
-            {
-                if (ImGui::IsItemClicked())
+                std::string treeLabel = std::string(componentTypes[i]) + " (" + std::to_string(entitiesWithComponent.size()) + ")";
+                if (ImGui::TreeNodeEx(treeLabel.c_str(), 0))
                 {
-                    m_SelectedEntityID = id;
-                }
+                    for (auto& [id, entity] : entitiesWithComponent)
+                    {
+                        std::string label = entity.HasComponent<TagComponent>() 
+                            ? entity.GetComponent<TagComponent>().Tag 
+                            : "Entity " + std::to_string(id);
+                        
+                        bool isSelected = (m_SelectedEntityID == id);
 
-                DrawEntityComponents(entity);
-                ImGui::TreePop();
+                        if (ImGui::Selectable(label.c_str(), isSelected))
+                        {
+                            m_SelectedEntityID = id;
+                        }
+                    }
+                    ImGui::TreePop();
+                }
             }
         }
     }
 
-}
+    }

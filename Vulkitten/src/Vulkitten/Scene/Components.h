@@ -90,7 +90,7 @@ namespace Vulkitten {
         bool FixedAspectRatio = false;
     };
 
-struct NativeScriptComponent
+    struct NativeScriptComponent
     {
         std::string ClassName {};
 		ScriptableEntity* Instance = nullptr;

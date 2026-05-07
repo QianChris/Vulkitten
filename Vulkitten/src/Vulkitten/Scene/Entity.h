@@ -17,7 +17,9 @@ namespace Vulkitten {
 
         bool operator==(const Entity& other) const { return m_EntityHandle == other.m_EntityHandle; }
         bool operator!=(const Entity& other) const { return !(*this == other); }
-        operator bool() const { return m_EntityHandle != entt::null; }
+operator bool() const { return m_EntityHandle != entt::null; }
+
+        uint32_t GetEntityID() const { return static_cast<uint32_t>(m_EntityHandle); }
 
         template<typename T, typename... Args>
         T& AddComponent(Args&&... args)

@@ -5,11 +5,20 @@
 
 namespace Vulkitten {
 
-    void SceneCamera::SetOrthographicProjection(float left, float right, float bottom, float top)
+void SceneCamera::SetOrthographicProjection(float left, float right, float bottom, float top)
     {
         m_ProjectionType = ProjectionType::Orthographic;
         m_OrthographicSize = top - bottom;
         m_AspectRatio = (right - left) / (top - bottom);
+        RecalculateProjection();
+    }
+
+    void SceneCamera::SetPerspectiveProjection(float fovRadians, float nearClip, float farClip)
+    {
+        m_ProjectionType = ProjectionType::Perspective;
+        m_PerspectiveFOV = fovRadians;
+        m_PerspectiveNear = nearClip;
+        m_PerspectiveFar = farClip;
         RecalculateProjection();
     }
 
