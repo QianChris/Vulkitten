@@ -43,7 +43,23 @@ namespace Vulkitten {
 
         DrawEntityComponents(m_SelectedEntity);
 
+        ProcessDeferredActions();
+
         ImGui::End();
+    }
+
+    void PropertyPanel::ProcessDeferredActions()
+    {
+        for (auto& [entity, typeIndex] : m_ComponentsToRemove)
+        {
+            if (typeIndex == std::type_index(typeid(SpriteRendererComponent)))
+                entity.RemoveComponent<SpriteRendererComponent>();
+            else if (typeIndex == std::type_index(typeid(CameraComponent)))
+                entity.RemoveComponent<CameraComponent>();
+            else if (typeIndex == std::type_index(typeid(NativeScriptComponent)))
+                entity.RemoveComponent<NativeScriptComponent>();
+        }
+        m_ComponentsToRemove.clear();
     }
 
     void PropertyPanel::DrawEntityComponents(Entity entity)
@@ -53,24 +69,31 @@ namespace Vulkitten {
 
         uint32_t entityID = entity.GetEntityID();
         ImGui::Text("Entity ID: %u", entityID);
-        ImGui::Separator();
 
         if (entity.HasComponent<TagComponent>())
         {
             auto& tag = entity.GetComponent<TagComponent>();
-            ImGui::Text("TagComponent:");
             static char tagBuffer[256] = {};
             strcpy_s(tagBuffer, tag.Tag.c_str());
-            if (ImGui::InputText("Tag", tagBuffer, IM_ARRAYSIZE(tagBuffer)))
+            
+            ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 90);
+            if (ImGui::InputText("##TagName", tagBuffer, IM_ARRAYSIZE(tagBuffer)))
             {
                 tag.Tag = tagBuffer;
             }
+            ImGui::SameLine();
+            ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 30);
+            if (ImGui::Button("Add"))
+            {
+                ImGui::OpenPopup("AddComponentPopup");
+            }
         }
+        
+        ImGui::Separator();
 
         if (entity.HasComponent<TransformComponent>())
         {
             auto& transform = entity.GetComponent<TransformComponent>();
-            ImGui::Text("TransformComponent:");
 
             glm::vec3 position = transform.Position;
             glm::vec3 rotation = transform.Rotation;
@@ -92,19 +115,42 @@ namespace Vulkitten {
 
         if (entity.HasComponent<SpriteRendererComponent>())
         {
+            DrawComponentHeader("SpriteRendererComponent", "##DeleteSprite", [&]() { 
+                m_ComponentsToRemove.push_back({entity, std::type_index(typeid(SpriteRendererComponent))});
+            });
+
             auto& sprite = entity.GetComponent<SpriteRendererComponent>();
-            ImGui::Text("SpriteRendererComponent:");
             ImGui::ColorEdit4("Color", glm::value_ptr(sprite.Color));
             ImGui::DragFloat("TilingFactor", &sprite.TilingFactor, 0.1f);
         }
 
         if (entity.HasComponent<CameraComponent>())
         {
+            DrawComponentHeader("CameraComponent", "##DeleteCamera", [&]() { 
+                m_ComponentsToRemove.push_back({entity, std::type_index(typeid(CameraComponent))});
+            });
+
             auto& cameraComponent = entity.GetComponent<CameraComponent>();
             auto& camera = cameraComponent.Camera;
-            ImGui::Text("CameraComponent:");
 
-            ImGui::Checkbox("Primary", &cameraComponent.Primary);
+            bool isPrimary = cameraComponent.Primary;
+            if (ImGui::Checkbox("Primary", &isPrimary))
+            {
+                cameraComponent.SetPrimary(isPrimary);
+                if (isPrimary)
+                {
+                    auto& registry = m_Context->GetRegistry();
+                    auto cameraView = registry.view<CameraComponent>();
+                    for (auto e : cameraView)
+                    {
+                        if ((uint32_t)e != entity.GetEntityID())
+                        {
+                            auto& otherCamera = registry.get<CameraComponent>(e);
+                            otherCamera.Primary = false;
+                        }
+                    }
+                }
+            }
             ImGui::Checkbox("FixedAspectRatio", &cameraComponent.FixedAspectRatio);
 
             const char* projectionTypes[] = { "Perspective", "Orthographic" };
@@ -154,10 +200,57 @@ namespace Vulkitten {
 
         if (entity.HasComponent<NativeScriptComponent>())
         {
+            DrawComponentHeader("NativeScriptComponent", "##DeleteScript", [&]() { 
+                m_ComponentsToRemove.push_back({entity, std::type_index(typeid(NativeScriptComponent))});
+            });
+
             auto& script = entity.GetComponent<NativeScriptComponent>();
-            ImGui::Text("NativeScriptComponent:");
             ImGui::Text("ClassName: %s", script.ClassName.c_str());
         }
+
+        if (ImGui::BeginPopup("AddComponentPopup"))
+        {
+            const char* availableComponents[] = {
+                "SpriteRendererComponent",
+                "CameraComponent",
+                "NativeScriptComponent"
+            };
+
+            for (int i = 0; i < IM_ARRAYSIZE(availableComponents); i++)
+            {
+                if (ImGui::Selectable(availableComponents[i]))
+                {
+                    switch (i)
+                    {
+                        case 0: if (!entity.HasComponent<SpriteRendererComponent>()) entity.AddComponent<SpriteRendererComponent>(); break;
+                        case 1: if (!entity.HasComponent<CameraComponent>()) entity.AddComponent<CameraComponent>(); break;
+                        case 2: if (!entity.HasComponent<NativeScriptComponent>()) entity.AddComponent<NativeScriptComponent>(); break;
+                    }
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+            ImGui::EndPopup();
+        }
+    }
+
+    void PropertyPanel::DrawComponentHeader(const char* name, const char* id, std::function<void()> onDelete)
+    {
+        ImGui::Text(name);
+        ImGui::SameLine();
+        ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 30);
+        std::string buttonId = "x" + std::string(id);
+        if (ImGui::Button(buttonId.c_str()))
+        {
+            onDelete();
+        }
+        if (ImGui::IsItemClicked(1))
+        {
+            onDelete();
+        }
+    }
+
+    void PropertyPanel::DrawAddComponentButton(Entity entity)
+    {
     }
 
 }

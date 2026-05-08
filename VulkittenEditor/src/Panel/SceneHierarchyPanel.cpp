@@ -62,6 +62,23 @@ void SceneHierarchyPanel::DrawSceneHierarchy()
 
     void SceneHierarchyPanel::DrawEntityView()
     {
+        if (ImGui::Button("Add Entity"))
+        {
+            m_Context->CreateEntity("New Entity");
+        }
+        ImGui::SameLine();
+        ImGui::BeginDisabled(m_SelectedEntityID == INVALID_SELECT);
+        if (ImGui::Button("Delete Entity"))
+        {
+            if (m_SelectedEntityID != INVALID_SELECT)
+            {
+                Entity entity(static_cast<entt::entity>(m_SelectedEntityID), m_Context.get());
+                m_Context->DestroyEntity(entity);
+                m_SelectedEntityID = INVALID_SELECT;
+            }
+        }
+        ImGui::EndDisabled();
+
         auto& registry = m_Context->GetRegistry();
 
         std::vector<std::pair<uint32_t, Entity>> entityList;
@@ -80,6 +97,8 @@ void SceneHierarchyPanel::DrawSceneHierarchy()
         }
 
         bool selectionChanged = false;
+        Entity hoveredEntity;
+        
         for (auto& [id, entity] : entityList)
         {
             std::string label = entity.HasComponent<TagComponent>() 
@@ -93,11 +112,47 @@ void SceneHierarchyPanel::DrawSceneHierarchy()
                 m_SelectedEntityID = id;
                 selectionChanged = true;
             }
+
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly))
+            {
+                hoveredEntity = entity;
+            }
         }
 
         if (!selectionChanged && ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0))
         {
             m_SelectedEntityID = INVALID_SELECT;
+        }
+
+        if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(1))
+        {
+            if (hoveredEntity)
+            {
+                ImGui::OpenPopup("EntityContextMenu");
+            }
+            else
+            {
+                ImGui::OpenPopup("EmptySpaceContextMenu");
+            }
+        }
+
+        if (ImGui::BeginPopup("EntityContextMenu"))
+        {
+            if (hoveredEntity && ImGui::MenuItem("Delete Entity"))
+            {
+                m_Context->DestroyEntity(hoveredEntity);
+                m_SelectedEntityID = INVALID_SELECT;
+            }
+            ImGui::EndPopup();
+        }
+
+        if (ImGui::BeginPopup("EmptySpaceContextMenu"))
+        {
+            if (ImGui::MenuItem("Create Entity"))
+            {
+                m_Context->CreateEntity("New Entity");
+            }
+            ImGui::EndPopup();
         }
     }
 

@@ -35,10 +35,17 @@ operator bool() const { return m_EntityHandle != entt::null; }
             return m_Scene->m_Registry.get<T>(m_EntityHandle);
         }
 
-        template<typename T>
+template<typename T>
         bool HasComponent()
         {
             return m_Scene->GetRegistry().any_of<T>(m_EntityHandle);
+        }
+
+        template<typename T>
+        void RemoveComponent()
+        {
+            VKT_CORE_ASSERT(HasComponent<T>(), "Entity does not have component!");
+            m_Scene->m_Registry.remove<T>(m_EntityHandle);
         }
 
     private:

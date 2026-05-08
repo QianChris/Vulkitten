@@ -12,12 +12,34 @@ namespace Vulkitten {
     {
     }
 
-    Entity Scene::CreateEntity(std::string name)
+Entity Scene::CreateEntity(std::string name)
     {
         auto entity = m_Registry.create();
         m_Registry.emplace<TransformComponent>(entity);
         m_Registry.emplace<TagComponent>(entity, name);
+        
         return Entity(entity, this);
+    }
+
+    void Scene::DestroyEntity(Entity entity)
+    {
+        if (entity)
+        {
+            m_Registry.destroy(entity.m_EntityHandle);
+        }
+    }
+
+    void Scene::SetCameraAspectRatio(float aspectRatio)
+    {
+        auto cameraView = m_Registry.view<CameraComponent>();
+        for (auto entity : cameraView)
+        {
+            auto& cameraComponent = cameraView.get<CameraComponent>(entity);
+            if (!cameraComponent.FixedAspectRatio)
+            {
+                cameraComponent.Camera.SetAspectRatio(aspectRatio);
+            }
+        }
     }
 
     void Scene::OnUpdate(Timestep ts)

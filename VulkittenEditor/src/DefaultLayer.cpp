@@ -141,13 +141,9 @@ void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
     Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
     Vulkitten::RenderCommand::Clear();
 
-    {
-        auto& cameraComponent = m_CameraEntity.GetComponent<Vulkitten::CameraComponent>();
-        if (!cameraComponent.FixedAspectRatio)
-        {
-            float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
-            cameraComponent.Camera.SetAspectRatio(aspectRatio);
-        }
+{
+        float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
+        m_Scene->SetCameraAspectRatio(aspectRatio);
     }
 
     auto& transform = m_Entities[4].GetComponent<Vulkitten::TransformComponent>();

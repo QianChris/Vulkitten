@@ -21,7 +21,9 @@ namespace Vulkitten {
         void OnUpdate(Timestep ts);
         void OnEvent(Event& event);
 
-        Entity CreateEntity(std::string name = "UnnamedEntity");
+Entity CreateEntity(std::string name = "UnnamedEntity");
+        void DestroyEntity(Entity entity);
+        void SetCameraAspectRatio(float aspectRatio);
 
         entt::registry& GetRegistry() { return m_Registry; }
 

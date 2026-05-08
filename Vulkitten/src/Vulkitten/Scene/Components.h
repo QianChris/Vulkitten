@@ -83,11 +83,17 @@ namespace Vulkitten {
         float TilingFactor{ 1.0f };
     };
 
-    struct CameraComponent
+struct CameraComponent
     {
         SceneCamera Camera;
-        bool Primary = true;
+        bool Primary = false;
         bool FixedAspectRatio = false;
+        entt::entity EntityHandle{ entt::null };
+
+        void SetPrimary(bool primary)
+        {
+            Primary = primary;
+        }
     };
 
     struct NativeScriptComponent
@@ -107,7 +113,7 @@ namespace Vulkitten {
 		}
 
         NativeScriptComponent() = default;
-        ~NativeScriptComponent() { if (Instance) DestroyScript(this); Instance = nullptr; };
+        ~NativeScriptComponent() { if (Instance && DestroyScript) DestroyScript(this); };
     };
 
 }
