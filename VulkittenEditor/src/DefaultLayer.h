@@ -27,6 +27,12 @@ private:
     void CreateTestScene();
     void UpdateViewportFramebuffer(uint32_t width, uint32_t height);
 
+    void NewScene();
+    void OpenScene();
+    void SaveSceneAs();
+
+    bool OnKeyPressed(Vulkitten::KeyPressedEvent& event);
+
     Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
     Vulkitten::Ref<Vulkitten::Texture2D> m_LogoTexture;
 
@@ -35,12 +41,12 @@ private:
     uint32_t m_ViewportHeight = 720;
 
     Vulkitten::Ref<Vulkitten::Scene> m_Scene;
-    std::vector<Vulkitten::Entity> m_Entities;
-    Vulkitten::Entity m_CameraEntity;
 
     std::vector<std::pair<std::string, float>> m_ProfileResults;
 
     Vulkitten::SceneHierarchyPanel m_SceneHierarchyPanel;
     Vulkitten::PropertyPanel m_PropertyPanel;
     Vulkitten::PerformancePanel m_PerformancePanel;
+
+    std::string m_CurrentScenePath;
 };

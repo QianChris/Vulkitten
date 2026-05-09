@@ -13,3 +13,6 @@
 [submodule "Vulkitten/vendor/entt"]
 	path = Vulkitten/vendor/entt
 	url = https://github.com/skypjack/entt.git
+[submodule "Vulkitten/vendor/yaml-cpp"]
+	path = Vulkitten/vendor/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git

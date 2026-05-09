@@ -5,6 +5,8 @@
 
 #include "Vulkitten/Scene/Entity.h"
 #include "Vulkitten/Scene/SceneCamera.h"
+#include "Vulkitten/Scene/SceneSerializer.h"
+#include "Vulkitten/Utils/FileDialogs.h"
 
 
 #define VKT_TIMER(name) Vulkitten::Timer timer##__LINE__([&](float elapsed) { \
@@ -76,15 +78,15 @@ void DefaultLayer::CreateTestScene()
     };
 
     {
-        m_CameraEntity = m_Scene->CreateEntity("Camera");
-        auto& cameraComponent = m_CameraEntity.AddComponent<CameraComponent>();
+        auto entity = m_Scene->CreateEntity("Camera");
+        auto& cameraComponent = entity.AddComponent<CameraComponent>();
         cameraComponent.Primary = true;
         cameraComponent.FixedAspectRatio = false;
 
         float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
         cameraComponent.Camera.SetOrthographicProjection(-aspectRatio * 1.0f, aspectRatio * 1.0f, -1.0f, 1.0f);
 
-        m_CameraEntity.AddComponent<NativeScriptComponent>().Bind<CameraController>();
+        entity.AddComponent<NativeScriptComponent>().Bind<CameraController>();
     }
 
     {
@@ -93,7 +95,6 @@ void DefaultLayer::CreateTestScene()
         auto& transform = entity.GetComponent<TransformComponent>();
         transform.SetPosition({ 0.5f, -0.5f, 0.1f });
         transform.SetScale({ 0.5f, 0.75f, 1.0f });
-        m_Entities.push_back(entity);
     }
 
     {
@@ -102,7 +103,6 @@ void DefaultLayer::CreateTestScene()
         auto& transform = entity.GetComponent<TransformComponent>();
         transform.SetPosition({ -0.5f, 0.0f, 0.1f });
         transform.SetScale({ 0.75f, 0.75f, 1.0f });
-        m_Entities.push_back(entity);
     }
 
     {
@@ -111,7 +111,6 @@ void DefaultLayer::CreateTestScene()
         auto& transform = entity.GetComponent<TransformComponent>();
         transform.SetPosition({ 0.0f, 0.0f, 0.0f });
         transform.SetScale({ 10.0f, 10.0f, 1.0f });
-        m_Entities.push_back(entity);
     }
 
     {
@@ -120,7 +119,6 @@ void DefaultLayer::CreateTestScene()
         auto& transform = entity.GetComponent<TransformComponent>();
         transform.SetPosition({ 0.0f, 0.0f, 0.2f });
         transform.SetScale({ 1.0f, 1.0f, 1.0f });
-        m_Entities.push_back(entity);
     }
 
     {
@@ -129,7 +127,6 @@ void DefaultLayer::CreateTestScene()
         auto& transform = entity.GetComponent<TransformComponent>();
         transform.SetPosition({ -2.0f, 0.0f, 0.2f });
         transform.SetScale({ 1.0f, 1.0f, 1.0f });
-        m_Entities.push_back(entity);
     }
 }
 
@@ -141,13 +138,10 @@ void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
     Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
     Vulkitten::RenderCommand::Clear();
 
-{
+    {
         float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
         m_Scene->SetCameraAspectRatio(aspectRatio);
     }
-
-    auto& transform = m_Entities[4].GetComponent<Vulkitten::TransformComponent>();
-    transform.SetDeltaRotation({ 0.0f, 0.0f, timestep * 50.0f });
 
     {
         VKT_TIMER("Render Scene");
@@ -194,10 +188,24 @@ void DefaultLayer::OnImguiRender()
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
-    if (ImGui::BeginMenuBar())
+if (ImGui::BeginMenuBar())
     {
-        if (ImGui::BeginMenu("Files"))
+        if (ImGui::BeginMenu("File"))
         {
+            if (ImGui::MenuItem("New", "Ctrl+N"))
+            {
+                NewScene();
+            }
+            if (ImGui::MenuItem("Open...", "Ctrl+O"))
+            {
+                OpenScene();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S"))
+            {
+                SaveSceneAs();
+            }
+            ImGui::Separator();
             if (ImGui::MenuItem("Exit"))
             {
                 Vulkitten::Application::Get().SetClose();
@@ -230,14 +238,70 @@ void DefaultLayer::OnImguiRender()
 
 void DefaultLayer::OnEvent(Vulkitten::Event& event)
 {
-    if (event.GetEventType() == Vulkitten::EventType::MouseScrolled)
+    Vulkitten::EventDispatcher dispatcher(event);
+    dispatcher.Dispatch<Vulkitten::KeyPressedEvent>(VKT_BIND_EVENT_FN(DefaultLayer::OnKeyPressed));
+}
+
+bool DefaultLayer::OnKeyPressed(Vulkitten::KeyPressedEvent& event)
+{
+    bool ctrlState = Vulkitten::Input::IsKeyPressed(VKT_KEY_LEFT_CONTROL) || Vulkitten::Input::IsKeyPressed(VKT_KEY_RIGHT_CONTROL);
+    bool shiftState = Vulkitten::Input::IsKeyPressed(VKT_KEY_LEFT_SHIFT) || Vulkitten::Input::IsKeyPressed(VKT_KEY_RIGHT_SHIFT);
+
+    if (ctrlState && event.GetKeyCode() == VKT_KEY_N)
     {
-        auto& mouseScrolledEvent = (Vulkitten::MouseScrolledEvent&)event;
-        if (m_CameraEntity){
-            auto& cameraComponent = m_CameraEntity.GetComponent<Vulkitten::CameraComponent>();
-            auto zl = cameraComponent.Camera.GetZoomLevel();
-            cameraComponent.Camera.SetZoomLevel( zl + mouseScrolledEvent.GetYOffset() * 0.25f);
-            VKT_INFO("Camera zoom level: {}", cameraComponent.Camera.GetZoomLevel());
+        NewScene();
+        return true;
+    }
+    else if (ctrlState && event.GetKeyCode() == VKT_KEY_O)
+    {
+        OpenScene();
+        return true;
+    }
+    else if (ctrlState && shiftState && event.GetKeyCode() == VKT_KEY_S)
+    {
+        SaveSceneAs();
+        return true;
+    }
+
+    return false;
+}
+
+void DefaultLayer::NewScene()
+{
+    m_Scene = Vulkitten::CreateRef<Vulkitten::Scene>();
+    m_SceneHierarchyPanel.SetContext(m_Scene);
+    m_PropertyPanel.SetContext(m_Scene);
+    m_PerformancePanel.SetContext(m_Scene);
+    m_CurrentScenePath.clear();
+    CreateTestScene();
+}
+
+void DefaultLayer::OpenScene()
+{
+    static Vulkitten::FileDialogs fileDialogs;
+    std::string filepath = fileDialogs.OpenFile("YAML Files (*.yaml)\0*.yaml\0All Files (*.*)\0*.*\0");
+    if (!filepath.empty())
+    {
+        m_Scene = Vulkitten::CreateRef<Vulkitten::Scene>();
+        Vulkitten::SceneSerializer serializer(m_Scene);
+        if (serializer.Deserialize(filepath))
+        {
+            m_SceneHierarchyPanel.SetContext(m_Scene);
+            m_PropertyPanel.SetContext(m_Scene);
+            m_PerformancePanel.SetContext(m_Scene);
+            m_CurrentScenePath = filepath;
         }
+    }
+}
+
+void DefaultLayer::SaveSceneAs()
+{
+    static Vulkitten::FileDialogs fileDialogs;
+    std::string filepath = fileDialogs.SaveFile("YAML Files (*.yaml)\0*.yaml\0All Files (*.*)\0*.*\0");
+    if (!filepath.empty())
+    {
+        Vulkitten::SceneSerializer serializer(m_Scene);
+        serializer.Serialize(filepath);
+        m_CurrentScenePath = filepath;
     }
 }

@@ -7,6 +7,7 @@ add_subdirectory(vendor/glm)
 add_subdirectory(vendor/glfw)
 add_subdirectory(vendor/glad)
 add_subdirectory(vendor/entt)
+add_subdirectory(vendor/yaml-cpp)
 # add_subdirectory(vendor/imgui)
 
 # 宏开关
@@ -64,6 +65,9 @@ target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/
 
 # OpenGL (Windows system library)
 target_link_libraries(Vulkitten PUBLIC opengl32)
+
+# yaml-cpp
+target_link_libraries(Vulkitten PUBLIC yaml-cpp::yaml-cpp)
 
 # 公开头文件目录 (供SandBox使用)
 target_include_directories(Vulkitten 

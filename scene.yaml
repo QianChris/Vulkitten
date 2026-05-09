@@ -1,0 +1,138 @@
+Scene: Untitled
+Entities:
+  - EntityID: 5
+    TagComponent: Camera
+    TransformComponent:
+      Position:
+        - 0
+        - 0
+        - 1.1
+      Rotation:
+        - 0
+        - 0
+        - 0
+      Scale:
+        - 1
+        - 1
+        - 1
+    CameraComponent:
+      Primary: true
+      FixedAspectRatio: false
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 2.7052603
+        PerspectiveNear: 0.01
+        PerspectiveFar: 1000
+        OrthographicSize: 6.7
+        OrthographicNear: -4.7
+        OrthographicFar: 3
+  - EntityID: 4
+    TagComponent: Green Quad
+    TransformComponent:
+      Position:
+        - 0.5
+        - -0.5
+        - 0.1
+      Rotation:
+        - 0
+        - 0
+        - 0
+      Scale:
+        - 0.5
+        - 0.75
+        - 1
+    SpriteRendererComponent:
+      Color:
+        - 0.2
+        - 0.8
+        - 0.3
+        - 1
+      TilingFactor: 1
+  - EntityID: 3
+    TagComponent: Red Quad
+    TransformComponent:
+      Position:
+        - -0.5
+        - 0
+        - 0.1
+      Rotation:
+        - 0
+        - 0
+        - 0
+      Scale:
+        - 0.75
+        - 0.75
+        - 1
+    SpriteRendererComponent:
+      Color:
+        - 0.8
+        - 0.2
+        - 0.3
+        - 1
+      TilingFactor: 1
+  - EntityID: 2
+    TagComponent: Background Quad
+    TransformComponent:
+      Position:
+        - 0
+        - 0
+        - -0.003
+      Rotation:
+        - -6
+        - 0
+        - 0
+      Scale:
+        - 10
+        - 10
+        - 1
+    SpriteRendererComponent:
+      Color:
+        - 0.043137256
+        - 1
+        - 0.7647059
+        - 1
+      TilingFactor: 10
+  - EntityID: 1
+    TagComponent: Logo
+    TransformComponent:
+      Position:
+        - 0
+        - 0
+        - 0.2
+      Rotation:
+        - 0
+        - 0
+        - 0
+      Scale:
+        - 1
+        - 1
+        - 1
+    SpriteRendererComponent:
+      Color:
+        - 1
+        - 1
+        - 1
+        - 1
+      TilingFactor: 1
+  - EntityID: 0
+    TagComponent: Rotating Quad
+    TransformComponent:
+      Position:
+        - -2
+        - 0
+        - 0.2
+      Rotation:
+        - 0
+        - 0
+        - 0
+      Scale:
+        - 1
+        - 1
+        - 1
+    SpriteRendererComponent:
+      Color:
+        - 1
+        - 1
+        - 1
+        - 1
+      TilingFactor: 10
