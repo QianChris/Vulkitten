@@ -16,3 +16,6 @@
 [submodule "Vulkitten/vendor/yaml-cpp"]
 	path = Vulkitten/vendor/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "Vulkitten/vendor/imguizmo"]
+	path = Vulkitten/vendor/imguizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo.git

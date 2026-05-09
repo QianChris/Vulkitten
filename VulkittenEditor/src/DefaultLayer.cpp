@@ -16,24 +16,6 @@ DefaultLayer::DefaultLayer()
     : Layer("DefaultLayer")
     , m_Scene(Vulkitten::CreateRef<Vulkitten::Scene>())
 {
-    Vulkitten::FrameBufferSpecification fbSpec;
-    fbSpec.Width = m_ViewportWidth;
-    fbSpec.Height = m_ViewportHeight;
-    m_Framebuffer = Vulkitten::FrameBuffer::Create(fbSpec);
-}
-
-void DefaultLayer::UpdateViewportFramebuffer(uint32_t width, uint32_t height)
-{
-    if (m_ViewportWidth != width || m_ViewportHeight != height)
-    {
-        m_ViewportWidth = width;
-        m_ViewportHeight = height;
-
-        Vulkitten::FrameBufferSpecification fbSpec;
-        fbSpec.Width = width;
-        fbSpec.Height = height;
-        m_Framebuffer = Vulkitten::FrameBuffer::Create(fbSpec);
-    }
 }
 
 void DefaultLayer::OnAttach()
@@ -43,9 +25,10 @@ void DefaultLayer::OnAttach()
 
     CreateTestScene();
 
-m_SceneHierarchyPanel.SetContext(m_Scene);
+    m_SceneHierarchyPanel.SetContext(m_Scene);
     m_PropertyPanel.SetContext(m_Scene);
     m_PerformancePanel.SetContext(m_Scene);
+    m_ViewportPanel.SetContext(m_Scene);
 }
 
 void DefaultLayer::OnDetach()
@@ -77,14 +60,17 @@ void DefaultLayer::CreateTestScene()
         }
     };
 
-    {
+{
         auto entity = m_Scene->CreateEntity("Camera");
         auto& cameraComponent = entity.AddComponent<CameraComponent>();
         cameraComponent.Primary = true;
         cameraComponent.FixedAspectRatio = false;
 
-        float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
+        float aspectRatio = (float)m_ViewportPanel.GetViewportWidth() / (float)m_ViewportPanel.GetViewportHeight();
         cameraComponent.Camera.SetOrthographicProjection(-aspectRatio * 1.0f, aspectRatio * 1.0f, -1.0f, 1.0f);
+
+        auto& cameraTransform = entity.GetComponent<TransformComponent>();
+        cameraTransform.SetPosition({ 0., 0., 1. });
 
         entity.AddComponent<NativeScriptComponent>().Bind<CameraController>();
     }
@@ -134,12 +120,12 @@ void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
 {
     VKT_TIMER("DefaultLayer::OnUpdate");
 
-    m_Framebuffer->Bind();
+    m_ViewportPanel.GetFrameBuffer()->Bind();
     Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
     Vulkitten::RenderCommand::Clear();
 
     {
-        float aspectRatio = (float)m_ViewportWidth / (float)m_ViewportHeight;
+        float aspectRatio = (float)m_ViewportPanel.GetViewportWidth() / (float)m_ViewportPanel.GetViewportHeight();
         m_Scene->SetCameraAspectRatio(aspectRatio);
     }
 
@@ -148,7 +134,7 @@ void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
         m_Scene->OnUpdate(timestep);
     }
 
-    m_Framebuffer->Unbind();
+    m_ViewportPanel.GetFrameBuffer()->Unbind();
 }
 
 void DefaultLayer::OnImguiRender()
@@ -212,19 +198,11 @@ if (ImGui::BeginMenuBar())
             }
             ImGui::EndMenu();
         }
-        ImGui::EndMenuBar();
+ImGui::EndMenuBar();
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    ImGui::Begin("Viewport");
-    ImGui::PopStyleVar();
-
-    uint32_t textureID = m_Framebuffer->GetColorAttachmentRendererID();
-    ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-    UpdateViewportFramebuffer((uint32_t)viewportPanelSize.x, (uint32_t)viewportPanelSize.y);
-
-    ImGui::Image((void*)(intptr_t)textureID, viewportPanelSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
-    ImGui::End();
+    m_ViewportPanel.SetSelectedEntity(m_SceneHierarchyPanel.GetSelectedEntity());
+    m_ViewportPanel.OnImGuiRender();
 
     m_SceneHierarchyPanel.OnImGuiRender();
     m_PropertyPanel.SetSelectedEntity(m_SceneHierarchyPanel.GetSelectedEntity());

@@ -10,6 +10,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <ImGuizmo.h>
 
 namespace {
     ImGuiKey ImGui_ImplGlfw_KeyToImGuiKey(int keycode)
@@ -211,6 +212,7 @@ namespace Vulkitten
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        ImGuizmo::BeginFrame();
     }
 
     void ImGuiLayer::End()

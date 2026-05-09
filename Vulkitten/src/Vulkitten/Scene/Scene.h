@@ -23,7 +23,8 @@ namespace Vulkitten {
 
 Entity CreateEntity(std::string name = "UnnamedEntity");
         void DestroyEntity(Entity entity);
-        void SetCameraAspectRatio(float aspectRatio);
+void SetCameraAspectRatio(float aspectRatio);
+        Entity GetPrimaryCameraEntity();
 
         entt::registry& GetRegistry() { return m_Registry; }
 

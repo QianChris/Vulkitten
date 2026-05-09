@@ -57,6 +57,9 @@ target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/
 # target_link_libraries(Vulkitten PUBLIC imgui)
 target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/imgui")
 
+# Create imguizmo SHARED library and link to Vulkitten
+target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/imguizmo/src")
+
 # stb_image
 target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/stb_image")
 

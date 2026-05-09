@@ -10,6 +10,7 @@
 #include "Panel/SceneHierarchyPanel.h"
 #include "Panel/PropertyPanel.h"
 #include "Panel/PerformancePanel.h"
+#include "Panel/ViewportPanel.h"
 
 class DefaultLayer : public Vulkitten::Layer
 {
@@ -25,7 +26,6 @@ public:
 
 private:
     void CreateTestScene();
-    void UpdateViewportFramebuffer(uint32_t width, uint32_t height);
 
     void NewScene();
     void OpenScene();
@@ -36,10 +36,6 @@ private:
     Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
     Vulkitten::Ref<Vulkitten::Texture2D> m_LogoTexture;
 
-    Vulkitten::Ref<Vulkitten::FrameBuffer> m_Framebuffer;
-    uint32_t m_ViewportWidth = 1280;
-    uint32_t m_ViewportHeight = 720;
-
     Vulkitten::Ref<Vulkitten::Scene> m_Scene;
 
     std::vector<std::pair<std::string, float>> m_ProfileResults;
@@ -47,6 +43,7 @@ private:
     Vulkitten::SceneHierarchyPanel m_SceneHierarchyPanel;
     Vulkitten::PropertyPanel m_PropertyPanel;
     Vulkitten::PerformancePanel m_PerformancePanel;
+    Vulkitten::ViewportPanel m_ViewportPanel;
 
     std::string m_CurrentScenePath;
 };

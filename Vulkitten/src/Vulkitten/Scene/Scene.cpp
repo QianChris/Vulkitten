@@ -42,6 +42,21 @@ Entity Scene::CreateEntity(std::string name)
         }
     }
 
+    Entity Scene::GetPrimaryCameraEntity()
+    {
+        Entity cameraEntity(entt::null, this);
+        auto cameraView = m_Registry.view<CameraComponent>();
+        for (auto entity : cameraView)
+        {
+            if (cameraView.get<CameraComponent>(entity).Primary)
+            {
+                cameraEntity = Entity(entity, this);
+                break;
+            }
+        }
+        return cameraEntity;
+    }
+
     void Scene::OnUpdate(Timestep ts)
     {
         TickScripts(ts);
