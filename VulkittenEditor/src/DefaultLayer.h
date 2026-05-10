@@ -7,6 +7,7 @@
 
 #include "Vulkitten/Scene/Entity.h"
 #include "Vulkitten/Scene/SceneCamera.h"
+#include "Vulkitten/Renderer/EditorCamera.h"
 #include "Panel/SceneHierarchyPanel.h"
 #include "Panel/PropertyPanel.h"
 #include "Panel/PerformancePanel.h"
@@ -34,14 +35,18 @@ private:
 
     bool OnKeyPressed(Vulkitten::KeyPressedEvent& event);
 
+    bool IsViewportFocused() const { return m_ViewportPanel.IsFocused(); }
+
+private:
     Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
     Vulkitten::Ref<Vulkitten::Texture2D> m_LogoTexture;
 
     Vulkitten::Ref<Vulkitten::Scene> m_Scene;
+    Vulkitten::EditorCamera m_EditorCamera;
 
     std::vector<std::pair<std::string, float>> m_ProfileResults;
 
-Vulkitten::SceneHierarchyPanel m_SceneHierarchyPanel;
+    Vulkitten::SceneHierarchyPanel m_SceneHierarchyPanel;
     Vulkitten::PropertyPanel m_PropertyPanel;
     Vulkitten::PerformancePanel m_PerformancePanel;
     Vulkitten::ViewportPanel m_ViewportPanel;

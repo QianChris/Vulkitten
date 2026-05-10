@@ -43,6 +43,9 @@ namespace Vulkitten {
         ImGui::Begin("Viewport");
         ImGui::PopStyleVar();
 
+        m_IsFocused = ImGui::IsWindowFocused();
+		m_IsHovered = ImGui::IsWindowHovered();
+
         ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
         UpdateViewportFramebuffer((uint32_t)viewportPanelSize.x, (uint32_t)viewportPanelSize.y);
 
@@ -70,15 +73,29 @@ namespace Vulkitten {
             float windowHeight = ImGui::GetWindowHeight();
             ImGuizmo::SetRect(viewportPos.x, viewportPos.y, windowWidth, windowHeight);
 
-            auto& cameraEntity = m_Scene->GetPrimaryCameraEntity();
-            if (cameraEntity)
+            glm::mat4 viewMatrix;
+            glm::mat4 projectionMatrix;
+
+            if (m_EditorCamera && m_IsFocused)
             {
-                auto& cameraComp = cameraEntity.GetComponent<Vulkitten::CameraComponent>();
-                auto& cameraTransform = cameraEntity.GetComponent<Vulkitten::TransformComponent>();
+                viewMatrix = m_EditorCamera->GetViewMatrix();
+                projectionMatrix = m_EditorCamera->GetProjectionMatrix();
+            }
+            else
+            {
+                auto& cameraEntity = m_Scene->GetPrimaryCameraEntity();
+                if (cameraEntity)
+                {
+                    auto& cameraComp = cameraEntity.GetComponent<Vulkitten::CameraComponent>();
+                    auto& cameraTransform = cameraEntity.GetComponent<Vulkitten::TransformComponent>();
 
-                glm::mat4 viewMatrix = glm::inverse(cameraTransform.GetTransform());
-                glm::mat4 projectionMatrix = cameraComp.Camera.GetProjectionMatrix();
+                    viewMatrix = glm::inverse(cameraTransform.GetTransform());
+                    projectionMatrix = cameraComp.Camera.GetProjectionMatrix();
+                }
+            }
 
+            if (m_EditorCamera && m_IsFocused || m_Scene->GetPrimaryCameraEntity())
+            {
                 auto& transformComp = m_SelectedEntity.GetComponent<Vulkitten::TransformComponent>();
                 glm::mat4 modelMatrix = transformComp.GetTransform();
 

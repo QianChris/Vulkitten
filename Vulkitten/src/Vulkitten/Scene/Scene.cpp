@@ -57,9 +57,15 @@ Entity Scene::CreateEntity(std::string name)
         return cameraEntity;
     }
 
-    void Scene::OnUpdate(Timestep ts)
+void Scene::OnUpdate(Timestep ts)
     {
         TickScripts(ts);
+
+        if (m_EditorCamera)
+        {
+            RenderScene(*m_EditorCamera);
+            return;
+        }
 
         Entity cameraEntity(entt::null, this);
         auto cameraView = m_Registry.view<CameraComponent>();
@@ -76,8 +82,7 @@ Entity Scene::CreateEntity(std::string name)
         {
             auto& cameraComponent = cameraEntity.GetComponent<CameraComponent>();
             auto& transform = cameraEntity.GetComponent<TransformComponent>();
-            glm::mat4 viewMatrix = glm::inverse(transform.GetTransform());
-            cameraComponent.Camera.SetViewMatrix(viewMatrix);
+            cameraComponent.Camera.SetTransform(transform.GetTransform());
             RenderScene(cameraComponent.Camera);
         }
     }

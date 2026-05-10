@@ -15,6 +15,7 @@
 DefaultLayer::DefaultLayer()
     : Layer("DefaultLayer")
     , m_Scene(Vulkitten::CreateRef<Vulkitten::Scene>())
+    , m_EditorCamera(45.0f, 1.778f, 0.1f, 1000.0f)
 {
 }
 
@@ -25,11 +26,19 @@ void DefaultLayer::OnAttach()
 
     CreateTestScene();
 
-    m_SceneHierarchyPanel.SetContext(m_Scene);
+m_SceneHierarchyPanel.SetContext(m_Scene);
     m_PropertyPanel.SetContext(m_Scene);
     m_PerformancePanel.SetContext(m_Scene);
     m_ViewportPanel.SetContext(m_Scene);
+    m_ViewportPanel.SetEditorCamera(&m_EditorCamera);
     m_ResourcePanel.SetContext(m_Scene);
+
+    m_Scene->SetEditorCamera(&m_EditorCamera);
+
+    m_EditorCamera.SetViewportSize(
+        (float)m_ViewportPanel.GetViewportWidth(),
+        (float)m_ViewportPanel.GetViewportHeight()
+    );
 }
 
 void DefaultLayer::OnDetach()
@@ -61,7 +70,7 @@ void DefaultLayer::CreateTestScene()
         }
     };
 
-{
+    {
         auto entity = m_Scene->CreateEntity("Camera");
         auto& cameraComponent = entity.AddComponent<CameraComponent>();
         cameraComponent.Primary = true;
@@ -92,7 +101,7 @@ void DefaultLayer::CreateTestScene()
         transform.SetScale({ 0.75f, 0.75f, 1.0f });
     }
 
-{
+    {
         Entity entity = m_Scene->CreateEntity("Background Quad");
         auto& spriteComp = entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_Texture, 10.0f);
         spriteComp.TexturePath = "sandbox://assets/textures/Checkerboard.png";
@@ -101,7 +110,7 @@ void DefaultLayer::CreateTestScene()
         transform.SetScale({ 10.0f, 10.0f, 1.0f });
     }
 
-{
+    {
         Entity entity = m_Scene->CreateEntity("Logo");
         auto& spriteComp = entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_LogoTexture, 1.0f);
         spriteComp.TexturePath = "sandbox://assets/textures/ChernoLogo.png";
@@ -110,7 +119,7 @@ void DefaultLayer::CreateTestScene()
         transform.SetScale({ 1.0f, 1.0f, 1.0f });
     }
 
-{
+    {
         Entity entity = m_Scene->CreateEntity("Rotating Quad");
         auto& spriteComp = entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_Texture, 10.0f);
         spriteComp.TexturePath = "sandbox://assets/textures/Checkerboard.png";
@@ -123,6 +132,9 @@ void DefaultLayer::CreateTestScene()
 void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
 {
     VKT_TIMER("DefaultLayer::OnUpdate");
+
+    if (IsViewportFocused())
+        m_EditorCamera.OnUpdate(timestep);
 
     m_ViewportPanel.GetFrameBuffer()->Bind();
     Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
@@ -178,7 +190,7 @@ void DefaultLayer::OnImguiRender()
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
-if (ImGui::BeginMenuBar())
+    if (ImGui::BeginMenuBar())
     {
         if (ImGui::BeginMenu("File"))
         {
@@ -202,11 +214,19 @@ if (ImGui::BeginMenuBar())
             }
             ImGui::EndMenu();
         }
-ImGui::EndMenuBar();
+    ImGui::EndMenuBar();
     }
 
     m_ViewportPanel.SetSelectedEntity(m_SceneHierarchyPanel.GetSelectedEntity());
     m_ViewportPanel.OnImGuiRender();
+
+    if (m_ViewportPanel.GetViewportWidth() > 0 && m_ViewportPanel.GetViewportHeight() > 0)
+    {
+        m_EditorCamera.SetViewportSize(
+            (float)m_ViewportPanel.GetViewportWidth(),
+            (float)m_ViewportPanel.GetViewportHeight()
+        );
+    }
 
     m_SceneHierarchyPanel.OnImGuiRender();
     m_PropertyPanel.SetSelectedEntity(m_SceneHierarchyPanel.GetSelectedEntity());
@@ -221,6 +241,11 @@ ImGui::EndMenuBar();
 
 void DefaultLayer::OnEvent(Vulkitten::Event& event)
 {
+    if (m_ViewportPanel.IsFocusedAndHovered())
+    {
+        m_EditorCamera.OnEvent(event);
+    }
+
     Vulkitten::EventDispatcher dispatcher(event);
     dispatcher.Dispatch<Vulkitten::KeyPressedEvent>(VKT_BIND_EVENT_FN(DefaultLayer::OnKeyPressed));
 }

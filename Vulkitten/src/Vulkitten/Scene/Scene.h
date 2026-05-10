@@ -4,6 +4,7 @@
 #include "Vulkitten/Core/Timestep.h"
 #include "Vulkitten/Events/Event.h"
 #include "Vulkitten/Renderer/Renderer2D.h"
+#include "Vulkitten/Renderer/Camera.h"
 
 #include "Components.h"
 #include "Entity.h"
@@ -21,10 +22,13 @@ namespace Vulkitten {
         void OnUpdate(Timestep ts);
         void OnEvent(Event& event);
 
-Entity CreateEntity(std::string name = "UnnamedEntity");
+        Entity CreateEntity(std::string name = "UnnamedEntity");
         void DestroyEntity(Entity entity);
-void SetCameraAspectRatio(float aspectRatio);
+        void SetCameraAspectRatio(float aspectRatio);
         Entity GetPrimaryCameraEntity();
+
+        void SetEditorCamera(Camera* camera) { m_EditorCamera = camera; }
+        Camera* GetEditorCamera() { return m_EditorCamera; }
 
         entt::registry& GetRegistry() { return m_Registry; }
 
@@ -34,6 +38,7 @@ void SetCameraAspectRatio(float aspectRatio);
 
     private:
         entt::registry m_Registry;
+        Camera* m_EditorCamera = nullptr;
 
         friend class Entity;
         friend class SceneSerializer;

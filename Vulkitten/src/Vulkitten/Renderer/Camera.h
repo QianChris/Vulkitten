@@ -10,15 +10,15 @@ class VKT_API Camera
     {
     public:
         Camera() = default;
+        Camera(const glm::mat4& projection)
+            : m_ProjectionMatrix(projection) {}
         virtual ~Camera() = default;
 
         virtual const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
-        virtual const glm::mat4& GetViewMatrix() const { return m_ViewMatrix; }
-        virtual const glm::mat4& GetViewProjectionMatrix() const { return m_ProjectionMatrix * m_ViewMatrix; }
+        virtual glm::mat4 GetViewProjectionMatrix() const = 0;
 
     protected:
         glm::mat4 m_ProjectionMatrix{ 1.0f };
-        glm::mat4 m_ViewMatrix{ 1.0f };
     };
 
 }

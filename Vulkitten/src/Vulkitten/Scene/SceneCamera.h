@@ -49,9 +49,8 @@ void SetOrthographicProjection(float left, float right, float bottom, float top)
         float GetZoomLevel() const { return m_OrthographicSize; }
         void SetZoomLevel(float zoomLevel) { m_OrthographicSize = zoomLevel; RecalculateProjection(); }
 
-        void SetViewMatrix(const glm::mat4& viewMatrix) { m_ViewMatrix = viewMatrix; RecalculateViewProjectionMatrix(); }
-        const glm::mat4& GetViewMatrix() const override { return m_ViewMatrix; }
-        const glm::mat4& GetViewProjectionMatrix() const override { return m_ViewProjectionMatrix; }
+void SetTransform(const glm::mat4& transform) { m_Transform = transform; RecalculateViewProjectionMatrix(); }
+        glm::mat4 GetViewProjectionMatrix() const override { return m_ViewProjectionMatrix; }
 
     private:
         void RecalculateProjection();
@@ -66,9 +65,11 @@ void SetOrthographicProjection(float left, float right, float bottom, float top)
         float m_OrthographicSize = 10.0f;
         float m_OrthographicNear = -1.0f, m_OrthographicFar = 1.0f;
 
-        float m_AspectRatio = 0.0f;
+float m_AspectRatio = 0.0f;
 
+        glm::mat4 m_Transform{ 1.0f };
         glm::mat4 m_ViewProjectionMatrix{ 1.0f };
+        bool m_Dirty = true;
     };
 
 }

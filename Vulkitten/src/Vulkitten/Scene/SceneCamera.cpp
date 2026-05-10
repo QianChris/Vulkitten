@@ -40,9 +40,9 @@ void SceneCamera::SetOrthographicProjection(float left, float right, float botto
         RecalculateViewProjectionMatrix();
     }
 
-    void SceneCamera::RecalculateViewProjectionMatrix()
+void SceneCamera::RecalculateViewProjectionMatrix()
     {
-        m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
+        m_ViewProjectionMatrix = m_ProjectionMatrix * glm::inverse(m_Transform);
     }
 
 }
