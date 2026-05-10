@@ -76,11 +76,20 @@ namespace Vulkitten {
         bool m_Dirty = true;
     };
 
-    struct SpriteRendererComponent
+struct SpriteRendererComponent
     {
         glm::vec4 Color{ 1.0f, 1.0f, 1.0f, 1.0f };
         Ref<Texture2D> Texture{ nullptr };
+        std::string TexturePath;
         float TilingFactor{ 1.0f };
+
+        SpriteRendererComponent() = default;
+        SpriteRendererComponent(const glm::vec4& color, const Ref<Texture2D>& texture, float tilingFactor)
+            : Color(color), Texture(texture), TilingFactor(tilingFactor)
+        {
+            if (Texture)
+                TexturePath = Texture->GetPath();
+        }
     };
 
 struct CameraComponent

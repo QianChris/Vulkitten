@@ -4,6 +4,7 @@
 #include "Scene.h"
 #include "Entity.h"
 #include "Components.h"
+#include "Vulkitten/Renderer/Texture.h"
 
 #include <yaml-cpp/yaml.h>
 #include "Vulkitten/Utils/YAMLConversions.h"
@@ -106,11 +107,12 @@ return true;
             out << YAML::EndMap;
             out << YAML::EndMap;
         }
-        if (entity.HasComponent<SpriteRendererComponent>())
+if (entity.HasComponent<SpriteRendererComponent>())
         {
             auto& sprite = entity.GetComponent<SpriteRendererComponent>();
             out << YAML::Key << "SpriteRendererComponent" << YAML::Value << YAML::BeginMap;
             out << YAML::Key << "Color" << YAML::Value << YAML::Encode(sprite.Color);
+            out << YAML::Key << "TexturePath" << YAML::Value << sprite.TexturePath;
             out << YAML::Key << "TilingFactor" << YAML::Value << sprite.TilingFactor;
             out << YAML::EndMap;
         }
@@ -168,11 +170,19 @@ return true;
             }
         }
 
-        if (entityNode["SpriteRendererComponent"])
+if (entityNode["SpriteRendererComponent"])
         {
             auto spriteNode = entityNode["SpriteRendererComponent"];
             auto& sprite = entity.AddComponent<SpriteRendererComponent>();
             sprite.Color = spriteNode["Color"].as<glm::vec4>();
+            if (spriteNode["TexturePath"])
+            {
+                sprite.TexturePath = spriteNode["TexturePath"].as<std::string>();
+                if (!sprite.TexturePath.empty())
+                {
+                    sprite.Texture = Texture2D::Create(sprite.TexturePath);
+                }
+            }
             sprite.TilingFactor = spriteNode["TilingFactor"].as<float>();
         }
     }

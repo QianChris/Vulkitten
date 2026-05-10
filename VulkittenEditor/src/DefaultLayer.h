@@ -11,6 +11,7 @@
 #include "Panel/PropertyPanel.h"
 #include "Panel/PerformancePanel.h"
 #include "Panel/ViewportPanel.h"
+#include "Panel/ResourcePanel.h"
 
 class DefaultLayer : public Vulkitten::Layer
 {
@@ -40,10 +41,11 @@ private:
 
     std::vector<std::pair<std::string, float>> m_ProfileResults;
 
-    Vulkitten::SceneHierarchyPanel m_SceneHierarchyPanel;
+Vulkitten::SceneHierarchyPanel m_SceneHierarchyPanel;
     Vulkitten::PropertyPanel m_PropertyPanel;
     Vulkitten::PerformancePanel m_PerformancePanel;
     Vulkitten::ViewportPanel m_ViewportPanel;
+    Vulkitten::ResourcePanel m_ResourcePanel;
 
     std::string m_CurrentScenePath;
 };

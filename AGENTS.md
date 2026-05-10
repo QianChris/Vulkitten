@@ -95,6 +95,114 @@ No test framework configured yet. Verify changes via successful builds and manua
 
 ---
 
+## Editor Architecture (VulkittenEditor)
+### Panel System
+Panels are standalone UI components in `VulkittenEditor/src/Panel/`. All panels follow a consistent interface:
+
+```cpp
+class PanelName {
+public:
+    PanelName() = default;
+    PanelName(const Ref<Scene>& scene);           // Optional constructor with context
+    void SetContext(const Ref<Scene>& scene);     // Set/update scene context
+    void OnImGuiRender();                          // Per-frame UI rendering
+};
+```
+
+**Available Panels:**
+| Panel | Header File | Purpose |
+|-------|------------|---------|
+| `SceneHierarchyPanel` | `Panel/SceneHierarchyPanel.h` | Entity tree, handles selection, stores `m_SelectedEntityID` |
+| `PropertyPanel` | `Panel/PropertyPanel.h` | Edit selected entity's components |
+| `ViewportPanel` | `Panel/ViewportPanel.h` | Render scene to framebuffer, gizmo interaction |
+| `PerformancePanel` | `Panel/PerformancePanel.h` | FPS, frame time, Renderer2D stats |
+| `ResourcePanel` | `Panel/ResourcePanel.h` | Visualize texture resources in scene |
+
+### ResourcePanel
+The `ResourcePanel` displays all textures used in the current scene:
+- Collects textures from `SpriteRendererComponent` via scene registry view
+- Shows texture path, dimensions (WxH), and usage count
+- Renders a 64x64 preview image for each texture
+- Updates every frame by re-collecting resources
+
+```cpp
+struct TextureResource {
+    std::string Path;
+    Ref<Texture2D> Texture;
+    uint32_t Width, Height;
+    uint32_t UsageCount = 0;
+};
+```
+
+### Panel Integration
+Panels are members of `DefaultLayer` and initialized in `OnAttach()`:
+```cpp
+m_SceneHierarchyPanel.SetContext(m_Scene);
+m_PropertyPanel.SetContext(m_Scene);
+m_ViewportPanel.SetContext(m_Scene);
+m_ResourcePanel.SetContext(m_Scene);
+```
+
+Render order in `OnImguiRender()`:
+1. ViewportPanel (framebuffer rendering)
+2. SceneHierarchyPanel (entity selection)
+3. PropertyPanel (component editing, reads from SceneHierarchyPanel)
+4. ResourcePanel (texture visualization)
+5. PerformancePanel (stats overlay)
+
+### Entity Selection Flow
+`SceneHierarchyPanel` is the source of truth for entity selection. Other panels query via `GetSelectedEntity()`:
+```cpp
+m_PropertyPanel.SetSelectedEntity(m_SceneHierarchyPanel.GetSelectedEntity());
+m_ViewportPanel.SetSelectedEntity(m_SceneHierarchyPanel.GetSelectedEntity());
+```
+
+---
+
+## Texture & Serialization
+### Texture2D Interface
+`Texture2D` has a `GetPath()` method returning the file path (useful for serialization):
+```cpp
+virtual const std::string& GetPath() const override { return m_Path; }
+```
+
+### SpriteRendererComponent
+Stores both the texture reference and its path for serialization:
+```cpp
+struct SpriteRendererComponent {
+    glm::vec4 Color{ 1.0f, 1.0f, 1.0f, 1.0f };
+    Ref<Texture2D> Texture{ nullptr };
+    std::string TexturePath;  // Serialization key
+    float TilingFactor{ 1.0f };
+};
+```
+
+### Scene Serialization (YAML)
+SpriteRendererComponent serializes texture path:
+```yaml
+SpriteRendererComponent:
+  Color: [1.0, 1.0, 1.0, 1.0]
+  TexturePath: "sandbox://assets/textures/Checkerboard.png"
+  TilingFactor: 10.0
+```
+
+Deserialization reloads texture from path:
+```cpp
+sprite.TexturePath = spriteNode["TexturePath"].as<std::string>();
+if (!sprite.TexturePath.empty()) {
+    sprite.Texture = Texture2D::Create(sprite.TexturePath);
+}
+```
+
+### FileSystem Protocol
+Use `sandbox://` protocol for asset paths. Register paths in application entry:
+```cpp
+FileSystem::RegisterPath("../../Sandbox", "sandbox");
+FileSystem::Resolve("sandbox://assets/textures/foo.png");  // Returns full path
+```
+
+---
+
 ## Template & Memory Guidelines
 - Template definitions (e.g., `InstrumentorUtils::CleanupOutputString`) must remain in headers.
 - Move non-template implementations to `.cpp` files to reduce header bloat.

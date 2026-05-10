@@ -29,6 +29,7 @@ void DefaultLayer::OnAttach()
     m_PropertyPanel.SetContext(m_Scene);
     m_PerformancePanel.SetContext(m_Scene);
     m_ViewportPanel.SetContext(m_Scene);
+    m_ResourcePanel.SetContext(m_Scene);
 }
 
 void DefaultLayer::OnDetach()
@@ -72,7 +73,7 @@ void DefaultLayer::CreateTestScene()
         auto& cameraTransform = entity.GetComponent<TransformComponent>();
         cameraTransform.SetPosition({ 0., 0., 1. });
 
-        entity.AddComponent<NativeScriptComponent>().Bind<CameraController>();
+        //entity.AddComponent<NativeScriptComponent>().Bind<CameraController>();
     }
 
     {
@@ -91,25 +92,28 @@ void DefaultLayer::CreateTestScene()
         transform.SetScale({ 0.75f, 0.75f, 1.0f });
     }
 
-    {
+{
         Entity entity = m_Scene->CreateEntity("Background Quad");
-        entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_Texture, 10.0f);
+        auto& spriteComp = entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_Texture, 10.0f);
+        spriteComp.TexturePath = "sandbox://assets/textures/Checkerboard.png";
         auto& transform = entity.GetComponent<TransformComponent>();
         transform.SetPosition({ 0.0f, 0.0f, 0.0f });
         transform.SetScale({ 10.0f, 10.0f, 1.0f });
     }
 
-    {
+{
         Entity entity = m_Scene->CreateEntity("Logo");
-        entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_LogoTexture, 1.0f);
+        auto& spriteComp = entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_LogoTexture, 1.0f);
+        spriteComp.TexturePath = "sandbox://assets/textures/ChernoLogo.png";
         auto& transform = entity.GetComponent<TransformComponent>();
         transform.SetPosition({ 0.0f, 0.0f, 0.2f });
         transform.SetScale({ 1.0f, 1.0f, 1.0f });
     }
 
-    {
+{
         Entity entity = m_Scene->CreateEntity("Rotating Quad");
-        entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_Texture, 10.0f);
+        auto& spriteComp = entity.AddComponent<SpriteRendererComponent>(glm::vec4(1.0f), m_Texture, 10.0f);
+        spriteComp.TexturePath = "sandbox://assets/textures/Checkerboard.png";
         auto& transform = entity.GetComponent<TransformComponent>();
         transform.SetPosition({ -2.0f, 0.0f, 0.2f });
         transform.SetScale({ 1.0f, 1.0f, 1.0f });
@@ -207,6 +211,7 @@ ImGui::EndMenuBar();
     m_SceneHierarchyPanel.OnImGuiRender();
     m_PropertyPanel.SetSelectedEntity(m_SceneHierarchyPanel.GetSelectedEntity());
     m_PropertyPanel.OnImGuiRender();
+    m_ResourcePanel.OnImGuiRender();
     m_PerformancePanel.OnImGuiRender();
 
     ImGui::End();
@@ -250,6 +255,8 @@ void DefaultLayer::NewScene()
     m_SceneHierarchyPanel.SetContext(m_Scene);
     m_PropertyPanel.SetContext(m_Scene);
     m_PerformancePanel.SetContext(m_Scene);
+    m_ViewportPanel.SetContext(m_Scene);
+    m_ResourcePanel.SetContext(m_Scene);
     m_CurrentScenePath.clear();
     CreateTestScene();
 }
@@ -267,6 +274,8 @@ void DefaultLayer::OpenScene()
             m_SceneHierarchyPanel.SetContext(m_Scene);
             m_PropertyPanel.SetContext(m_Scene);
             m_PerformancePanel.SetContext(m_Scene);
+            m_ViewportPanel.SetContext(m_Scene);
+            m_ResourcePanel.SetContext(m_Scene);
             m_CurrentScenePath = filepath;
         }
     }
