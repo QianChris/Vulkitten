@@ -17,7 +17,7 @@ namespace Vulkitten {
     static uint32_t s_MaxQuads = 10000;
     static uint32_t s_MaxTextureSlots = 32;
 
-    struct QuadData
+struct QuadData
     {
         glm::mat4 Transform;
         glm::vec4 Color;
@@ -25,9 +25,10 @@ namespace Vulkitten {
         float TexIndex;
         float TilingFactor;
         float ZDepth;
+        int32_t EntityID;
     };
 
-    struct Renderer2DData
+struct Renderer2DData
     {
         Ref<VertexArray> quadVertexArray;
         Ref<VertexBuffer> quadVertexBuffer;
@@ -41,6 +42,8 @@ namespace Vulkitten {
         std::vector<QuadData> quadQueue;
         std::vector<Ref<Texture2D>> textureSlots;
         uint32_t textureSlotIndex = 1;
+
+        int32_t currentEntityID = 0;
 
         Renderer2DStats stats;
     };
@@ -61,7 +64,7 @@ namespace Vulkitten {
         s_Data->quadQueue.reserve(s_MaxQuads);
         s_Data->textureSlots.resize(s_MaxTextureSlots);
 
-        s_Data->textureShader = Shader::Create("sandbox://assets/shaders/Texture.shader");
+        s_Data->textureShader = Shader::Create("sandbox://assets/shaders/TextureEntity.shader");
         s_Data->textureShader->Bind();
         for (uint32_t i = 0; i < s_MaxTextureSlots; i++)
         {
@@ -78,7 +81,8 @@ namespace Vulkitten {
             { ShaderDataType::Float4, "a_Color" },
             { ShaderDataType::Float2, "a_TexCoord" },
             { ShaderDataType::Float, "a_TexIndex" },
-            { ShaderDataType::Float, "a_TilingFactor" }
+            { ShaderDataType::Float, "a_TilingFactor" },
+            { ShaderDataType::Int, "a_EntityID" }
         });
         s_Data->quadVertexArray->AddVertexBuffer(s_Data->quadVertexBuffer);
 
@@ -156,17 +160,20 @@ void Renderer2D::BeginScene(const Camera& camera)
         SortAndFlush();
     }
 
-    void Renderer2D::SortAndFlush()
+void Renderer2D::SortAndFlush()
     {
         if (s_Data->quadQueue.empty())
             return;
 
-        std::sort(s_Data->quadQueue.begin(), s_Data->quadQueue.end(),
-            [](const QuadData& a, const QuadData& b) {
-                return a.ZDepth < b.ZDepth;
-            });
+        //std::sort(s_Data->quadQueue.begin(), s_Data->quadQueue.end(),
+        //    [](const QuadData& a, const QuadData& b) {
+        //        if (a.EntityID != b.EntityID)
+        //            return a.EntityID < b.EntityID;
+        //        return a.ZDepth < b.ZDepth;
+        //    });
 
         uint32_t batchQuadCount = 0;
+        int32_t currentEntityID = 0;
 
         for (const auto& quad : s_Data->quadQueue)
         {
@@ -174,6 +181,8 @@ void Renderer2D::BeginScene(const Camera& camera)
             {
                 Flush();
                 batchQuadCount = 0;
+                //currentEntityID = quad.EntityID;
+                //s_Data->textureShader->SetUniformInt("u_EntityID", currentEntityID);
             }
 
             glm::vec3 localPositions[4] = {
@@ -190,6 +199,7 @@ void Renderer2D::BeginScene(const Camera& camera)
                 s_Data->vertexBufferPtr->TexCoord = quad.TexCoords[i];
                 s_Data->vertexBufferPtr->TexIndex = quad.TexIndex;
                 s_Data->vertexBufferPtr->TilingFactor = quad.TilingFactor;
+                s_Data->vertexBufferPtr->EntityID = quad.EntityID;
                 s_Data->vertexBufferPtr++;
             }
 
@@ -287,7 +297,12 @@ void Renderer2D::BeginScene(const Camera& camera)
         DrawQuad(transform, color);
     }
 
-    void Renderer2D::DrawQuad(const glm::mat4& transform, const glm::vec4& color)
+void Renderer2D::DrawQuad(const glm::mat4& transform, const glm::vec4& color)
+    {
+        DrawQuad(transform, color, 0);
+    }
+
+    void Renderer2D::DrawQuad(const glm::mat4& transform, const glm::vec4& color, int entityID)
     {
         VKT_PROFILE_FUNCTION();
 
@@ -301,6 +316,7 @@ void Renderer2D::BeginScene(const Camera& camera)
         quad.TexIndex = 0.0f;
         quad.TilingFactor = 1.0f;
         quad.ZDepth = transform[3].z;
+        quad.EntityID = entityID;
 
         s_Data->quadQueue.push_back(quad);
     }
@@ -331,7 +347,12 @@ void Renderer2D::BeginScene(const Camera& camera)
         s_Data->quadQueue.push_back(quad);
     }
 
-    void Renderer2D::DrawQuad(const glm::mat4& transform, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
+void Renderer2D::DrawQuad(const glm::mat4& transform, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
+    {
+        DrawQuad(transform, texture, tilingFactor, tintColor, 0);
+    }
+
+    void Renderer2D::DrawQuad(const glm::mat4& transform, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor, int entityID)
     {
         VKT_PROFILE_FUNCTION();
 
@@ -345,6 +366,7 @@ void Renderer2D::BeginScene(const Camera& camera)
         quad.TexIndex = (float)GetTextureSlot(texture);
         quad.TilingFactor = tilingFactor;
         quad.ZDepth = transform[3].z;
+        quad.EntityID = entityID;
 
         s_Data->quadQueue.push_back(quad);
     }

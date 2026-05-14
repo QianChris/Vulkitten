@@ -34,6 +34,7 @@ private:
     void SaveSceneAs();
 
     bool OnKeyPressed(Vulkitten::KeyPressedEvent& event);
+    bool OnMouseButtonPressed(Vulkitten::MouseButtonPressedEvent& event);
 
     bool IsViewportFocused() const { return m_ViewportPanel.IsFocused(); }
 

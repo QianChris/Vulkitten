@@ -7,10 +7,15 @@
 namespace Vulkitten {
     ViewportPanel::ViewportPanel()
     {
-        Vulkitten::FrameBufferSpecification fbSpec;
+        Vulkitten::FramebufferSpecification fbSpec;
+        fbSpec.Attachments = {
+            { FramebufferTextureFormat::RGBA8 },
+            { FramebufferTextureFormat::RED_INTEGER },
+            { FramebufferTextureFormat::DEPTH }
+        };
         fbSpec.Width = 1280;
         fbSpec.Height = 960;
-        m_Framebuffer = Vulkitten::FrameBuffer::Create(fbSpec);
+        m_Framebuffer = Vulkitten::Framebuffer::Create(fbSpec);
     }
 
     void ViewportPanel::SetContext(Vulkitten::Ref<Vulkitten::Scene> scene)
@@ -23,17 +28,14 @@ namespace Vulkitten {
         m_SelectedEntity = entity;
     }
 
-    void ViewportPanel::UpdateViewportFramebuffer(uint32_t width, uint32_t height)
+void ViewportPanel::UpdateViewportFramebuffer(uint32_t width, uint32_t height)
     {
         if (m_ViewportWidth != width || m_ViewportHeight != height)
         {
             m_ViewportWidth = width;
             m_ViewportHeight = height;
 
-            //Vulkitten::FrameBufferSpecification fbSpec;
-            //fbSpec.Width = width;
-            //fbSpec.Height = height;
-            //m_Framebuffer = Vulkitten::FrameBuffer::Create(fbSpec);
+            m_Framebuffer->Resize(width, height);
         }
     }
 
@@ -41,6 +43,14 @@ namespace Vulkitten {
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
         ImGui::Begin("Viewport");
+
+        auto viewportPos = ImGui::GetWindowPos();
+        auto regionMin = ImGui::GetWindowContentRegionMin();
+        auto regionMax = ImGui::GetWindowContentRegionMax();
+        m_ViewportPos = { viewportPos.x, viewportPos.y };
+        m_ViewportBounds[0] = { regionMin.x, regionMin.y };
+        m_ViewportBounds[1] = { regionMax.x, regionMax.y };
+
         ImGui::PopStyleVar();
 
         m_IsFocused = ImGui::IsWindowFocused();
@@ -123,12 +133,61 @@ namespace Vulkitten {
                 }
             }
 
-            if (ImGui::IsKeyPressed(ImGuiKey_T))
+if (ImGui::IsKeyPressed(ImGuiKey_T))
                 m_GizmoOperation = ImGuizmo::TRANSLATE;
             if (ImGui::IsKeyPressed(ImGuiKey_R))
                 m_GizmoOperation = ImGuizmo::ROTATE;
             if (ImGui::IsKeyPressed(ImGuiKey_Y))
                 m_GizmoOperation = ImGuizmo::SCALE;
         }
+    }
+
+    bool ViewportPanel::QueryScene() {
+        if (!m_Scene || !m_Framebuffer)
+            return false;
+
+        auto [mouseX, mouseY] = ImGui::GetMousePos();
+
+        float x = mouseX - m_ViewportBounds[0].x - m_ViewportPos.x;
+        float y = mouseY - m_ViewportBounds[0].y - m_ViewportPos.y;
+        glm::vec2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
+
+        int pixelX = (int)x;
+        int pixelY = (int)(viewportSize.y - y);
+
+        int entityID = m_Framebuffer->ReadPixel(1, pixelX, pixelY);
+
+        VKT_CORE_INFO("click pos: x {}, y {}, entity id: {}", pixelX, pixelY, entityID);
+        if (entityID > 0)
+        {
+            m_SelectedEntity = m_Scene->GetEntityByID((uint32_t)entityID);
+            return true;
+        }
+        return false;
+    }
+
+    bool ViewportPanel::OnMouseClicked()
+    {
+        if (!m_Scene || !m_Framebuffer)
+            return false;
+
+        auto [mouseX, mouseY] = ImGui::GetMousePos();
+
+        float x = mouseX - m_ViewportBounds[0].x - m_ViewportPos.x;
+        float y = mouseY - m_ViewportBounds[0].y - m_ViewportPos.y;
+        glm::vec2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
+
+        int pixelX = (int)x;
+        int pixelY = (int)(viewportSize.y - y);
+
+        int entityID = m_Framebuffer->ReadPixel(1, pixelX, pixelY);
+
+        VKT_CORE_INFO("click pos: x {}, y {}, entity id: {}", pixelX, pixelY, entityID);
+        if (entityID > 0)
+        {
+            m_SelectedEntity = m_Scene->GetEntityByID((uint32_t)entityID);
+            return true;
+        }
+        return false;
     }
 }

@@ -36,7 +36,7 @@ namespace Vulkitten {
         glBindVertexArray(0);
     }
 
-    void OpenGLVertexArray::AddVertexBuffer(Ref<VertexBuffer> vertexBuffer)
+void OpenGLVertexArray::AddVertexBuffer(Ref<VertexBuffer> vertexBuffer)
     {
         VKT_PROFILE_RENDER_FUNCTION();
 
@@ -50,12 +50,33 @@ namespace Vulkitten {
         for (const auto& element : layout.GetElements())
         {
             glEnableVertexAttribArray(index);
-            glVertexAttribPointer(index,
-                element.GetComponentCount(),
-                OpenGLUtil::ShaderDataTypeToOpenGLBaseType(element.Type),
-                element.Normalized ? GL_TRUE : GL_FALSE,
-                layout.GetStride(),
-                 (const void*)element.Offset);
+            
+            bool isIntegerType = element.Type == ShaderDataType::Int ||
+                                 element.Type == ShaderDataType::Int2 ||
+                                 element.Type == ShaderDataType::Int3 ||
+                                 element.Type == ShaderDataType::Int4 ||
+                                 element.Type == ShaderDataType::Uint ||
+                                 element.Type == ShaderDataType::Uint2 ||
+                                 element.Type == ShaderDataType::Uint3 ||
+                                 element.Type == ShaderDataType::Uint4;
+
+            if (isIntegerType)
+            {
+                glVertexAttribIPointer(index,
+                    element.GetComponentCount(),
+                    OpenGLUtil::ShaderDataTypeToOpenGLBaseType(element.Type),
+                    layout.GetStride(),
+                    (const void*)(uint64_t)element.Offset);
+            }
+            else
+            {
+                glVertexAttribPointer(index,
+                    element.GetComponentCount(),
+                    OpenGLUtil::ShaderDataTypeToOpenGLBaseType(element.Type),
+                    element.Normalized ? GL_TRUE : GL_FALSE,
+                    layout.GetStride(),
+                    (const void*)(uint64_t)element.Offset);
+            }
             index++;
         }
 

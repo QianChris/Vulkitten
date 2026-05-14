@@ -26,7 +26,7 @@ void DefaultLayer::OnAttach()
 
     CreateTestScene();
 
-m_SceneHierarchyPanel.SetContext(m_Scene);
+    m_SceneHierarchyPanel.SetContext(m_Scene);
     m_PropertyPanel.SetContext(m_Scene);
     m_PerformancePanel.SetContext(m_Scene);
     m_ViewportPanel.SetContext(m_Scene);
@@ -136,9 +136,11 @@ void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
     if (IsViewportFocused())
         m_EditorCamera.OnUpdate(timestep);
 
-    m_ViewportPanel.GetFrameBuffer()->Bind();
+    auto framebuffer = m_ViewportPanel.GetFramebuffer();
+    framebuffer->Bind();
     Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
     Vulkitten::RenderCommand::Clear();
+    framebuffer->ClearAttachment(1, -1);
 
     {
         float aspectRatio = (float)m_ViewportPanel.GetViewportWidth() / (float)m_ViewportPanel.GetViewportHeight();
@@ -150,7 +152,12 @@ void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
         m_Scene->OnUpdate(timestep);
     }
 
-    m_ViewportPanel.GetFrameBuffer()->Unbind();
+    if (m_ViewportPanel.QueryScene())
+    {
+        m_SceneHierarchyPanel.SetSelectedEntity(m_ViewportPanel.GetSelectedEntity());
+	}
+
+    m_ViewportPanel.GetFramebuffer()->Unbind();
 }
 
 void DefaultLayer::OnImguiRender()
@@ -248,6 +255,7 @@ void DefaultLayer::OnEvent(Vulkitten::Event& event)
 
     Vulkitten::EventDispatcher dispatcher(event);
     dispatcher.Dispatch<Vulkitten::KeyPressedEvent>(VKT_BIND_EVENT_FN(DefaultLayer::OnKeyPressed));
+    dispatcher.Dispatch<Vulkitten::MouseButtonPressedEvent>(VKT_BIND_EVENT_FN(DefaultLayer::OnMouseButtonPressed));
 }
 
 bool DefaultLayer::OnKeyPressed(Vulkitten::KeyPressedEvent& event)
@@ -268,6 +276,17 @@ bool DefaultLayer::OnKeyPressed(Vulkitten::KeyPressedEvent& event)
     else if (ctrlState && shiftState && event.GetKeyCode() == VKT_KEY_S)
     {
         SaveSceneAs();
+        return true;
+    }
+
+return false;
+}
+
+bool DefaultLayer::OnMouseButtonPressed(Vulkitten::MouseButtonPressedEvent& event)
+{
+    if (m_ViewportPanel.IsFocusedAndHovered() && event.GetMouseButton() == VKT_MOUSE_BUTTON_LEFT)
+    {
+        bool result = m_ViewportPanel.OnMouseClicked();
         return true;
     }
 

@@ -16,6 +16,7 @@ namespace Vulkitten {
 
         void SetContext(const Ref<Scene>& scene);
         Entity GetSelectedEntity() const;
+        void SetSelectedEntity(Entity entity) { m_SelectedEntityID = entity.GetEntityID(); }
         void OnImGuiRender();
 
     private:

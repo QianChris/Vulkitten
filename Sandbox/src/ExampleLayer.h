@@ -16,6 +16,7 @@ public:
         m_ShaderLibrary.Load("sandbox://assets/shaders/FlatColor.shader");
         m_ShaderLibrary.Load("sandbox://assets/shaders/SolidColor.shader");
         m_ShaderLibrary.Load("sandbox://assets/shaders/Texture.shader");
+        m_ShaderLibrary.Load("sandbox://assets/shaders/TextureEntity.shader");
 
         m_VAO = Vulkitten::VertexArray::Create();
         {

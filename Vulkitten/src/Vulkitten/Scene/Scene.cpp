@@ -42,7 +42,7 @@ Entity Scene::CreateEntity(std::string name)
         }
     }
 
-    Entity Scene::GetPrimaryCameraEntity()
+Entity Scene::GetPrimaryCameraEntity()
     {
         Entity cameraEntity(entt::null, this);
         auto cameraView = m_Registry.view<CameraComponent>();
@@ -55,6 +55,11 @@ Entity Scene::CreateEntity(std::string name)
             }
         }
         return cameraEntity;
+    }
+
+    Entity Scene::GetEntityByID(uint32_t id)
+    {
+        return Entity(entt::entity(id), this);
     }
 
 void Scene::OnUpdate(Timestep ts)
@@ -112,18 +117,19 @@ void Scene::OnUpdate(Timestep ts)
         }
     }
 
-    void Scene::RenderScene(Camera& camera)
+void Scene::RenderScene(Camera& camera)
     {
         Renderer2D::BeginScene(camera);
         auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 
         for (auto entity : group) {
             auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+            int entityID = (int)entt::to_integral(entity);
 
             if (sprite.Texture) {
-                Renderer2D::DrawQuad(transform.GetTransform(), sprite.Texture, sprite.TilingFactor, sprite.Color);
+                Renderer2D::DrawQuad(transform.GetTransform(), sprite.Texture, sprite.TilingFactor, sprite.Color, entityID);
             } else {
-                Renderer2D::DrawQuad(transform.GetTransform(), sprite.Color);
+                Renderer2D::DrawQuad(transform.GetTransform(), sprite.Color, entityID);
             }
         }
 

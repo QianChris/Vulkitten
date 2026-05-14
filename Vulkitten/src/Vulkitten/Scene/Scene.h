@@ -22,10 +22,11 @@ namespace Vulkitten {
         void OnUpdate(Timestep ts);
         void OnEvent(Event& event);
 
-        Entity CreateEntity(std::string name = "UnnamedEntity");
+Entity CreateEntity(std::string name = "UnnamedEntity");
         void DestroyEntity(Entity entity);
         void SetCameraAspectRatio(float aspectRatio);
         Entity GetPrimaryCameraEntity();
+        Entity GetEntityByID(uint32_t id);
 
         void SetEditorCamera(Camera* camera) { m_EditorCamera = camera; }
         Camera* GetEditorCamera() { return m_EditorCamera; }
