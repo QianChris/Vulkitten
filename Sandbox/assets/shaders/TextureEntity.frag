@@ -13,7 +13,7 @@ layout (location = 4) in flat int v_EntityID;
 
 void main()
 {
-    int index = int(v_TexIndex);
+    int index = int(round(v_TexIndex));
     vec4 texColor = texture(u_Textures[index], v_TexCoord * v_TilingFactor);
     color = texColor * v_Color;
 
