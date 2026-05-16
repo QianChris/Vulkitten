@@ -1,7 +1,9 @@
 #include <Vulkitten.h>
 #include <VulkittenEntry.h>
+
 #include <filesystem>
-#include "EditorLayer.h"
+
+#include "DefaultLayer.h"
 
 class EditorApp : public Vulkitten::Application {
 public:
@@ -12,7 +14,7 @@ public:
         Vulkitten::FileSystem::RegisterPath("../../VulkittenEditor", "editor");
         Vulkitten::FileSystem::RegisterPath("../../Sandbox", "sandbox");
 
-        PushLayer(new EditorLayer());
+        PushLayer(new DefaultLayer());
     }
     ~EditorApp() {}
 };

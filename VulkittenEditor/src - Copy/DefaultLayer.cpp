@@ -31,6 +31,10 @@ void DefaultLayer::OnAttach()
     m_PerformancePanel.SetContext(m_Scene);
     m_ViewportPanel.SetContext(m_Scene);
     m_ViewportPanel.SetEditorCamera(&m_EditorCamera);
+    m_ViewportPanel.SetOnEntitySelectedCallback([this](Vulkitten::Entity entity) {
+        m_SceneHierarchyPanel.SetSelectedEntity(entity);
+        m_PropertyPanel.SetSelectedEntity(entity);
+    });
     m_ResourcePanel.SetContext(m_Scene);
 
     m_Scene->SetEditorCamera(&m_EditorCamera);
@@ -151,11 +155,6 @@ void DefaultLayer::OnUpdate(Vulkitten::Timestep timestep)
         VKT_TIMER("Render Scene");
         m_Scene->OnUpdate(timestep);
     }
-
-    if (m_ViewportPanel.QueryScene())
-    {
-        m_SceneHierarchyPanel.SetSelectedEntity(m_ViewportPanel.GetSelectedEntity());
-	}
 
     m_ViewportPanel.GetFramebuffer()->Unbind();
 }
@@ -286,7 +285,6 @@ bool DefaultLayer::OnMouseButtonPressed(Vulkitten::MouseButtonPressedEvent& even
 {
     if (m_ViewportPanel.IsFocusedAndHovered() && event.GetMouseButton() == VKT_MOUSE_BUTTON_LEFT)
     {
-        bool result = m_ViewportPanel.OnMouseClicked();
         return true;
     }
 

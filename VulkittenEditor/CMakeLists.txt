@@ -11,6 +11,8 @@ file(GLOB_RECURSE VulkittenEditor_SOURCES
 # 创建可执行文件
 add_executable(VulkittenEditor ${VulkittenEditor_SOURCES})
 
+target_include_directories(VulkittenEditor PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+
 # 确保Vulkitten先构建完成
 add_dependencies(VulkittenEditor Vulkitten)
 

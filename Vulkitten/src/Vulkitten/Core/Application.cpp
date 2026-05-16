@@ -84,9 +84,6 @@ namespace Vulkitten
                 VKT_PROFILE_SCOPE("Window update");
                 m_Window->OnUpdate();
             }
-
-            //auto [mouseX, mouseY] = Input::GetMousePosition();
-            //VKT_CORE_TRACE("{0}, {1}", mouseX, mouseY);
         }
     }
 

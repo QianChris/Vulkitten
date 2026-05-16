@@ -1,18 +1,23 @@
+#include "vktpch.h"
 #include "PerformancePanel.h"
-#include "imgui.h"
-#include "Vulkitten/Renderer/Renderer2D.h"
-#include "Vulkitten/Core/Application.h"
+
+#include <imgui.h>
 
 namespace Vulkitten {
 
-    void PerformancePanel::OnAttach(EditorContext* context)
+    PerformancePanel::PerformancePanel(const Ref<Scene>& scene)
     {
-        IPanel::OnAttach(context);
+        SetContext(scene);
     }
 
-    void PerformancePanel::OnUIRender()
+    void PerformancePanel::SetContext(const Ref<Scene>& scene)
     {
-        ImGui::Begin("Performance", &IsOpen);
+        m_Context = scene;
+    }
+
+    void PerformancePanel::OnImGuiRender()
+    {
+        ImGui::Begin("Performance");
 
         float fps = Application::Get().GetFPS();
         float frameTime = Application::Get().GetFrameTime();
@@ -30,4 +35,4 @@ namespace Vulkitten {
         ImGui::End();
     }
 
-} // namespace Vulkitten
+}

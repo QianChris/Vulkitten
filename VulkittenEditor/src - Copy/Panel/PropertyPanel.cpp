@@ -1,28 +1,39 @@
+#include "vktpch.h"
 #include "PropertyPanel.h"
-#include "EditorCommand.h"
+
 #include "Vulkitten/Scene/SceneCamera.h"
-#include "imgui.h"
+
+#include <imgui.h>
 #include <glm/gtc/type_ptr.hpp>
 
 namespace Vulkitten {
 
-    void PropertyPanel::OnAttach(EditorContext* context)
+    PropertyPanel::PropertyPanel(const Ref<Scene>& scene)
     {
-        IPanel::OnAttach(context);
-        context->signals.Subscribe<EditorEvents::EntitySelected>(
-            [this](const auto& evt) { m_SelectedEntity = evt.entity; });
+        SetContext(scene);
     }
 
-    void PropertyPanel::OnUIRender()
+    void PropertyPanel::SetContext(const Ref<Scene>& scene)
     {
-        ImGui::Begin("Properties", &IsOpen);
+        m_Context = scene;
+    }
 
-        if (!m_Context || !m_Context->scene)
+    void PropertyPanel::SetSelectedEntity(Entity entity)
+    {
+        m_SelectedEntity = entity;
+    }
+
+    void PropertyPanel::OnImGuiRender()
+    {
+        ImGui::Begin("Properties");
+
+        if (!m_Context)
         {
             ImGui::Text("No scene loaded");
             ImGui::End();
             return;
         }
+
         if (!m_SelectedEntity)
         {
             ImGui::Text("No entity selected");
@@ -31,6 +42,7 @@ namespace Vulkitten {
         }
 
         DrawEntityComponents(m_SelectedEntity);
+
         ProcessDeferredActions();
 
         ImGui::End();
@@ -40,7 +52,6 @@ namespace Vulkitten {
     {
         for (auto& [entity, typeIndex] : m_ComponentsToRemove)
         {
-            if (!entity) continue;
             if (typeIndex == std::type_index(typeid(SpriteRendererComponent)))
                 entity.RemoveComponent<SpriteRendererComponent>();
             else if (typeIndex == std::type_index(typeid(CameraComponent)))
@@ -53,7 +64,8 @@ namespace Vulkitten {
 
     void PropertyPanel::DrawEntityComponents(Entity entity)
     {
-        if (!entity) return;
+        if (!entity)
+            return;
 
         uint32_t entityID = entity.GetEntityID();
         ImGui::Text("Entity ID: %u", entityID);
@@ -63,76 +75,61 @@ namespace Vulkitten {
             auto& tag = entity.GetComponent<TagComponent>();
             static char tagBuffer[256] = {};
             strcpy_s(tagBuffer, tag.Tag.c_str());
+            
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 90);
             if (ImGui::InputText("##TagName", tagBuffer, IM_ARRAYSIZE(tagBuffer)))
+            {
                 tag.Tag = tagBuffer;
+            }
             ImGui::SameLine();
             ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 30);
             if (ImGui::Button("Add"))
+            {
                 ImGui::OpenPopup("AddComponentPopup");
+            }
         }
+        
         ImGui::Separator();
 
-        // ===== TransformComponent =====
         if (entity.HasComponent<TransformComponent>())
         {
             auto& transform = entity.GetComponent<TransformComponent>();
+
             glm::vec3 position = transform.Position;
             glm::vec3 rotation = transform.Rotation;
             glm::vec3 scale = transform.Scale;
 
-            bool edited = false;
-
-            ImGui::DragFloat3("Position", glm::value_ptr(position), 0.1f);
-            if (ImGui::IsItemActivated() && !m_TransformEditing) {
-                m_TransformEditing = true;
-                m_TransformBeforeEdit = transform;
-            }
-            if (ImGui::IsItemDeactivatedAfterEdit()) edited = true;
-            transform.SetPosition(position);
-
-            ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 1.0f);
-            if (ImGui::IsItemActivated() && !m_TransformEditing) {
-                m_TransformEditing = true;
-                m_TransformBeforeEdit = transform;
-            }
-            if (ImGui::IsItemDeactivatedAfterEdit()) edited = true;
-            transform.SetRotation(rotation);
-
-            ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.1f);
-            if (ImGui::IsItemActivated() && !m_TransformEditing) {
-                m_TransformEditing = true;
-                m_TransformBeforeEdit = transform;
-            }
-            if (ImGui::IsItemDeactivatedAfterEdit()) edited = true;
-            transform.SetScale(scale);
-
-            if (edited && m_Context && m_Context->commands)
+            if (ImGui::DragFloat3("Position", glm::value_ptr(position), 0.1f))
             {
-                m_Context->commands->Execute(CreateRef<SetTransformCommand>(
-                    entity, m_TransformBeforeEdit, transform));
-                m_Context->signals.Publish<EditorEvents::ComponentModified>(entity, "TransformComponent");
-                m_TransformEditing = false;
+                transform.SetPosition(position);
+            }
+            if (ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 1.0f))
+            {
+                transform.SetRotation(rotation);
+            }
+            if (ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.1f))
+            {
+                transform.SetScale(scale);
             }
         }
 
-        // ===== SpriteRendererComponent =====
         if (entity.HasComponent<SpriteRendererComponent>())
         {
-            DrawComponentHeader("SpriteRendererComponent", "##DeleteSprite", [&]() {
+            DrawComponentHeader("SpriteRendererComponent", "##DeleteSprite", [&]() { 
                 m_ComponentsToRemove.push_back({entity, std::type_index(typeid(SpriteRendererComponent))});
             });
+
             auto& sprite = entity.GetComponent<SpriteRendererComponent>();
             ImGui::ColorEdit4("Color", glm::value_ptr(sprite.Color));
             ImGui::DragFloat("TilingFactor", &sprite.TilingFactor, 0.1f);
         }
 
-        // ===== CameraComponent =====
         if (entity.HasComponent<CameraComponent>())
         {
-            DrawComponentHeader("CameraComponent", "##DeleteCamera", [&]() {
+            DrawComponentHeader("CameraComponent", "##DeleteCamera", [&]() { 
                 m_ComponentsToRemove.push_back({entity, std::type_index(typeid(CameraComponent))});
             });
+
             auto& cameraComponent = entity.GetComponent<CameraComponent>();
             auto& camera = cameraComponent.Camera;
 
@@ -142,12 +139,15 @@ namespace Vulkitten {
                 cameraComponent.SetPrimary(isPrimary);
                 if (isPrimary)
                 {
-                    auto& registry = m_Context->scene->GetRegistry();
+                    auto& registry = m_Context->GetRegistry();
                     auto cameraView = registry.view<CameraComponent>();
                     for (auto e : cameraView)
                     {
                         if ((uint32_t)e != entity.GetEntityID())
-                            registry.get<CameraComponent>(e).Primary = false;
+                        {
+                            auto& otherCamera = registry.get<CameraComponent>(e);
+                            otherCamera.Primary = false;
+                        }
                     }
                 }
             }
@@ -156,45 +156,58 @@ namespace Vulkitten {
             const char* projectionTypes[] = { "Perspective", "Orthographic" };
             int currentProjection = static_cast<int>(camera.GetProjectionType());
             if (ImGui::Combo("Projection Type", &currentProjection, projectionTypes, IM_ARRAYSIZE(projectionTypes)))
+            {
                 camera.SetProjectionType(static_cast<SceneCamera::ProjectionType>(currentProjection));
+            }
 
             if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
             {
                 float fov = glm::degrees(camera.GetPerspectiveFOV());
                 if (ImGui::DragFloat("FOV", &fov, 1.0f, 1.0f, 180.0f))
+                {
                     camera.SetPerspectiveFOV(glm::radians(fov));
+                }
                 float nearClip = camera.GetPerspectiveNear();
                 if (ImGui::DragFloat("Near", &nearClip, 0.01f, 0.001f, 100.0f))
+                {
                     camera.SetPerspectiveNear(nearClip);
+                }
                 float farClip = camera.GetPerspectiveFar();
                 if (ImGui::DragFloat("Far", &farClip, 1.0f, 0.1f, 2000.0f))
+                {
                     camera.SetPerspectiveFar(farClip);
+                }
             }
             else
             {
                 float size = camera.GetOrthographicSize();
                 if (ImGui::DragFloat("Size", &size, 0.1f, 0.1f, 100.0f))
+                {
                     camera.SetOrthographicSize(size);
+                }
                 float nearClip = camera.GetOrthographicNear();
                 if (ImGui::DragFloat("Near", &nearClip, 0.1f, -100.0f, 100.0f))
+                {
                     camera.SetOrthographicNear(nearClip);
+                }
                 float farClip = camera.GetOrthographicFar();
                 if (ImGui::DragFloat("Far", &farClip, 0.1f, -100.0f, 100.0f))
+                {
                     camera.SetOrthographicFar(farClip);
+                }
             }
         }
 
-        // ===== NativeScriptComponent =====
         if (entity.HasComponent<NativeScriptComponent>())
         {
-            DrawComponentHeader("NativeScriptComponent", "##DeleteScript", [&]() {
+            DrawComponentHeader("NativeScriptComponent", "##DeleteScript", [&]() { 
                 m_ComponentsToRemove.push_back({entity, std::type_index(typeid(NativeScriptComponent))});
             });
+
             auto& script = entity.GetComponent<NativeScriptComponent>();
             ImGui::Text("ClassName: %s", script.ClassName.c_str());
         }
 
-        // ===== Add Component Popup =====
         if (ImGui::BeginPopup("AddComponentPopup"))
         {
             const char* availableComponents[] = {
@@ -202,6 +215,7 @@ namespace Vulkitten {
                 "CameraComponent",
                 "NativeScriptComponent"
             };
+
             for (int i = 0; i < IM_ARRAYSIZE(availableComponents); i++)
             {
                 if (ImGui::Selectable(availableComponents[i]))
@@ -213,7 +227,6 @@ namespace Vulkitten {
                         case 2: if (!entity.HasComponent<NativeScriptComponent>()) entity.AddComponent<NativeScriptComponent>(); break;
                     }
                     ImGui::CloseCurrentPopup();
-                    m_Context->signals.Publish<EditorEvents::SceneModified>();
                 }
             }
             ImGui::EndPopup();
@@ -227,9 +240,17 @@ namespace Vulkitten {
         ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 30);
         std::string buttonId = "x" + std::string(id);
         if (ImGui::Button(buttonId.c_str()))
+        {
             onDelete();
+        }
         if (ImGui::IsItemClicked(1))
+        {
             onDelete();
+        }
     }
 
-} // namespace Vulkitten
+    void PropertyPanel::DrawAddComponentButton(Entity entity)
+    {
+    }
+
+}

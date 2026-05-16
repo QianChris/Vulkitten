@@ -1,9 +1,12 @@
 #pragma once
-#include "IPanel.h"
+
+#include "Vulkitten/Core/Core.h"
 #include "Vulkitten/Scene/Scene.h"
 #include "Vulkitten/Scene/Entity.h"
+
 #include <string>
 #include <vector>
+#include <utility>
 
 namespace Vulkitten {
 
@@ -15,18 +18,22 @@ namespace Vulkitten {
         uint32_t UsageCount = 0;
     };
 
-    class ResourcePanel : public IPanel {
+    class ResourcePanel
+    {
     public:
         ResourcePanel() = default;
-        void OnAttach(EditorContext* context) override;
-        void OnUIRender() override;
+        ResourcePanel(const Ref<Scene>& scene);
+
+        void SetContext(const Ref<Scene>& scene);
+        void OnImGuiRender();
 
     private:
         void CollectTextureResources();
         void DrawTextureItem(TextureResource& resource);
 
     private:
+        Ref<Scene> m_Context;
         std::vector<TextureResource> m_TextureResources;
     };
 
-} // namespace Vulkitten
+}

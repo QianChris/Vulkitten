@@ -1,34 +1,25 @@
-#include "vktpch.h"
 #include "SceneHierarchyPanel.h"
-
-#include <imgui.h>
-#include <glm/gtc/type_ptr.hpp>
+#include "EditorCommand.h"
+#include "imgui.h"
 
 namespace Vulkitten {
 
-    SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene)
+    void SceneHierarchyPanel::OnAttach(EditorContext* context)
     {
-        SetContext(scene);
+        IPanel::OnAttach(context);
+
+        // 同步外部选中信号到本地树高亮
+        context->signals.Subscribe<EditorEvents::EntitySelected>(
+            [this](const auto& evt) {
+                m_SelectedEntityID = evt.entity ? evt.entity.GetEntityID() : ~0u;
+            });
     }
 
-void SceneHierarchyPanel::SetContext(const Ref<Scene>& scene)
+    void SceneHierarchyPanel::OnUIRender()
     {
-        m_Context = scene;
-    }
+        ImGui::Begin("Scene Hierarchy", &IsOpen);
 
-    Entity SceneHierarchyPanel::GetSelectedEntity() const
-    {
-        if (m_SelectedEntityID == INVALID_SELECT)
-            return Entity();
-
-        return Entity(static_cast<entt::entity>(m_SelectedEntityID), m_Context.get());
-    }
-
-    void SceneHierarchyPanel::OnImGuiRender()
-    {
-        ImGui::Begin("Scene Hierarchy");
-
-        if (!m_Context)
+        if (!m_Context || !m_Context->scene)
         {
             ImGui::Text("No scene loaded");
             ImGui::End();
@@ -40,7 +31,7 @@ void SceneHierarchyPanel::SetContext(const Ref<Scene>& scene)
         ImGui::End();
     }
 
-void SceneHierarchyPanel::DrawSceneHierarchy()
+    void SceneHierarchyPanel::DrawSceneHierarchy()
     {
         if (ImGui::BeginTabBar("SceneHierarchyTabs"))
         {
@@ -49,45 +40,56 @@ void SceneHierarchyPanel::DrawSceneHierarchy()
                 DrawEntityView();
                 ImGui::EndTabItem();
             }
-
             if (ImGui::BeginTabItem("Component View"))
             {
                 DrawComponentView();
                 ImGui::EndTabItem();
             }
-
             ImGui::EndTabBar();
         }
     }
 
     void SceneHierarchyPanel::DrawEntityView()
     {
+        auto scene = m_Context->scene;
+
         if (ImGui::Button("Add Entity"))
         {
-            m_Context->CreateEntity("New Entity");
+            scene->CreateEntity("New Entity");
+            m_Context->signals.Publish<EditorEvents::SceneModified>();
         }
         ImGui::SameLine();
-        ImGui::BeginDisabled(m_SelectedEntityID == INVALID_SELECT);
+
+        bool hasSelection = m_SelectedEntityID != ~0u;
+        ImGui::BeginDisabled(!hasSelection);
         if (ImGui::Button("Delete Entity"))
         {
-            if (m_SelectedEntityID != INVALID_SELECT)
+            if (hasSelection)
             {
-                Entity entity(static_cast<entt::entity>(m_SelectedEntityID), m_Context.get());
-                m_Context->DestroyEntity(entity);
-                m_SelectedEntityID = INVALID_SELECT;
+                Entity entity((entt::entity)m_SelectedEntityID, scene.get());
+                if (entity)
+                {
+                    if (m_Context->commands)
+                        m_Context->commands->Execute(CreateRef<DestroyEntityCommand>(scene, entity));
+                    else
+                        scene->DestroyEntity(entity);
+
+                    if (m_Context->selectedEntity == entity)
+                        m_Context->SelectEntity(Entity{});
+
+                    m_Context->signals.Publish<EditorEvents::EntityDestroyed>(m_SelectedEntityID);
+                }
             }
         }
         ImGui::EndDisabled();
 
-        auto& registry = m_Context->GetRegistry();
-
+        auto& registry = scene->GetRegistry();
         std::vector<std::pair<uint32_t, Entity>> entityList;
-
         auto view = registry.view<entt::entity>();
         for (auto entity : view)
         {
             uint32_t id = static_cast<uint32_t>(entity);
-            entityList.push_back({ id, Entity(entity, m_Context.get()) });
+            entityList.push_back({ id, Entity(entity, scene.get()) });
         }
 
         if (entityList.empty())
@@ -96,52 +98,44 @@ void SceneHierarchyPanel::DrawSceneHierarchy()
             return;
         }
 
-        bool selectionChanged = false;
         Entity hoveredEntity;
-        
         for (auto& [id, entity] : entityList)
         {
-            std::string label = entity.HasComponent<TagComponent>() 
-                ? entity.GetComponent<TagComponent>().Tag 
+            std::string label = entity.HasComponent<TagComponent>()
+                ? entity.GetComponent<TagComponent>().Tag
                 : "Entity " + std::to_string(id);
-            
             bool isSelected = (m_SelectedEntityID == id);
 
             if (ImGui::Selectable(label.c_str(), isSelected))
             {
-                m_SelectedEntityID = id;
-                selectionChanged = true;
+                m_Context->SelectEntity(entity);  // 发信号，不直接改 ID
             }
-
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly))
-            {
                 hoveredEntity = entity;
-            }
         }
 
-        if (!selectionChanged && ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0))
-        {
-            m_SelectedEntityID = INVALID_SELECT;
-        }
+        if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0) && !hoveredEntity)
+            m_Context->SelectEntity(Entity{});
 
         if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(1))
         {
-            if (hoveredEntity)
-            {
-                ImGui::OpenPopup("EntityContextMenu");
-            }
-            else
-            {
-                ImGui::OpenPopup("EmptySpaceContextMenu");
-            }
+            if (hoveredEntity) ImGui::OpenPopup("EntityContextMenu");
+            else               ImGui::OpenPopup("EmptySpaceContextMenu");
         }
 
         if (ImGui::BeginPopup("EntityContextMenu"))
         {
             if (hoveredEntity && ImGui::MenuItem("Delete Entity"))
             {
-                m_Context->DestroyEntity(hoveredEntity);
-                m_SelectedEntityID = INVALID_SELECT;
+                if (m_Context->commands)
+                    m_Context->commands->Execute(CreateRef<DestroyEntityCommand>(scene, hoveredEntity));
+                else
+                    scene->DestroyEntity(hoveredEntity);
+
+                if (m_Context->selectedEntity == hoveredEntity)
+                    m_Context->SelectEntity(Entity{});
+
+                m_Context->signals.Publish<EditorEvents::EntityDestroyed>(hoveredEntity.GetEntityID());
             }
             ImGui::EndPopup();
         }
@@ -150,7 +144,8 @@ void SceneHierarchyPanel::DrawSceneHierarchy()
         {
             if (ImGui::MenuItem("Create Entity"))
             {
-                m_Context->CreateEntity("New Entity");
+                scene->CreateEntity("New Entity");
+                m_Context->signals.Publish<EditorEvents::SceneModified>();
             }
             ImGui::EndPopup();
         }
@@ -158,59 +153,45 @@ void SceneHierarchyPanel::DrawSceneHierarchy()
 
     void SceneHierarchyPanel::DrawComponentView()
     {
-        const char* componentTypes[] = {
-            "TagComponent",
-            "TransformComponent",
-            "SpriteRendererComponent",
-            "CameraComponent",
-            "NativeScriptComponent"
-        };
-
-        auto& registry = m_Context->GetRegistry();
+        auto scene = m_Context->scene;
+        auto& registry = scene->GetRegistry();
         auto view = registry.view<entt::entity>();
+
+        const char* componentTypes[] = {
+            "TagComponent", "TransformComponent", "SpriteRendererComponent",
+            "CameraComponent", "NativeScriptComponent"
+        };
 
         for (int i = 0; i < IM_ARRAYSIZE(componentTypes); i++)
         {
             std::vector<std::pair<uint32_t, Entity>> entitiesWithComponent;
-
             for (auto entity : view)
             {
-                Entity e(entity, m_Context.get());
-                bool hasComponent = false;
-
+                Entity e(entity, scene.get());
+                bool has = false;
                 switch (i)
                 {
-                    case 0: hasComponent = e.HasComponent<TagComponent>(); break;
-                    case 1: hasComponent = e.HasComponent<TransformComponent>(); break;
-                    case 2: hasComponent = e.HasComponent<SpriteRendererComponent>(); break;
-                    case 3: hasComponent = e.HasComponent<CameraComponent>(); break;
-                    case 4: hasComponent = e.HasComponent<NativeScriptComponent>(); break;
+                    case 0: has = e.HasComponent<TagComponent>(); break;
+                    case 1: has = e.HasComponent<TransformComponent>(); break;
+                    case 2: has = e.HasComponent<SpriteRendererComponent>(); break;
+                    case 3: has = e.HasComponent<CameraComponent>(); break;
+                    case 4: has = e.HasComponent<NativeScriptComponent>(); break;
                 }
-
-                if (hasComponent)
-                {
-                    uint32_t id = static_cast<uint32_t>(entity);
-                    entitiesWithComponent.push_back({ id, e });
-                }
+                if (has) entitiesWithComponent.push_back({ (uint32_t)entity, e });
             }
 
             if (!entitiesWithComponent.empty())
             {
-                std::string treeLabel = std::string(componentTypes[i]) + " (" + std::to_string(entitiesWithComponent.size()) + ")";
-                if (ImGui::TreeNodeEx(treeLabel.c_str(), 0))
+                std::string label = std::string(componentTypes[i]) + " (" + std::to_string(entitiesWithComponent.size()) + ")";
+                if (ImGui::TreeNodeEx(label.c_str(), 0))
                 {
                     for (auto& [id, entity] : entitiesWithComponent)
                     {
-                        std::string label = entity.HasComponent<TagComponent>() 
-                            ? entity.GetComponent<TagComponent>().Tag 
+                        std::string name = entity.HasComponent<TagComponent>()
+                            ? entity.GetComponent<TagComponent>().Tag
                             : "Entity " + std::to_string(id);
-                        
-                        bool isSelected = (m_SelectedEntityID == id);
-
-                        if (ImGui::Selectable(label.c_str(), isSelected))
-                        {
-                            m_SelectedEntityID = id;
-                        }
+                        if (ImGui::Selectable(name.c_str(), m_SelectedEntityID == id))
+                            m_Context->SelectEntity(entity);
                     }
                     ImGui::TreePop();
                 }
@@ -218,4 +199,4 @@ void SceneHierarchyPanel::DrawSceneHierarchy()
         }
     }
 
-    }
+} // namespace Vulkitten

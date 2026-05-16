@@ -1,22 +1,11 @@
 #pragma once
-
-#include "Vulkitten/Core/Core.h"
-#include "Vulkitten/Core/Application.h"
-#include "Vulkitten/Scene/Scene.h"
+#include "IPanel.h"
 
 namespace Vulkitten {
-
-    class PerformancePanel
-    {
+    class PerformancePanel : public IPanel {
     public:
         PerformancePanel() = default;
-        PerformancePanel(const Ref<Scene>& scene);
-
-        void SetContext(const Ref<Scene>& scene);
-        void OnImGuiRender();
-
-    private:
-        Ref<Scene> m_Context;
+        void OnAttach(EditorContext* context) override;
+        void OnUIRender() override;
     };
-
-}
+} // namespace Vulkitten

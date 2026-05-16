@@ -1,30 +1,36 @@
 #pragma once
-#include "IPanel.h"
+
+#include "Vulkitten/Core/Core.h"
+#include "Vulkitten/Scene/Scene.h"
 #include "Vulkitten/Scene/Entity.h"
+
 #include <functional>
 #include <vector>
 #include <typeindex>
+#include <memory>
 
 namespace Vulkitten {
 
-    class PropertyPanel : public IPanel {
+    class PropertyPanel
+    {
     public:
         PropertyPanel() = default;
-        void OnAttach(EditorContext* context) override;
-        void OnUIRender() override;
+        PropertyPanel(const Ref<Scene>& scene);
+
+        void SetContext(const Ref<Scene>& scene);
+        void SetSelectedEntity(Entity entity);
+        void OnImGuiRender();
 
     private:
         void DrawEntityComponents(Entity entity);
         void DrawComponentHeader(const char* name, const char* id, std::function<void()> onDelete);
+        void DrawAddComponentButton(Entity entity);
         void ProcessDeferredActions();
 
     private:
+        Ref<Scene> m_Context;
         Entity m_SelectedEntity;
         std::vector<std::pair<Entity, std::type_index>> m_ComponentsToRemove;
-
-        // Transform Command 状态
-        bool m_TransformEditing = false;
-        TransformComponent m_TransformBeforeEdit;
     };
 
-} // namespace Vulkitten
+}
