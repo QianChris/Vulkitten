@@ -138,7 +138,7 @@ void EditorLayer::CreateTestScene()
 void EditorLayer::OnUpdate(Vulkitten::Timestep timestep)
 {
     // Phase 1: 全局输入（EditorCamera 漫游）
-    if (IsViewportFocused())
+    if (IsViewportFocused() && m_Context.isEditorCameraActive)
         m_EditorCamera.OnUpdate(timestep);
 
     // Phase 2: 各 Panel 逻辑更新（无 UI）
@@ -165,6 +165,12 @@ void EditorLayer::OnUpdate(Vulkitten::Timestep timestep)
     Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
     Vulkitten::RenderCommand::Clear();
     framebuffer->ClearAttachment(1, -1);
+    
+    if (m_Context.isEditorCameraActive) 
+	    m_Scene->SetEditorCamera(&m_EditorCamera);
+    else
+		m_Scene->SetEditorCamera(nullptr);
+
     m_Scene->OnUpdate(timestep);
     framebuffer->Unbind();
 }
@@ -283,6 +289,10 @@ bool EditorLayer::OnKeyPressed(Vulkitten::KeyPressedEvent& event)
     else if ((ctrl && event.GetKeyCode() == VKT_KEY_Y) || (ctrl && shift && event.GetKeyCode() == VKT_KEY_Z)) {
         m_CommandSystem.Redo();
         return true;
+    }
+    else if (event.GetKeyCode() == VKT_KEY_C) {
+        m_Context.isEditorCameraActive = !m_Context.isEditorCameraActive;
+		return true;
     }
     return false;
 }

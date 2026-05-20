@@ -15,7 +15,7 @@ namespace Vulkitten {
         };
         fbSpec.Width = 1280;
         fbSpec.Height = 960;
-        m_Framebuffer = Framebuffer::Create(fbSpec);
+        m_Framebuffer = Framebuffer::Create(fbSpec); 
     }
 
     void ViewportPanel::OnAttach(EditorContext* context)
@@ -38,6 +38,12 @@ namespace Vulkitten {
     void ViewportPanel::OnUpdate(Timestep ts)
     {
         // 相机更新在 EditorLayer 处理，这里保留给后续扩展（如动画预览）
+        if (m_IsHovered) 
+        {
+            m_Framebuffer->Bind();
+            QueryScene();
+			m_Framebuffer->Unbind();
+        }
     }
 
     void ViewportPanel::OnUIRender()
@@ -66,8 +72,8 @@ namespace Vulkitten {
             // 鼠标拾取
             if (ImGui::IsItemHovered() && m_Context)
             {
-                QueryScene();
-                if (ImGui::IsItemClicked())
+                m_IsHovered = true;
+                if (ImGui::IsItemClicked() && !ImGuizmo::IsOver() && !ImGuizmo::IsUsing())
                 {
                     if (m_Context->hoveredEntity)
                         m_Context->SelectEntity(m_Context->hoveredEntity);
@@ -99,6 +105,8 @@ namespace Vulkitten {
         if (pixelX >= 0 && pixelY >= 0 && pixelX < (int)m_ViewportWidth && pixelY < (int)m_ViewportHeight)
         {
             int entityID = m_Framebuffer->ReadPixel(1, pixelX, pixelY);
+            //VKT_INFO("Mouse Pos: ({}, {}), Viewport Size: ({}, {}), Pixel: ({}, {}), Entity: {}",
+                //mouseX, mouseY, viewportSize.x, viewportSize.y, pixelX, pixelY, entityID);
             if (entityID > 0)
                 m_Context->SetHoveredEntity(m_Context->scene->GetEntityByID((uint32_t)entityID));
             else
@@ -126,7 +134,7 @@ namespace Vulkitten {
         glm::mat4 viewMatrix;
         glm::mat4 projectionMatrix;
 
-        if (m_Context->editorCamera && m_IsFocused)
+        if (m_Context->isEditorCameraActive && m_IsFocused)
         {
             viewMatrix = m_Context->editorCamera->GetViewMatrix();
             projectionMatrix = m_Context->editorCamera->GetProjectionMatrix();
@@ -140,6 +148,9 @@ namespace Vulkitten {
                 auto& cameraTransform = cameraEntity.GetComponent<TransformComponent>();
                 viewMatrix = glm::inverse(cameraTransform.GetTransform());
                 projectionMatrix = cameraComp.Camera.GetProjectionMatrix();
+
+                if (cameraComp.Camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
+				    ImGuizmo::SetOrthographic(true);
             }
             else
             {

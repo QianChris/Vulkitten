@@ -109,13 +109,15 @@ namespace Vulkitten {
         SignalBus signals;
         CommandSystem* commands = nullptr;   // 由 EditorLayer 注入
 
+		bool isEditorCameraActive = true;
+
         void SelectEntity(Entity entity) {
             selectedEntity = entity;
-            signals.Publish<EditorEvents::EntitySelected> (entity);
+            signals.Publish<EditorEvents::EntitySelected>(entity);
         }
         void SetHoveredEntity(Entity entity) {
             hoveredEntity = entity;
-            signals.Publish<EditorEvents::EntityHovered> (entity);
+            signals.Publish<EditorEvents::EntityHovered>(entity);
         }
     };
 
