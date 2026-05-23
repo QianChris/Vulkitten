@@ -1,7 +1,8 @@
 #pragma once
-#include <Vulkitten.h>
 #include <glm/glm.hpp>
 #include <entt/entt.hpp>
+
+#include "Vulkitten/Core/Layer.h"
 
 #include "EditorContext.h"
 #include "EditorCommand.h"
@@ -12,40 +13,51 @@
 #include "Panel/PerformancePanel.h"
 #include "Panel/ResourcePanel.h"
 
-class EditorLayer : public Vulkitten::Layer {
-public:
-    EditorLayer();
-    virtual ~EditorLayer() = default;
+namespace Vulkitten {
 
-    void OnAttach() override;
-    void OnDetach() override;
-    void OnUpdate(Vulkitten::Timestep timestep) override;
-    void OnImguiRender() override;
-    void OnEvent(Vulkitten::Event& event) override;
+    class EditorLayer : public Layer {
+    public:
+        EditorLayer();
+        virtual ~EditorLayer() = default;
 
-private:
-    void CreateTestScene();
-    void NewScene();
-    void OpenScene();
-    void SaveSceneAs();
-    bool OnKeyPressed(Vulkitten::KeyPressedEvent& event);
-    bool OnMouseButtonPressed(Vulkitten::MouseButtonPressedEvent& event);
-    bool IsViewportFocused() const;
+        void OnAttach() override;
+        void OnDetach() override;
+        void OnUpdate(Timestep timestep) override;
+        void OnImguiRender() override;
+        void OnEvent(Event& event) override;
 
-private:
-    Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
-    Vulkitten::Ref<Vulkitten::Texture2D> m_LogoTexture;
-    Vulkitten::Ref<Vulkitten::Scene> m_Scene;
-    Vulkitten::EditorCamera m_EditorCamera;
+    private:
+        void CreateTestScene();
+        void NewScene();
+        void OpenScene();
+        void SaveSceneAs();
+        bool OnKeyPressed(KeyPressedEvent& event);
+        bool OnMouseButtonPressed(MouseButtonPressedEvent& event);
+        bool IsViewportFocused() const;
 
-    Vulkitten::EditorContext m_Context;
-    Vulkitten::CommandSystem m_CommandSystem;
+    private:
+        Ref<Texture2D> m_Texture;
+        Ref<Texture2D> m_LogoTexture;
+        Ref<Scene> m_Scene;
+        EditorCamera m_EditorCamera;
 
-    Vulkitten::Scope<Vulkitten::ViewportPanel> m_ViewportPanel;
-    Vulkitten::Scope<Vulkitten::SceneHierarchyPanel> m_SceneHierarchyPanel;
-    Vulkitten::Scope<Vulkitten::PropertyPanel> m_PropertyPanel;
-    Vulkitten::Scope<Vulkitten::PerformancePanel> m_PerformancePanel;
-    Vulkitten::Scope<Vulkitten::ResourcePanel> m_ResourcePanel;
+        EditorContext m_Context;
+        CommandSystem m_CommandSystem;
 
-    std::string m_CurrentScenePath;
-};
+        Scope<ViewportPanel> m_ViewportPanel;
+        Scope<SceneHierarchyPanel> m_SceneHierarchyPanel;
+        Scope<PropertyPanel> m_PropertyPanel;
+        Scope<PerformancePanel> m_PerformancePanel;
+        Scope<ResourcePanel> m_ResourcePanel;
+
+        std::string m_CurrentScenePath;
+
+
+        enum class SceneState
+        {
+            Edit = 0, Play = 1, Simulate = 2
+        };
+        SceneState m_SceneState = SceneState::Edit;
+    };
+
+}

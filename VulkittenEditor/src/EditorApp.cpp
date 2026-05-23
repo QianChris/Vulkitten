@@ -1,22 +1,27 @@
-#include <Vulkitten.h>
-#include <VulkittenEntry.h>
+#include "Vulkitten/Core/Application.h"
+#include "Vulkitten/Core/FileSystem.h"
+
 #include <filesystem>
 #include "EditorLayer.h"
 
-class EditorApp : public Vulkitten::Application {
-public:
-    EditorApp() {
-        auto currPath = std::filesystem::current_path().string();
-        VKT_INFO("Current path is {0}", currPath);
-        
-        Vulkitten::FileSystem::RegisterPath("../../VulkittenEditor", "editor");
-        Vulkitten::FileSystem::RegisterPath("../../Sandbox", "sandbox");
+#include <VulkittenEntry.h>
 
-        PushLayer(new EditorLayer());
-    }
-    ~EditorApp() {}
-};
+namespace Vulkitten {
+    class EditorApp : public Application {
+    public:
+        EditorApp() {
+            auto currPath = std::filesystem::current_path().string();
+            VKT_INFO("Current path is {0}", currPath);
+
+            FileSystem::RegisterPath("../../VulkittenEditor", "editor");
+            FileSystem::RegisterPath("../../Sandbox", "sandbox");
+
+            PushLayer(new EditorLayer());
+        }
+        ~EditorApp() {}
+    };
+}
 
 Vulkitten::Application* Vulkitten::CreateApplication() {
-    return new EditorApp();
+    return new Vulkitten::EditorApp();
 }
