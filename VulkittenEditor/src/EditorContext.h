@@ -109,6 +109,12 @@ namespace Vulkitten {
         SignalBus signals;
         CommandSystem* commands = nullptr;   // 由 EditorLayer 注入
 
+        enum class EditorState {
+            Edit = 0,
+            Play = 1,
+            Simulate = 2
+		};
+		EditorState state = EditorState::Edit;
 		bool isEditorCameraActive = true;
 
         void SelectEntity(Entity entity) {

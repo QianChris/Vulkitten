@@ -14,6 +14,7 @@ namespace Vulkitten {
             VKT_INFO("Current path is {0}", currPath);
 
             FileSystem::RegisterPath("../../VulkittenEditor", "editor");
+            FileSystem::RegisterPath("../../VulkittenEditor/assets/icons", "editorIcons");
             FileSystem::RegisterPath("../../Sandbox", "sandbox");
 
             PushLayer(new EditorLayer());

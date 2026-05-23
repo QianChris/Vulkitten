@@ -35,6 +35,13 @@ namespace Vulkitten {
         bool OnMouseButtonPressed(MouseButtonPressedEvent& event);
         bool IsViewportFocused() const;
 
+        void UI_Toolbar();
+
+        void OnScenePlay() {}
+        void OnSceneStop() {}
+		void OnSceneSimulate() {}
+		Ref<Texture2D> m_IconPlay, m_IconStop, m_IconSimulate, m_IconPause, m_IconStep;
+
     private:
         Ref<Texture2D> m_Texture;
         Ref<Texture2D> m_LogoTexture;

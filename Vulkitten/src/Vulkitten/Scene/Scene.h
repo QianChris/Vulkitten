@@ -19,14 +19,19 @@ namespace Vulkitten {
         Scene();
         ~Scene();
 
+        void Step() {}
         void OnUpdate(Timestep ts);
         void OnEvent(Event& event);
 
-Entity CreateEntity(std::string name = "UnnamedEntity");
+        Entity CreateEntity(std::string name = "UnnamedEntity");
         void DestroyEntity(Entity entity);
         void SetCameraAspectRatio(float aspectRatio);
         Entity GetPrimaryCameraEntity();
         Entity GetEntityByID(uint32_t id);
+
+		bool IsRunning() const { return m_IsRunning; }
+		bool IsPaused() const { return m_IsPaused; }
+		void SetPaused(bool paused) { m_IsPaused = paused; }
 
         void SetEditorCamera(Camera* camera) { m_EditorCamera = camera; }
         Camera* GetEditorCamera() { return m_EditorCamera; }
@@ -40,6 +45,10 @@ Entity CreateEntity(std::string name = "UnnamedEntity");
     private:
         entt::registry m_Registry;
         Camera* m_EditorCamera = nullptr;
+        
+		bool m_IsRunning = false;
+		bool m_IsPaused = false;
+		int m_StepFrames = 0;
 
         friend class Entity;
         friend class SceneSerializer;
