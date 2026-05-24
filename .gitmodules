@@ -19,3 +19,6 @@
 [submodule "Vulkitten/vendor/imguizmo"]
 	path = Vulkitten/vendor/imguizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
+[submodule "Vulkitten/vendor/imnodes"]
+	path = Vulkitten/vendor/imnodes
+	url = https://github.com/Nelarius/imnodes.git

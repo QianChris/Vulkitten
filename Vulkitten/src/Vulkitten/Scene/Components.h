@@ -8,6 +8,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <entt/entt.hpp>
+
 namespace Vulkitten {
 
     struct TagComponent
@@ -76,7 +78,7 @@ namespace Vulkitten {
         bool m_Dirty = true;
     };
 
-struct SpriteRendererComponent
+    struct SpriteRendererComponent
     {
         glm::vec4 Color{ 1.0f, 1.0f, 1.0f, 1.0f };
         Ref<Texture2D> Texture{ nullptr };
@@ -92,12 +94,27 @@ struct SpriteRendererComponent
         }
     };
 
-struct CameraComponent
+    struct GpuEmitterComponent
+    {
+        Ref<Texture2D> Texture{ nullptr };
+        std::string TexturePath;
+        uint32_t MaxParticles{ 10000 };
+
+        GpuEmitterComponent() = default;
+        GpuEmitterComponent(const Ref<Texture2D>& texture, uint32_t maxParticles)
+            : Texture(texture), MaxParticles(maxParticles)
+        {
+            if (Texture)
+                TexturePath = Texture->GetPath();
+        }
+    };
+
+    struct CameraComponent
     {
         SceneCamera Camera;
         bool Primary = false;
         bool FixedAspectRatio = false;
-        entt::entity EntityHandle{ entt::null };
+        //entt::entity EntityHandle{ entt::null };
 
         void SetPrimary(bool primary)
         {

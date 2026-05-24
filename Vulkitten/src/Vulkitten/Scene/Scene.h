@@ -5,6 +5,7 @@
 #include "Vulkitten/Events/Event.h"
 #include "Vulkitten/Renderer/Renderer2D.h"
 #include "Vulkitten/Renderer/Camera.h"
+#include "Vulkitten/Scene/GpuParticle/GpuParticle.h"
 
 #include "Components.h"
 #include "Entity.h"
@@ -13,21 +14,36 @@
 
 namespace Vulkitten {
 
+    class Entity;
+
     class VKT_API Scene
     {
     public:
         Scene();
         ~Scene();
 
-        void Step() {}
-        void OnUpdate(Timestep ts);
-        void OnEvent(Event& event);
-
         Entity CreateEntity(std::string name = "UnnamedEntity");
         void DestroyEntity(Entity entity);
-        void SetCameraAspectRatio(float aspectRatio);
         Entity GetPrimaryCameraEntity();
         Entity GetEntityByID(uint32_t id);
+
+        void OnUpdate(Timestep ts);
+
+		// With scripts/graph
+        void OnUpdateRuntime(Timestep ts);
+		// With physics
+        void OnUpdateSimulation(Timestep ts) { OnUpdateRuntime(ts); }
+        // Step simulation only
+        void Step(int frames = 1) { m_StepFrames = frames; };
+
+        void OnRuntimeStart();
+        void OnRuntimeStop();
+        void OnSimulationStart() { OnRuntimeStart(); }
+        void OnSimulationStop() { OnRuntimeStop(); }
+
+        void OnEvent(Event& event);
+
+        void SetCameraAspectRatio(float aspectRatio);
 
 		bool IsRunning() const { return m_IsRunning; }
 		bool IsPaused() const { return m_IsPaused; }
@@ -45,6 +61,8 @@ namespace Vulkitten {
     private:
         entt::registry m_Registry;
         Camera* m_EditorCamera = nullptr;
+
+        GpuEmitterManager m_EmitterManager {};
         
 		bool m_IsRunning = false;
 		bool m_IsPaused = false;

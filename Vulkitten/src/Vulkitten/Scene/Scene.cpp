@@ -1,6 +1,7 @@
 #include "vktpch.h"
 #include "Scene.h"
 #include "ScriptableEntity.h"
+#include "Entity.h"
 
 namespace Vulkitten {
 
@@ -12,13 +13,13 @@ namespace Vulkitten {
     {
     }
 
-Entity Scene::CreateEntity(std::string name)
+    Entity Scene::CreateEntity(std::string name)
     {
         auto entity = m_Registry.create();
         m_Registry.emplace<TransformComponent>(entity);
         m_Registry.emplace<TagComponent>(entity, name);
         
-        return Entity(entity, this);
+        return Entity(static_cast<entt::entity>(entity), this);
     }
 
     void Scene::DestroyEntity(Entity entity)
@@ -42,7 +43,7 @@ Entity Scene::CreateEntity(std::string name)
         }
     }
 
-Entity Scene::GetPrimaryCameraEntity()
+    Entity Scene::GetPrimaryCameraEntity()
     {
         Entity cameraEntity(entt::null, this);
         auto cameraView = m_Registry.view<CameraComponent>();
@@ -50,8 +51,7 @@ Entity Scene::GetPrimaryCameraEntity()
         {
             if (cameraView.get<CameraComponent>(entity).Primary)
             {
-                cameraEntity = Entity(entity, this);
-                break;
+                cameraEntity = Entity(entity, this);                break;
             }
         }
         return cameraEntity;
@@ -59,10 +59,10 @@ Entity Scene::GetPrimaryCameraEntity()
 
     Entity Scene::GetEntityByID(uint32_t id)
     {
-        return Entity(entt::entity(id), this);
+        return Entity{ entt::entity(id), this };
     }
 
-void Scene::OnUpdate(Timestep ts)
+    void Scene::OnUpdate(Timestep ts)
     {
         TickScripts(ts);
 
@@ -92,6 +92,10 @@ void Scene::OnUpdate(Timestep ts)
         }
     }
 
+    void Scene::OnUpdateRuntime(Timestep ts)
+    {
+    }
+
     void Scene::TickScripts(Timestep ts)
     {
         auto scriptView = m_Registry.view<NativeScriptComponent>();
@@ -117,11 +121,22 @@ void Scene::OnUpdate(Timestep ts)
         }
     }
 
-void Scene::RenderScene(Camera& camera)
+    void Scene::RenderScene(Camera& camera)
     {
-        Renderer2D::BeginScene(camera);
-        auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+        auto gpuEmitterView = m_Registry.view<GpuEmitterComponent>();
+        for (auto entity : gpuEmitterView)
+        {
+            auto emitterInstance = m_EmitterManager.GetOrCreateEmitterInstance(Entity(entity, this));
+            if (emitterInstance)
+            {
+                emitterInstance->Update();
+                emitterInstance->Render(camera);
+            }
+        }
 
+        Renderer2D::BeginScene(camera);
+
+        auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
         for (auto entity : group) {
             auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
             int entityID = (int)entt::to_integral(entity);
@@ -134,6 +149,14 @@ void Scene::RenderScene(Camera& camera)
         }
 
         Renderer2D::EndScene();
+    }
+
+    void Scene::OnRuntimeStart()
+    {
+    }
+
+    void Scene::OnRuntimeStop()
+    {
     }
 
     void Scene::OnEvent(Event& event)

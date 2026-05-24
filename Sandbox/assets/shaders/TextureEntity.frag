@@ -1,9 +1,9 @@
-#version 450
+#version 450 core
 
 layout(location = 0) out vec4 color;
 layout(location = 1) out int entityID;
 
-uniform sampler2D u_Textures[32];
+layout(location = 7) uniform sampler2D u_Textures[32];
 
 layout (location = 0) in vec4 v_Color;
 layout (location = 1) in vec2 v_TexCoord;
