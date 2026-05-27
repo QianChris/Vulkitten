@@ -40,6 +40,9 @@ struct ParticleUBO
     float TotalTime;
     uint MaxParticles;
     uint EmitCount;
+
+    vec3 Gravity;
+    float useCollide;
 };
 
 #endif // PARTICLE_STRUCT_H

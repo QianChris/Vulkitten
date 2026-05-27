@@ -8,7 +8,7 @@ layout(binding = 2, std140) uniform ParticleUBOBuffer { ParticleUBO ubo; };
 #endif // PARTICLE_ARG_INOUT
 
 #ifdef PARTICLE_SIM_INOUT
-layout(std430, binding = 0) buffer ParticleInArgBuffer { ParticleArg argsRead; };
+layout(std430, binding = 0) buffer ParticleInArgBuffer{ ParticleArg argsRead; };
 layout(std430, binding = 1) buffer ParticleInBuffer { Particle particlesRead[]; };
 layout(std430, binding = 2) buffer ParticleOutArgBuffer { ParticleArg argsWrite; };
 layout(std430, binding = 3) buffer ParticleOutBuffer { Particle particlesWrite[]; };

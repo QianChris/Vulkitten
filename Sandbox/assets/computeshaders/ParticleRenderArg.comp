@@ -7,8 +7,25 @@
 #define PARTICLE_ARG_INOUT
 #include "Vulkitten/Scene/GpuParticle/ParticleInOut.h"
 
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 void main ()
 {
     uint index = gl_GlobalInvocationID.x;
+    if (index > 0) return;
+
+    argsWrite.maxCount = ubo.MaxParticles;
+    uint currCount = min(min(argsWrite.currCount, argsWrite.maxCount), ubo.MaxParticles);
     
+    argsWrite.currCount = currCount;
+    argsWrite.ngx = currCount / PARTICLE_MAX_WGS + 1;
+    argsWrite.ngy = 1;
+    argsWrite.ngz = 1;
+    argsWrite.padding0 = 0;
+    argsWrite.padding1 = 0;
+    argsWrite.padding2 = 0;
+
+    argsWrite.vertCount = currCount;
+    argsWrite.primCount = 1;
+    argsWrite.firstVert = 0;
+    argsWrite.firstPrim = 0;
 }
