@@ -1,5 +1,5 @@
-#ifndef PARTICLE_FUNC_H
-#define PARTICLE_FUNC_H
+#ifndef SHADER_MATH_HASH_H
+#define SHADER_MATH_HASH_H
 
 // https://www.shadertoy.com/view/4djSRW
 float hash11(float p)
@@ -132,4 +132,4 @@ vec4 hash44(vec4 p4)
     return fract((p4.xxyz+p4.yzzw)*p4.zywx);
 }
 
-#endif // PARTICLE_FUNC_H
+#endif //   SHADER_MATH_HASH_H

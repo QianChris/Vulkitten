@@ -1,6 +1,14 @@
 #version 450 core
+#extension GL_GOOGLE_include_directive : require
+
+#include "common/math_hash.h"
+#include "Vulkitten/Scene/GpuParticle/ParticleStruct.h"
+
+#define PARTICLE_SIM_INOUT
+#include "Vulkitten/Scene/GpuParticle/ParticleInOut.h"
 
 void main ()
 {
+    uint index = gl_GlobalInvocationID.x;
     
 }

@@ -27,8 +27,8 @@ BLACKLIST_DIRS = {
 # 例如：['./shaders/include', './common']
 # 留空则不添加额外 include 路径
 INCLUDE_DIRS = [
-    './Vulkitten/src',
-    './Sandbox/assets/computeshaders/common'
+    'Vulkitten/src',
+    'Sandbox/assets/computeshaders/common'
 ]
 
 # ==================== 逻辑区 ====================
@@ -53,7 +53,7 @@ def compile_shader(src_path: Path) -> bool:
 
     # 添加 include 路径
     for inc in INCLUDE_DIRS:
-        cmd.extend(['-I', inc])
+        cmd.extend(['-I' + inc])
 
     cmd.extend([
         '-o', str(out_path),
