@@ -1,0 +1,28 @@
+#version 450 core
+#extension GL_GOOGLE_include_directive : require
+
+#include "common/math_hash.h"
+#include "Vulkitten/Scene/GpuParticle/ParticleStruct.h"
+
+#define PARTICLE_SIM_INOUT
+#include "Vulkitten/Scene/GpuParticle/ParticleInOut.h"
+
+layout(local_size_x = PARTICLE_MAX_WGS, local_size_y = 1, local_size_z = 1) in;
+void main ()
+{
+    uint index = gl_GlobalInvocationID.x;
+    if (index >= ubo.EmitCount) return;
+
+    uint writeIdx = atomicAdd(argsWrite.currCount, 1u);
+    if (writeIdx >= ubo.MaxParticles) return;
+
+    vec3 n = hash32(vec2(float(index), ubo.TotalTime));
+
+    Particle pOut;
+    pOut.Position = n - 0.5;
+    pOut.Velocity = (n - 0.5) * 0.1;
+    pOut.LifeTime = 2.;
+    pOut.Size = 1.;
+
+    particlesWrite[writeIdx] = pOut;
+}

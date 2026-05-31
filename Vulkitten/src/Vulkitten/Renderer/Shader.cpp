@@ -43,6 +43,23 @@ namespace Vulkitten {
         }
     }
 
+    Ref<Shader> Shader::CreateCompute(const std::string& name, const std::string& filepath)
+    {
+        VKT_PROFILE_FUNCTION();
+
+        switch (Renderer::GetAPI())
+        {
+            case RendererAPI::API::None:
+                VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
+                return nullptr;
+            case RendererAPI::API::OpenGL:
+                return CreateRef<OpenGLShader>(name, filepath, true);
+            default:
+                VKT_CORE_ASSERT(false, "Unknown RendererAPI!");
+                return nullptr;
+        }
+    }
+
     void ShaderLibrary::Add(const std::string& name, const Ref<Shader>& shader)
     {
         VKT_PROFILE_FUNCTION();
@@ -83,12 +100,12 @@ namespace Vulkitten {
         return shader;
     }
 
-    Ref<Shader> ShaderLibrary::Get(const std::string& name)
+    Ref<Shader> ShaderLibrary::Get(const std::string& name) const
     {
         VKT_PROFILE_FUNCTION();
 
         VKT_CORE_ASSERT(Exists(name), "Shader not found!");
-        return m_Shaders[name];
+        return m_Shaders.at(name);
     }
 
     bool ShaderLibrary::Exists(const std::string& name) const

@@ -9,6 +9,7 @@
 #include "Vulkitten/Core/Input.h"
 #include "Vulkitten/Renderer/RenderCommand.h"
 #include "Vulkitten/Scene/Entity.h"
+#include "Vulkitten/Scene/Components.h"
 #include "Vulkitten/Scene/SceneCamera.h"
 #include "Vulkitten/Scene/SceneSerializer.h"
 #include "Vulkitten/Utils/FileDialogs.h"
@@ -67,8 +68,10 @@ namespace Vulkitten {
         m_Context.signals.Subscribe<EditorEvents::RequestSaveScene>(
             [this](const auto&) { SaveSceneAs(); });
 
+        // 4. 
         CreateTestScene();
 
+        // 5. Set up editor camera
         m_EditorCamera.SetViewportSize(
             (float)m_ViewportPanel->GetViewportWidth(),
             (float)m_ViewportPanel->GetViewportHeight()
@@ -143,6 +146,11 @@ namespace Vulkitten {
             auto& transform = entity.GetComponent<TransformComponent>();
             transform.SetPosition({ -2.0f, 0.0f, 0.2f });
             transform.SetScale({ 1.0f, 1.0f, 1.0f });
+        }
+
+        {
+			Entity entity = m_Scene->CreateEntity("ParticleEmitter");
+			auto& particleComp = entity.AddComponent<GpuEmitterComponent>(m_LogoTexture, 10000u);
         }
     }
 
@@ -348,6 +356,44 @@ namespace Vulkitten {
         ImGui::PopStyleVar(2);
         ImGui::PopStyleColor(3);
         ImGui::End();
+    }
+
+    void EditorLayer::OnScenePlay()
+    {
+        if (m_SceneState == SceneState::Simulate)
+            OnSceneStop();
+
+        m_SceneState = SceneState::Play;
+        m_Context.scene->OnRuntimeStart();
+    }
+
+    void EditorLayer::OnSceneSimulate()
+    {
+        if (m_SceneState == SceneState::Play)
+            OnSceneStop();
+
+        m_SceneState = SceneState::Simulate;
+        m_Context.scene->OnSimulationStart();
+    }
+
+    void EditorLayer::OnScenePause()
+    {
+        if (m_SceneState == SceneState::Edit)
+            return;
+
+        m_Context.scene->SetPaused(true);
+    }
+
+    void EditorLayer::OnSceneStop()
+    {
+        VKT_CORE_ASSERT(m_SceneState == SceneState::Play || m_SceneState == SceneState::Simulate);
+
+        if (m_SceneState == SceneState::Play)
+            m_Context.scene->OnRuntimeStop();
+        else if (m_SceneState == SceneState::Simulate)
+            m_Context.scene->OnSimulationStop();
+
+        m_SceneState = SceneState::Edit;
     }
 
     void EditorLayer::OnEvent(Event& event)

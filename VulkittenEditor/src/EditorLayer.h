@@ -37,9 +37,10 @@ namespace Vulkitten {
 
         void UI_Toolbar();
 
-        void OnScenePlay() {}
-        void OnSceneStop() {}
-		void OnSceneSimulate() {}
+        void OnScenePlay();
+        void OnSceneSimulate();
+        void OnScenePause();
+        void OnSceneStop();
 		Ref<Texture2D> m_IconPlay, m_IconStop, m_IconSimulate, m_IconPause, m_IconStep;
 
     private:

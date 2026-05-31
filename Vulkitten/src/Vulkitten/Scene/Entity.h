@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vulkitten/Core/Core.h"
+//#include "Vulkitten/Scene/Scene.h"
 
 #include "entt/entt.hpp"
 
@@ -17,7 +18,7 @@ namespace Vulkitten {
 
         bool operator==(const Entity& other) const { return m_EntityHandle == other.m_EntityHandle; }
         bool operator!=(const Entity& other) const { return !(*this == other); }
-operator bool() const { return m_EntityHandle != entt::null; }
+        operator bool() const { return m_EntityHandle != entt::null; }
 
         uint32_t GetEntityID() const { return static_cast<uint32_t>(m_EntityHandle); }
 
@@ -35,7 +36,7 @@ operator bool() const { return m_EntityHandle != entt::null; }
             return m_Scene->m_Registry.get<T>(m_EntityHandle);
         }
 
-template<typename T>
+        template<typename T>
         bool HasComponent()
         {
             return m_Scene->GetRegistry().any_of<T>(m_EntityHandle);
@@ -54,5 +55,15 @@ template<typename T>
 
         friend class Scene;
     };
+}
 
+namespace std {
+    template<>
+    struct hash<Vulkitten::Entity>
+    {
+        size_t operator()(const Vulkitten::Entity& entity) const
+        {
+            return hash<uint32_t>()(entity.GetEntityID());
+        }
+    };
 }

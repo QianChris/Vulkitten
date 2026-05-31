@@ -6,7 +6,7 @@
 
 namespace Vulkitten {
 
-class VKT_API Camera
+    class VKT_API Camera
     {
     public:
         Camera() = default;

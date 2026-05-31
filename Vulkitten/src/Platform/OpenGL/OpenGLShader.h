@@ -12,6 +12,7 @@ namespace Vulkitten {
     public:
         OpenGLShader(const std::string& filepath);
         OpenGLShader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc);
+        OpenGLShader(const std::string& name, const std::string& filepath, bool isCompute);
         virtual ~OpenGLShader() override;
 
         virtual void Bind() const override;
@@ -32,6 +33,7 @@ namespace Vulkitten {
         void UploadUniformInt(const std::string& name, int value);
     private:
         void Compile(const std::string& vertexSrc, const std::string& fragmentSrc);
+        void CompileCompute(const std::string& source);
 
         std::string m_Name;
         uint32_t m_RendererID;
