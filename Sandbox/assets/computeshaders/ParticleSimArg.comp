@@ -16,7 +16,7 @@ void main ()
     argsWrite.maxCount = ubo.MaxParticles;
     uint currCount = min(min(argsRead.currCount, argsRead.maxCount), ubo.MaxParticles);
     
-    argsWrite.currCount = currCount;
+    argsWrite.currCount = 0;
     argsWrite.ngx = currCount / PARTICLE_MAX_WGS + 1;
     argsWrite.ngy = 1;
     argsWrite.ngz = 1;

@@ -11,18 +11,23 @@ layout(local_size_x = PARTICLE_MAX_WGS, local_size_y = 1, local_size_z = 1) in;
 void main ()
 {
     uint index = gl_GlobalInvocationID.x;
-    if (index >= ubo.EmitCount) return;
+    if (index >= argsRead.currCount) return;
+
+    Particle pIn = particlesRead[index];
+
+    float life = pIn.LifeTime - ubo.DeltaTime;
+    if (life < 0.) return;
 
     uint writeIdx = atomicAdd(argsWrite.currCount, 1u);
     if (writeIdx >= ubo.MaxParticles) return;
 
-    vec3 n = hash32(vec2(float(index), ubo.TotalTime));
+    vec3 vel = pIn.Velocity + ubo.Gravity * ubo.DeltaTime;
+    vec3 pos = pIn.Position + vel * ubo.DeltaTime;
 
     Particle pOut;
-    pOut.Position = n - 0.5;
-    pOut.Velocity = (n - 0.5) * 0.1;
-    pOut.LifeTime = 2.;
-    pOut.Size = 1.;
-    
+    pOut.Position = pos;
+    pOut.LifeTime = life;
+    pOut.Velocity = vel;
+    pOut.Size = pIn.Size;
     particlesWrite[writeIdx] = pOut;
 }
