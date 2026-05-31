@@ -1,0 +1,1 @@
+python tools/ShaderCompile/compile_shader.py
