@@ -46,6 +46,10 @@ namespace Vulkitten {
         GLuint m_ParticleSSBO[2] = { 0, 0 };
         GLuint m_UBO = 0;
 
+        // Render resources
+        GLuint m_RenderUBO = 0;
+        GLuint m_VAO = 0;
+
         uint32_t m_FrameIndex = 0;
         float m_TotalTime = 0.0f;
     };

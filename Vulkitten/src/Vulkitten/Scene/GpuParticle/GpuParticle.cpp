@@ -59,6 +59,9 @@ namespace Vulkitten {
             Shader::CreateCompute("ParticleRenderArg",
                 "sandbox://assets/computeshaders/ParticleRenderArg.comp"));
 
+        // Load the particle render shader (vertex + fragment)
+        m_ShaderLibrary.Load("sandbox://assets/shaders/Particle.shader");
+
         m_Initialized = true;
     }
 
@@ -72,7 +75,9 @@ namespace Vulkitten {
         {
             glDeleteBuffers(2, m_ArgSSBO);
             glDeleteBuffers(2, m_ParticleSSBO);
-            if (m_UBO) glDeleteBuffers(1, &m_UBO);
+            glDeleteBuffers(1, &m_UBO);
+            glDeleteBuffers(1, &m_RenderUBO);
+            glDeleteVertexArrays(1, &m_VAO);
         }
     }
 
@@ -115,6 +120,27 @@ namespace Vulkitten {
         glBindBuffer(GL_UNIFORM_BUFFER, m_UBO);
         glBufferData(GL_UNIFORM_BUFFER, sizeof(ParticleUBO), nullptr, GL_DYNAMIC_DRAW);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+        // ---- Render UBO (projection, view, screendim) ----
+        glGenBuffers(1, &m_RenderUBO);
+        glBindBuffer(GL_UNIFORM_BUFFER, m_RenderUBO);
+        glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2 + sizeof(glm::vec2),
+                     nullptr, GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+        // ---- VAO for rendering particles as points ----
+        glGenVertexArrays(1, &m_VAO);
+        glBindVertexArray(m_VAO);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, 0);
+        glVertexAttribBinding(0, 0);
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribFormat(1, 1, GL_FLOAT, GL_FALSE, offsetof(Particle, Size));
+        glVertexAttribBinding(1, 0);
+
+        glBindVertexArray(0);
 
         m_Initialized = true;
     }
@@ -221,7 +247,64 @@ namespace Vulkitten {
     void GpuEmitterInstance::Render(Camera& camera)
     {
         VKT_PROFILE_FUNCTION();
-        // TODO: bind particle SSBO as vertex buffer, draw with glDrawArraysIndirect
+
+        if (!m_Initialized || m_MaxParticles == 0) return;
+
+        // Enable program point size so gl_PointSize in the vertex shader takes effect
+        glEnable(GL_PROGRAM_POINT_SIZE);
+
+        const uint32_t readIdx = m_FrameIndex;
+        auto& shaderLib = m_Manager->GetShaderLibrary();
+
+        // --- Bind render shader ---
+        auto shader = shaderLib.Get("Particle");
+        shader->Bind();
+
+        // --- Fill camera UBO (matches GLSL std140 layout) ---
+        glm::mat4 projection = camera.GetProjectionMatrix();
+        glm::mat4 viewProj = camera.GetViewProjectionMatrix();
+        // Derive view = inverse(projection) * viewProjection
+        glm::mat4 view = glm::inverse(projection) * viewProj;
+
+        GLint viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        glm::vec2 screendim((float)viewport[2], (float)viewport[3]);
+
+        // Layout: mat4(64) + mat4(64) + vec2(8) + pad(8) = 144 bytes
+        struct CameraUBO {
+            glm::mat4 projection;
+            glm::mat4 view;
+            glm::vec2 screendim;
+            float _pad[2];
+        };
+        CameraUBO camUbo = { projection, view, screendim, {0.0f, 0.0f} };
+
+        glBindBuffer(GL_UNIFORM_BUFFER, m_RenderUBO);
+
+        //glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(CameraUBO), &camUbo);
+
+        void* ptr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+        memcpy(ptr, &camUbo, sizeof(CameraUBO));
+        glUnmapBuffer(GL_UNIFORM_BUFFER);
+
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+        glBindBufferBase(GL_UNIFORM_BUFFER, 2, m_RenderUBO);
+
+        // --- Bind VAO and set vertex buffer to current particle buffer ---
+        glBindVertexArray(m_VAO);
+        glBindVertexBuffer(0, m_ParticleSSBO[readIdx], 0, sizeof(Particle));
+
+        glEnable(GL_PROGRAM_POINT_SIZE);
+
+        // --- Indirect draw ---
+        // ParticleRenderArg wrote the draw command at offsetof(ParticleArg, vertCount)
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, m_ArgSSBO[readIdx]);
+        glDrawArraysIndirect(GL_POINTS, (const void*)offsetof(ParticleArg, vertCount));
+
+        glDisable(GL_PROGRAM_POINT_SIZE);
+
+        glBindVertexArray(0);
     }
 
 }
