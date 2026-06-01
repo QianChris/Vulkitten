@@ -3,8 +3,9 @@
 
 #include <filesystem>
 
-#include "ExampleLayer.h"
-#include "Sandbox2D.h"
+//#include "ExampleLayer.h"
+//#include "Sandbox2D.h"
+#include "ExampleLayer2.h"
 
 class Sandbox : public Vulkitten::Application {
 public:
@@ -14,8 +15,9 @@ public:
         
         Vulkitten::FileSystem::RegisterPath("../../Sandbox", "sandbox");
 
-        //PushLayer(new ExampleLayer());
-        PushLayer(new Sandbox2D());
+        // PushLayer(new ExampleLayer());
+        //PushLayer(new Sandbox2D());
+        PushLayer(new ExampleLayer2());
     }
     ~Sandbox() {}
 };

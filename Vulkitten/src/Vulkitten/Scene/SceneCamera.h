@@ -14,7 +14,7 @@ namespace Vulkitten {
         SceneCamera() = default;
         ~SceneCamera() = default;
 
-void SetOrthographicProjection(float left, float right, float bottom, float top);
+        void SetOrthographicProjection(float left, float right, float bottom, float top);
         void SetPerspectiveProjection(float fovRadians, float nearClip, float farClip);
 
         void SetProjectionType(ProjectionType type) 

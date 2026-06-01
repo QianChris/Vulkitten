@@ -8,6 +8,9 @@
 #include "Vulkitten/Core/Layer.h"
 #include "Vulkitten/Events/Event.h"
 
+// Window
+#include "Vulkitten/Core/Window.h"
+
 // IO
 #include "Vulkitten/Core/Input.h"
 #include "Vulkitten/Core/KeyCode.h"
