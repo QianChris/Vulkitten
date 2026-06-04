@@ -6,6 +6,7 @@
 #include "Vulkitten/Renderer/Renderer2D.h"
 #include "Vulkitten/Renderer/Camera.h"
 #include "Vulkitten/Scene/GpuParticle/GpuParticle.h"
+#include "Vulkitten/Scene/Systems/System.h"
 
 #include "Components.h"
 #include "Entity.h"
@@ -15,6 +16,7 @@
 namespace Vulkitten {
 
     class Entity;
+    class System;
 
     class VKT_API Scene
     {
@@ -53,6 +55,7 @@ namespace Vulkitten {
         Camera* GetEditorCamera() { return m_EditorCamera; }
 
         entt::registry& GetRegistry() { return m_Registry; }
+        void AddSystem(Scope<System> system) { m_Systems.push_back(std::move(system)); }
 
     private:
         void TickScripts(Timestep ts);
@@ -60,8 +63,9 @@ namespace Vulkitten {
 
     private:
         entt::registry m_Registry;
-        Camera* m_EditorCamera = nullptr;
+        std::vector<Scope<System>> m_Systems;
 
+        Camera* m_EditorCamera = nullptr;
         GpuEmitterManager m_EmitterManager {};
         
 		bool m_IsRunning = false;

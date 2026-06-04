@@ -14,7 +14,7 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        RenderCommand::Init();
+        Legacy::RenderCommand::Init();
         Renderer2D::Init();
     }
 
@@ -22,7 +22,7 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        RenderCommand::SetViewport(0, 0, width, height);
+        Legacy::RenderCommand::SetViewport(0, 0, width, height);
     }
 
     void Renderer::Shutdown()
@@ -54,7 +54,7 @@ namespace Vulkitten {
         shader->SetUniformMat4("u_Transform", transform);
 
         vertexArray->Bind();
-        RenderCommand::DrawIndexed(vertexArray);
+        Legacy::RenderCommand::DrawIndexed(vertexArray);
     }
 
 }

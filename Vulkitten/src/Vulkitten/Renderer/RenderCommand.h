@@ -9,6 +9,7 @@
 
 namespace Vulkitten {
 
+namespace Legacy {
     class VKT_API RenderCommand
     {
     public:
@@ -41,5 +42,6 @@ inline static void DrawIndexed(const Ref<VertexArray>& vertexArray)
     private:
         static RendererAPI* s_RendererAPI;
     };
+}
 
 }

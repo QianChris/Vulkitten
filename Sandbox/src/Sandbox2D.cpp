@@ -111,8 +111,8 @@ void Sandbox2D::OnUpdate(Vulkitten::Timestep timestep)
 
     {
         VKT_TIMER("Render Prep");
-        Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
-        Vulkitten::RenderCommand::Clear();
+        Vulkitten::Legacy::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
+        Vulkitten::Legacy::RenderCommand::Clear();
     }
 
     static float rotation = 0.0f;

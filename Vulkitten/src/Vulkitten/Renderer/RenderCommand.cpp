@@ -5,6 +5,6 @@
 
 namespace Vulkitten {
 
-    RendererAPI* RenderCommand::s_RendererAPI = new OpenGLRendererAPI();
+    RendererAPI* Legacy::RenderCommand::s_RendererAPI = new OpenGLRendererAPI();
 
 }

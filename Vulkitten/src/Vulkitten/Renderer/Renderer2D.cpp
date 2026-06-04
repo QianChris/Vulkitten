@@ -224,7 +224,7 @@ void Renderer2D::SortAndFlush()
         }
 
         s_Data->quadVertexArray->Bind();
-        RenderCommand::DrawIndexed(s_Data->quadVertexArray, s_Data->quadCount * 6);
+        Legacy::RenderCommand::DrawIndexed(s_Data->quadVertexArray, s_Data->quadCount * 6);
 
         s_Data->stats.DrawCalls++;
         s_Data->stats.Quads += s_Data->quadCount;

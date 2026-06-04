@@ -30,6 +30,8 @@
 #include "Vulkitten/Scene/Entity.h"
 #include "Vulkitten/Scene/ScriptableEntity.h"
 
+#include "Vulkitten/Scene/Systems/RenderSystem.h"
+
 // Renderer
 #include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Renderer/Renderer2D.h"

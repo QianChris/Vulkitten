@@ -14,6 +14,14 @@ public:
         using namespace Vulkitten;
         m_Texture = Texture2D::Create("sandbox://assets/textures/Checkerboard.png");
 
+        CreateTestScene();
+
+        m_Scene->AddSystem(CreateScope<RenderSystem>());
+    }
+
+    void CreateTestScene()
+    {
+        using namespace Vulkitten;
         {
             auto entity = m_Scene->CreateEntity("Camera");
             auto& cameraComponent = entity.AddComponent<CameraComponent>();
@@ -57,8 +65,8 @@ public:
 
     void OnUpdate(Vulkitten::Timestep timestep) override
     {
-        Vulkitten::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
-        Vulkitten::RenderCommand::Clear();
+        Vulkitten::Legacy::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
+        Vulkitten::Legacy::RenderCommand::Clear();
         m_Scene->SetEditorCamera(nullptr);
         m_Scene->OnUpdate(timestep);
     }
