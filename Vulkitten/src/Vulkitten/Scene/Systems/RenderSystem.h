@@ -2,7 +2,6 @@
 
 #include "System.h"
 
-
 namespace Vulkitten {
 
     class Scene;
@@ -16,7 +15,7 @@ namespace Vulkitten {
         bool OnUpdate(Scene& scene, Timestep timestep, bool shouldRender) override;
     
     private:
-        void RenderQuadComponent();
+        //void RenderQuadComponent();
     };
 
 }

@@ -64,8 +64,19 @@ namespace Vulkitten {
 
     void Scene::OnUpdate(Timestep ts)
     {
+        // Logic tick
         TickScripts(ts);
 
+        bool shouldRender = false;
+        for (auto& system : m_Systems)
+        {
+            if (system->OnUpdate(*this, ts, shouldRender)) {
+                shouldRender = true;
+            }
+		}
+        if (!shouldRender) { return; }
+
+        // Render tick
         if (m_EditorCamera)
         {
             RenderScene(*m_EditorCamera);

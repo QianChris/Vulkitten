@@ -1,18 +1,29 @@
 #include "vktpch.h"
 #include "RenderSystem.h"
+#include "Vulkitten/Scene/Scene.h"
 
 namespace Vulkitten {
 
-    bool RenderSystem::OnUpdate(Scene& scene, Timestep timestep, bool shouldRender)
+    bool RenderQuadComponent(entt::registry& registry)
     {
-        RenderQuadComponent();
-        
-        return shouldRender;
+        auto view = registry.view<const TransformComponent, SpriteRendererComponent>();
+        for (auto entity : view)
+        {
+            auto& [transform, sprite] = view.get<TransformComponent, SpriteRendererComponent>(entity);
+            Renderer2D::DrawQuad(transform.GetTransform(), sprite.Texture, sprite.TilingFactor, sprite.Color);
+        }
+
+        return true;
     }
 
-    void RenderSystem::RenderQuadComponent()
+    bool RenderSystem::OnUpdate(Scene& scene, Timestep timestep, bool shouldRender)
     {
+        auto& registry = scene.GetRegistry();
+        bool ret = false;
 
+        ret = RenderQuadComponent(registry) || ret;
+        
+        return ret || shouldRender;
     }
 
 }

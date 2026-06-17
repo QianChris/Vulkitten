@@ -9,6 +9,7 @@
 namespace Vulkitten {
 
     Renderer::SceneData* Renderer::s_SceneData = new Renderer::SceneData();
+	RenderGraph* Renderer::m_graph = nullptr;
 
     void Renderer::Init()
     {
@@ -16,6 +17,8 @@ namespace Vulkitten {
 
         Legacy::RenderCommand::Init();
         Renderer2D::Init();
+
+        m_graph = new RenderGraph();
     }
 
     void Renderer::OnWindowResize(uint32_t width, uint32_t height)
@@ -28,6 +31,8 @@ namespace Vulkitten {
     void Renderer::Shutdown()
     {
         VKT_PROFILE_FUNCTION();
+
+        delete m_graph;
 
         Renderer2D::Shutdown();
     }

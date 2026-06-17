@@ -1,4 +1,3 @@
-#pragma once
 
 #include "Vulkitten/Core/Core.h"
 
@@ -6,6 +5,8 @@
 #include "Vulkitten/Renderer/VertexArray.h"
 
 #include <glm/glm.hpp>
+#include <cstdint>
+#include <variant>
 
 namespace Vulkitten {
 
@@ -42,6 +43,6 @@ inline static void DrawIndexed(const Ref<VertexArray>& vertexArray)
     private:
         static RendererAPI* s_RendererAPI;
     };
-}
+} // namespace Legacy
 
-}
+} // namespace Vulkitten

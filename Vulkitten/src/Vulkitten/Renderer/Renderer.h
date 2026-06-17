@@ -5,6 +5,8 @@
 #include "Vulkitten/Renderer/OrthographicCamera.h"
 //#include "Vulkitten/Renderer/Shader.h"
 
+#include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
+
 namespace Vulkitten {
 
     class Shader;
@@ -22,11 +24,17 @@ namespace Vulkitten {
         static void Submit(const Ref<Shader>& shader, const Ref<VertexArray>& vertexArray, const glm::mat4& transform = glm::mat4(1.0f));
 
         inline static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
+
+        // RenderGraph
+        inline static RenderGraph* GetRenderGraph() { return m_graph; }
+
     private:
         struct SceneData
         {
             glm::mat4 ViewProjectionMatrix;
         };
         static SceneData* s_SceneData;
+
+        static RenderGraph* m_graph;
     };
 }
