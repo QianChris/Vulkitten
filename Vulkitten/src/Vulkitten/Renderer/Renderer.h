@@ -27,6 +27,7 @@ namespace Vulkitten {
 
         // RenderGraph
         inline static RenderGraph* GetRenderGraph() { return m_graph; }
+        inline static void Render();
 
     private:
         struct SceneData

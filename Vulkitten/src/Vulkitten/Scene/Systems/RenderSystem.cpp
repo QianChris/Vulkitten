@@ -1,6 +1,7 @@
 #include "vktpch.h"
 #include "RenderSystem.h"
 #include "Vulkitten/Scene/Scene.h"
+#include "Vulkitten/Renderer/Renderer.h"
 
 namespace Vulkitten {
 
@@ -10,7 +11,15 @@ namespace Vulkitten {
         for (auto entity : view)
         {
             auto& [transform, sprite] = view.get<TransformComponent, SpriteRendererComponent>(entity);
-            Renderer2D::DrawQuad(transform.GetTransform(), sprite.Texture, sprite.TilingFactor, sprite.Color);
+            //Renderer2D::DrawQuad(transform.GetTransform(), sprite.Texture, sprite.TilingFactor, sprite.Color);
+
+            auto graph = Renderer::GetRenderGraph();
+            graph->AddCommand(DrawQuadCommand{
+                sprite.Color,
+                sprite.Texture,
+                sprite.TilingFactor,
+                transform.GetTransform()
+                });
         }
 
         return true;

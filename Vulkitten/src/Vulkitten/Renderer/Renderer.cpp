@@ -62,4 +62,8 @@ namespace Vulkitten {
         Legacy::RenderCommand::DrawIndexed(vertexArray);
     }
 
+    void Renderer::Render()
+    {
+        m_graph->Execute();
+    }
 }
