@@ -6,8 +6,11 @@ Guidelines for AI agents contributing to the Vulkitten Engine, a C++17 game engi
 
 ## Project Overview
 - **Standard**: C++17 | **Build**: CMake 3.16+ with Visual Studio 2022 (x64, Windows)
-- **Architecture**: DLL (`Vulkitten`) + Executable (`SandBox`) | **Renderer**: OpenGL 4 (GLAD)
-- **Key Dependencies**: spdlog, glm, glfw, imgui, stb_image
+- **Architecture**: DLL (`Vulkitten`) + Executable (`SandBox`) + Editor (`VulkittenEditor`)
+- **Renderer**: OpenGL 4 (GLAD) via abstract `RendererAPI`; RenderGraph pipeline (in-progress); Vulkan planned
+- **ECS**: EnTT-based with `Scene` owning `entt::registry`, `Entity` wrappers, `System` interface
+- **Editor**: Docked ImGui panels, ImGuizmo, undo/redo command system, entity picking
+- **Key Dependencies**: spdlog, glm, glfw, glad, imgui, entt, yaml-cpp, imguizmo, imnodes
 
 ---
 
@@ -67,41 +70,88 @@ No test framework configured. Verify changes via successful builds and manual ex
 ---
 
 ## Key Subsystems
-- **Event System**: Inherit from `Event`, use `EVENT_CLASS_TYPE`/`EVENT_CLASS_CATEGORY` macros
-- **Layers**: `PushLayer` (before overlays) or `PushOverlay` (always top)
-- **Renderer**: Abstract `RendererAPI`; use `RenderCommand`, `Shader`, `Texture`, `VertexArray`
+- **Event System**: Inherit from `Event`, use `EVENT_CLASS_TYPE`/`EVENT_CLASS_CATEGORY` macros, dispatch via `EventDispatcher`
+- **Layers**: `PushLayer` (in-order) or `PushOverlay` (always on top); Application runs OnUpdate then OnImguiRender for all layers
+- **ECS**: `Scene` owns `entt::registry`. `Entity` wraps `entt::entity` with `AddComponent`/`GetComponent`. Components are POD structs in `Components.h`. Systems implement `System::OnUpdate(Scene&, Timestep, bool)`.
+- **Renderer (6 layers, see [ARCHITECTURE.md](Vulkitten/ARCHITECTURE.md#4-分层渲染器架构))**:
+  - `RendererAPI` — abstract base for platform backends (virtual: Init, Clear, DrawIndexed)
+  - `Legacy::RenderCommand` — static proxy wrapping a `RendererAPI*` singleton
+  - `Renderer` — scene-level Begin/End/Submit; owns `RenderGraph` instance
+  - `Renderer2D` — immediate-mode batched quad renderer (10000 quads, 32 texture slots)
+  - `RenderGraph` — command-based pass system (**Execute() is currently a stub**)
+  - `RenderSystem` — ECS System that creates `RenderCommand`s from components
+- **GPU Particles**: Direct OpenGL compute shaders (glDispatchCompute, SSBOs, indirect draw) — bypasses all abstractions
 - **Entry Point**: Implement `Vulkitten::CreateApplication()` returning `Application*`
 
 ---
 
+## RenderGraph Pipeline (In Progress)
+
+- **`RenderGraph`** owns `vector<RenderPass> m_Passes` and `vector<RenderCommand> m_FrameCommands`
+- **`RenderCommand`** is `std::variant<DrawQuadCommand, ClearCommand>` (extensible — DrawMesh, DrawParticle, DrawFullscreen are reserved but commented out)
+- **`RenderPass`** has inputs/outputs (`PassResourceUsage` with `AccessFlags`/`pipelineStages`/`imageLayout`), `writesToSwapchain` flag, and `onExecute` callback
+- **`ResourcePool`** provides type-erased GPU resource management with generation-counted handles (`Handle<T>`), free-list allocation, and per-frame deferred deletion (`MAX_FRAMES_IN_FLIGHT`)
+- **`RenderGraphResource`** describes a resource by name, type (Texture2D/TextureCube/Buffer/SwapchainImage), and descriptor union
+- **Current state**: `Execute()` is **empty**. Rendering still goes through `Scene::RenderScene()` → `Renderer2D`. `RenderSystem` populates commands into the graph but they are never executed.
+- **To complete**: Implement `Execute()` to iterate passes, filter commands per pass, dispatch `onExecute` callbacks; wire `Renderer::Render()` into the main loop; transition `Scene::RenderScene()` to use RenderGraph
+
+---
+
+## GPU Particles (`Vulkitten/Scene/GpuParticle/`)
+
+- Uses **direct OpenGL compute shaders** — does NOT go through RendererAPI or RenderGraph
+- **Double-buffered SSBO** pairs for particle data and indirect args
+- **4 compute passes per frame**: SimArg (reset args) → Sim (indirect dispatch, update existing) → Emit (direct dispatch, spawn new) → RenderArg (write indirect draw args)
+- Renders as `GL_POINTS` via `glDrawArraysIndirect`
+- Managed per-emitter by `GpuEmitterManager` (owns ShaderLibrary + instance map)
+- Shaders loaded from `sandbox://assets/computeshaders/`
+- **Architectural note**: This is technical debt — future work should integrate compute into RenderGraph as a pass type
+
+---
+
 ## Editor Architecture (VulkittenEditor)
+
+### Context and Signals
+- `EditorContext` (in `EditorContext.h`) is the single shared state — scene, selected/hovered entity, editor camera, SignalBus, CommandSystem pointer
+- `SignalBus` provides type-safe publish/subscribe between panels without direct coupling — subscribe with `Subscribe<T>(handler)`, publish with `Publish<T>(event)`
+- Editor events: `EntitySelected`, `EntityHovered`, `EntityDestroyed`, `ComponentModified`, `SceneModified`, `ViewportResized`, `RequestNewScene`, `RequestOpenScene`, `RequestSaveScene`
+
+### Undo/Redo (CommandSystem)
+- `EditorCommand` base: `Execute()`, `Undo()`, `GetName()`
+- `CommandSystem` maintains history (max 50), supports `CanUndo()`/`CanRedo()`
+- Concrete commands: `DestroyEntityCommand`, `SetTransformCommand`
+- Commands created at gizmo release (ViewportPanel) or property edit completion (PropertyPanel)
+
 ### Panels
-All panels in `VulkittenEditor/src/Panel/` follow:
+All panels in `VulkittenEditor/src/Panel/` implement the `IPanel` interface:
 ```cpp
-class PanelName {
+class IPanel {
 public:
-    PanelName() = default;
-    PanelName(const Ref<Scene>& scene);
-    void SetContext(const Ref<Scene>& scene);
-    void OnImGuiRender();
+    virtual void OnAttach(EditorContext* context);
+    virtual void OnDetach();
+    virtual void OnUpdate(Timestep ts);
+    virtual void OnUIRender() = 0;
+    virtual void OnEvent(Event& event);
+    bool IsOpen;
 };
 ```
 
 | Panel | Purpose |
 |-------|---------|
-| `SceneHierarchyPanel` | Entity tree, selection (`m_SelectedEntityID`) |
-| `PropertyPanel` | Edit selected entity's components |
-| `ViewportPanel` | Render scene to framebuffer, gizmo |
-| `PerformancePanel` | FPS, frame time, Renderer2D stats |
-| `ResourcePanel` | Visualize texture resources |
+| `ViewportPanel` | Framebuffer rendering, ImGuizmo (T/R/Y), entity mouse picking (RED_INTEGER attachment) |
+| `SceneHierarchyPanel` | Entity tree with add/delete context menus |
+| `PropertyPanel` | Edit selected entity's Tag, Transform, SpriteRenderer, Camera, NativeScript components |
+| `PerformancePanel` | FPS, frame time, Renderer2D stats (DrawCalls, Quads, Vertices, TextureCount) |
+| `ResourcePanel` | Visualize texture resources with usage counts |
 
-### Panel Integration
-Initialize in `DefaultLayer::OnAttach()`:
+### Panel Initialization
+In `EditorLayer::OnAttach()`:
 ```cpp
-m_SceneHierarchyPanel.SetContext(m_Scene);
-m_PropertyPanel.SetContext(m_Scene);
+m_ViewportPanel->OnAttach(&m_Context);
+m_SceneHierarchyPanel->OnAttach(&m_Context);
+// etc.
 ```
-Render order: ViewportPanel → SceneHierarchyPanel → PropertyPanel → ResourcePanel → PerformancePanel
+UIRender order (within dockspace): Viewport → SceneHierarchy → Property → Resource → Performance
 
 ---
 
@@ -120,8 +170,30 @@ Render order: ViewportPanel → SceneHierarchyPanel → PropertyPanel → Resour
 
 ---
 
+## Vendor Dependencies
+
+Git submodules (in `Vulkitten/vendor/`):
+
+| Library | Purpose |
+|---------|---------|
+| `spdlog` | Logging framework |
+| `glm` | Math library (vec/mat/quat) |
+| `glfw` | Window creation + input |
+| `imgui` | Immediate-mode GUI (Dear ImGui) |
+| `entt` | ECS library (header-only, C++17) |
+| `yaml-cpp` | YAML serialization |
+| `ImGuizmo` | 3D gizmo for ImGui (Translate/Rotate/Scale) |
+| `imnodes` | Node editor for ImGui (future use) |
+
+Manual (header-only, no submodule):
+- `nlohmann/json` — JSON parsing in `vendor/nlohmann/include/`
+- `stb_image` — Image loading in `vendor/stb_image/`
+- `glad` — OpenGL function loader in `vendor/Glad/`
+
+---
+
 ## Notes
-- Only Windows (x64) + OpenGL supported
+- Only Windows (x64) + OpenGL supported; Vulkan planned
 - Third-party libs vendored in `Vulkitten/vendor/`
 - All `.cpp` files must include `vktpch.h` first
 - Use `VKT_PROFILE_*` macros for profiling
