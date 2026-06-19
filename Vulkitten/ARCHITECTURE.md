@@ -590,20 +590,21 @@ class SceneSerializer {
 
 反序列化：`sprite.Texture = Texture2D::Create(sprite.TexturePath);`
 
-### 虚拟文件系统（已实例化，过渡期保留静态转发）
+### 虚拟文件系统（实例化，通过 Engine 访问）
 
-FileSystem 已从全静态类重构为实例类。Engine 持有 `Scope<FileSystem>` 实例作为主 FileSystem。过渡期间保留一套静态包装方法（`FileSystem::RegisterPath` / `Resolve` / `Exists`），内部转发到 `Engine::Get().GetFileSystem().*_Impl()`。
+FileSystem 已从全静态类重构为实例类。Engine 持有 `Scope<FileSystem>` 实例，所有文件系统操作通过 `Engine::Get().GetFileSystem()` 访问。
 
 ```cpp
-// 当前用法（过渡期）：
-FileSystem::RegisterPath("../../Sandbox", "sandbox");
-// → Engine::Get().GetFileSystem().RegisterPath_Impl(path, protocol)
-
-// Task 5 后的最终用法：
+// 注册虚拟路径
 Engine::Get().GetFileSystem().RegisterPath("../../Sandbox", "sandbox");
+
+// 使用：
+// "sandbox://assets/shaders/FlatColor.shader"
+//   → Engine::Get().GetFileSystem().Resolve(path)
+//   → "../../Sandbox/assets/shaders/FlatColor.shader"
 ```
 
-协议前缀通过 `://` 分隔，解析为注册的物理路径。实例方法当前带 `_Impl` 后缀以避开 MSVC 同名静态/非静态冲突，Task 5 完成后重命名为原名。
+协议前缀通过 `://` 分隔，解析为注册的物理路径。
 
 ---
 

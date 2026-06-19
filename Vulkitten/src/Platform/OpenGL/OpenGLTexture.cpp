@@ -1,6 +1,7 @@
 #include "vktpch.h"
 #include "OpenGLTexture.h"
 
+#include "Vulkitten/Core/Engine.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -34,7 +35,7 @@ namespace Vulkitten {
     {
         VKT_PROFILE_RENDER_FUNCTION();
 
-        std::string fullpath = FileSystem::Resolve(path);
+        std::string fullpath = Engine::Get().GetFileSystem().Resolve(path);
         int width, height, channels;
         stbi_set_flip_vertically_on_load(1);
         stbi_uc* data = stbi_load(fullpath.c_str(), &width, &height, &channels, 0);

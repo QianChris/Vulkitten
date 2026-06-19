@@ -20,6 +20,7 @@
 #include "Vulkitten/Core/Timestep.h"
 #include "Vulkitten/Core/FileSystem.h"
 #include "Vulkitten/Core/ClassFactory.h"
+#include "Vulkitten/Core/Engine.h"
 
 // Performance
 #include "Vulkitten/Perf/Instrumentor.h"

@@ -2,6 +2,7 @@
 #include "Vulkitten/Core/Application.h"
 
 #include "Vulkitten/Core/Layer.h"
+#include "Vulkitten/Core/Engine.h"
 #include "Vulkitten/Core/Input.h"
 
 #include "Vulkitten/Renderer/Renderer.h"
@@ -20,7 +21,7 @@ namespace Vulkitten
     {
         VKT_PROFILE_FUNCTION();
 
-        Vulkitten::FileSystem::RegisterPath("../../Sandbox", "sandbox");
+        Engine::Get().GetFileSystem().RegisterPath("../../Sandbox", "sandbox");
 
         VKT_ASSERT(!s_Instance, "Application already exists!");
         s_Instance = this;

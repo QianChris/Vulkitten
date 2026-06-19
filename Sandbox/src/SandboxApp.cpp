@@ -13,7 +13,7 @@ public:
         auto currPath = std::filesystem::current_path().string();
         VKT_INFO("Current path is {0}", currPath);
         
-        Vulkitten::FileSystem::RegisterPath("../../Sandbox", "sandbox");
+        Vulkitten::Engine::Get().GetFileSystem().RegisterPath("../../Sandbox", "sandbox");
 
         // PushLayer(new ExampleLayer());
         //PushLayer(new Sandbox2D());

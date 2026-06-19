@@ -1,5 +1,6 @@
 #include "Vulkitten/Core/Application.h"
 #include "Vulkitten/Core/FileSystem.h"
+#include "Vulkitten/Core/Engine.h"
 
 #include <filesystem>
 #include "EditorLayer.h"
@@ -13,9 +14,9 @@ namespace Vulkitten {
             auto currPath = std::filesystem::current_path().string();
             VKT_INFO("Current path is {0}", currPath);
 
-            FileSystem::RegisterPath("../../VulkittenEditor", "editor");
-            FileSystem::RegisterPath("../../VulkittenEditor/assets/icons", "editorIcons");
-            FileSystem::RegisterPath("../../Sandbox", "sandbox");
+            Engine::Get().GetFileSystem().RegisterPath("../../VulkittenEditor", "editor");
+            Engine::Get().GetFileSystem().RegisterPath("../../VulkittenEditor/assets/icons", "editorIcons");
+            Engine::Get().GetFileSystem().RegisterPath("../../Sandbox", "sandbox");
 
             PushLayer(new EditorLayer());
         }

@@ -1,6 +1,7 @@
 #include "vktpch.h"
 #include "OpenGLShader.h"
 
+#include "Vulkitten/Core/Engine.h"
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
@@ -141,7 +142,7 @@ namespace Vulkitten {
     {
         VKT_PROFILE_RENDER_FUNCTION();
 
-        std::string fullPath = FileSystem::Resolve(filepath);
+        std::string fullPath = Engine::Get().GetFileSystem().Resolve(filepath);
 
         std::ifstream in(fullPath);
         if (!in.is_open())
@@ -158,8 +159,8 @@ namespace Vulkitten {
 
         auto j = nlohmann::json::parse(jsonStr);
 
-        std::string vertPath = FileSystem::Resolve(j["vertex"].get<std::string>());
-        std::string fragPath = FileSystem::Resolve(j["fragment"].get<std::string>());
+        std::string vertPath = Engine::Get().GetFileSystem().Resolve(j["vertex"].get<std::string>());
+        std::string fragPath = Engine::Get().GetFileSystem().Resolve(j["fragment"].get<std::string>());
 
         std::ifstream vertIn(vertPath);
         std::stringstream vertSs;
@@ -317,7 +318,7 @@ namespace Vulkitten {
 
         VKT_CORE_ASSERT(isCompute, "This constructor is only for compute shaders");
 
-        std::string fullPath = FileSystem::Resolve(filepath);
+        std::string fullPath = Engine::Get().GetFileSystem().Resolve(filepath);
 
         std::string source = ReadFileToString(fullPath);
         VKT_CORE_ASSERT(!source.empty(), "Failed to read compute shader file: {0}", fullPath);
