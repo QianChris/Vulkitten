@@ -69,12 +69,41 @@ namespace Vulkitten {
         TickScripts(ts);
 
         bool shouldRender = false;
-        for (auto& system : m_Systems)
+
+        if (m_SystemOrder.empty())
         {
-            if (system->OnUpdate(*this, ts, shouldRender)) {
-                shouldRender = true;
+            for (auto& system : m_Systems)
+            {
+                if (system->OnUpdate(*this, ts, shouldRender))
+                    shouldRender = true;
             }
-		}
+        }
+        else
+        {
+            std::vector<System*> ordered, unordered;
+            for (auto& system : m_Systems)
+                unordered.push_back(system.get());
+
+            for (const auto& name : m_SystemOrder)
+            {
+                for (auto it = unordered.begin(); it != unordered.end(); ++it)
+                {
+                    if ((*it)->GetName() == name)
+                    {
+                        ordered.push_back(*it);
+                        unordered.erase(it);
+                        break;
+                    }
+                }
+            }
+
+            for (auto* system : ordered)
+                if (system->OnUpdate(*this, ts, shouldRender))
+                    shouldRender = true;
+            for (auto* system : unordered)
+                if (system->OnUpdate(*this, ts, shouldRender))
+                    shouldRender = true;
+        }
 
         if (!shouldRender) { return; }
 

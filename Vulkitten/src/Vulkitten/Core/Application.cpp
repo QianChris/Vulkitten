@@ -4,6 +4,7 @@
 #include "Vulkitten/Core/Layer.h"
 #include "Vulkitten/Core/Engine.h"
 #include "Vulkitten/Core/Input.h"
+#include "Vulkitten/Core/GraphicContext.h"
 
 #include "Vulkitten/Renderer/RenderContext.h"
 #include "Vulkitten/Renderer/Device.h"
@@ -25,11 +26,14 @@ namespace Vulkitten
     {
         VKT_PROFILE_FUNCTION();
 
+        // Init engine subsystems first
+        Engine::Get().Init();
         Engine::Get().GetFileSystem().RegisterPath("../../Sandbox", "sandbox");
 
         VKT_ASSERT(!s_Instance, "Application already exists!");
         s_Instance = this;
 
+        // Create window first (RenderContext::Init needs it for backend context)
         m_Window.reset(Window::Create());
         m_Window->SetEventCallback(VKT_BIND_EVENT_FN(Application::OnEvent));
 
@@ -41,6 +45,9 @@ namespace Vulkitten
         m_RenderContext = CreateScope<RenderContext>(
             m_Device.get(), *m_Resources, *m_ShaderMgr);
         m_RenderContext->Init();
+
+        // GraphicContext wraps existing window + RenderContext
+        m_GraphicContext = CreateScope<GraphicContext>(*m_RenderContext);
 
         m_ImGuiLayer = new ImGuiLayer();
         PushOverlay(m_ImGuiLayer);

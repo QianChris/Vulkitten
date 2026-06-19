@@ -1,6 +1,10 @@
 #include "vktpch.h"
 #include "RenderSystem.h"
 #include "Vulkitten/Scene/Scene.h"
+
+namespace Vulkitten {
+const std::string RenderSystem::s_Name = "RenderSystem";
+}
 #include "Vulkitten/Renderer/RenderContext.h"
 
 namespace Vulkitten {

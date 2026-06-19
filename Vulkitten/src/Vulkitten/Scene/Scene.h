@@ -55,6 +55,9 @@ namespace Vulkitten {
 
         entt::registry& GetRegistry() { return m_Registry; }
         void AddSystem(Scope<System> system) { m_Systems.push_back(std::move(system)); }
+        // Configure the execution order of Systems by name.
+        // Systems not listed execute last, in their AddSystem order.
+        void SetSystemOrder(std::vector<std::string> systemNames) { m_SystemOrder = std::move(systemNames); }
         GpuEmitterManager& GetEmitterManager() { return m_EmitterManager; }
 
     private:
@@ -63,6 +66,7 @@ namespace Vulkitten {
     private:
         entt::registry m_Registry;
         std::vector<Scope<System>> m_Systems;
+        std::vector<std::string> m_SystemOrder;
 
         Camera* m_EditorCamera = nullptr;
         GpuEmitterManager m_EmitterManager {};

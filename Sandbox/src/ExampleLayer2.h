@@ -8,7 +8,7 @@ class ExampleLayer2 : public Vulkitten::Layer
 public:
     ExampleLayer2() : Layer("Empty")
     {
-        m_Scene = Vulkitten::CreateRef<Vulkitten::Scene>();
+        m_Scene = Vulkitten::Engine::Get().CreateEmptyScene();
         m_ShaderLibrary.Load("sandbox://assets/shaders/FlatColor.shader");
 
         using namespace Vulkitten;
@@ -76,10 +76,28 @@ public:
 
     void OnEvent(Vulkitten::Event& event) override
     {
+        // OnEvent pattern: modify Component data only.
+        // Scene::OnUpdate reads Component state each frame.
+        Vulkitten::EventDispatcher dispatcher(event);
+        dispatcher.Dispatch<Vulkitten::KeyPressedEvent>([this](Vulkitten::KeyPressedEvent& e)
+        {
+            if (e.GetKeyCode() == VKT_KEY_SPACE)
+            {
+                // Modify component data — rendering reacts next frame
+                auto view = m_Scene->GetRegistry().view<Vulkitten::SpriteRendererComponent>();
+                for (auto entity : view)
+                {
+                    auto& sprite = view.get<Vulkitten::SpriteRendererComponent>(entity);
+                    sprite.Color = { 1.0f, 0.0f, 0.0f, 1.0f }; // flash red
+                }
+                return true;
+            }
+            return false;
+        });
     }
 
 private:
-    Vulkitten::Ref<Vulkitten::Scene> m_Scene;
+    Vulkitten::Scope<Vulkitten::Scene> m_Scene;
     Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
 
     Vulkitten::ShaderLibrary m_ShaderLibrary;

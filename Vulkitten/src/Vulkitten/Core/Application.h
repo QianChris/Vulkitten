@@ -12,6 +12,7 @@
 namespace Vulkitten
 {
     class RenderContext;
+    class GraphicContext;
     class OpenGLDevice;
     class GpuResourceManager;
     class ShaderManager;
@@ -44,6 +45,7 @@ namespace Vulkitten
         Scope<GpuResourceManager> m_Resources;
         Scope<ShaderManager> m_ShaderMgr;
 
+		Scope<GraphicContext> m_GraphicContext;
 		Scope<Window> m_Window;
         ImGuiLayer* m_ImGuiLayer;
         LayerStack m_LayerStack;

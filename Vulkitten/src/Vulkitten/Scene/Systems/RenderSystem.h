@@ -13,8 +13,10 @@ namespace Vulkitten {
         virtual ~RenderSystem() = default;
 
         bool OnUpdate(Scene& scene, Timestep timestep, bool shouldRender) override;
-    
+        const std::string& GetName() const override { return s_Name; }
+
     private:
+        static const std::string s_Name;
         //void RenderQuadComponent();
     };
 

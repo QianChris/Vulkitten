@@ -7,6 +7,7 @@ namespace Vulkitten {
 class FileSystem;
 class Log;
 class Input;
+class Scene;
 
 // ============================================================
 // Engine — the core engine singleton.
@@ -42,6 +43,17 @@ public:
 
     // Convenience accessor — delegates to ClassFactory::GetInstance<Engine>()
     static Engine& Get();
+
+    // ---- Scene Factory ----
+
+    // Create an empty scene with a fresh entt::registry.
+    Scope<Scene> CreateEmptyScene();
+
+    // Load a scene from a glTF file. Stub — returns empty scene for now.
+    Scope<Scene> LoadSceneFromGltf(const std::string& filepath);
+
+    // Merge all entities and components from source into target.
+    void MergeScenes(Scene& target, Scene& source);
 
     // ---- Future Subsystems (stubs) ----
 
