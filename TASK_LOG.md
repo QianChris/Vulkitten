@@ -68,3 +68,23 @@
 - **Start**: 2026-06-19
 - **End**: 2026-06-19
 - **Summary**: Created RenderContext (Vulkitten/src/Vulkitten/Renderer/RenderContext.h/.cpp) as the rendering subsystem singleton, owning Renderer (instance, no longer static) and RenderUtils (empty stub). Renderer.h/.cpp refactored from static class to instance class: Init/Shutdown/Execute/GetRenderGraph/SetViewProjection/OnWindowResize are now instance methods. RenderContext owns the Renderer and provides static Get() for global access. Application.cpp now creates GpuResourceManager + ShaderManager + OpenGLDevice + RenderContext (via Scope<...> members). Updated 10 caller files (Application, ClassFactory, EditorLayer, Scene, RenderSystem, SpriteRenderPass, PreparePass, GpuParticlePass, Vulkitten.h umbrella) to use RenderContext::Get().GetRenderGraph() instead of Renderer::GetRenderGraph(). Renamed GpuResourceManager's TextureDesc/BufferDesc to GpuTextureDesc/GpuBufferDesc to avoid conflict with RenderGraphResource.h. All 3 targets compile.
+
+## Task 9: GraphicContext Singleton
+- **Start**: 2026-06-19
+- **End**: 2026-06-19
+- **Summary**: Created GraphicContext (Vulkitten/src/Vulkitten/Core/GraphicContext.h/.cpp) as the user-visible graphics shell. Takes RenderContext& in constructor, owns Window (via Window::Create()), and holds SceneUtil/GraphicUtil empty stubs. Provides static Get() for global access. StreamBuffers still handled by EndPass via RenderContext's RenderGraph backend context. Also added Vulkitten/Utils/SceneUtil.h and Vulkitten/Utils/GraphicUtil.h placeholder classes. All 3 targets compile.
+
+## Task 10: Engine Scene Factory Methods
+- **Start**: 2026-06-19
+- **End**: 2026-06-19
+- **Summary**: Added three Scene factory methods to Engine. CreateEmptyScene() returns Scope<Scene> with a fresh entt::registry. LoadSceneFromGltf(filepath) is a stub returning empty scene. MergeScenes(target, source) iterates source entities via component views (Tag, Transform, SpriteRenderer, Camera), clones each entity with all known component types into the target. Engine.h now forward-declares Scene; Engine.cpp includes Scene.h and Entity.h. All 3 targets compile.
+
+## Task 11: System Execution Order
+- **Start**: 2026-06-19
+- **End**: 2026-06-19
+- **Summary**: Added virtual GetName() to System base class. RenderSystem now returns static name "RenderSystem". Scene gains SetSystemOrder(vector<string>) to configure execution order. Scene::OnUpdate respects ordering: systems matching configured names execute first in order, unlisted systems execute last in AddSystem order. All 3 targets compile.
+
+## Tasks 12-14: Application Wiring, Sandbox Adaptation, OnEvent Pattern
+- **Start**: 2026-06-19
+- **End**: 2026-06-19
+- **Summary**: Task 12: Application constructor now calls Engine::Get().Init() first, creates Window before RenderContext (needed for backend context), then creates GraphicContext wrapping RenderContext. Task 13: Sandbox ExampleLayer2 adapted — m_Scene changed from Ref<Scene> to Scope<Scene>, created via Engine::Get().CreateEmptyScene(). Sandbox2D.h and ExampleLayer.h remain excluded from build. Task 14: Added OnEvent example in ExampleLayer2 — pressing Space triggers KeyPressedEvent dispatch, modifies all SpriteRendererComponent::Color to red. Demonstrates the OnEvent→Component pattern where events only modify component data, and Scene::OnUpdate reads the updated components next frame. All 3 targets compile.
