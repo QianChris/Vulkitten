@@ -162,7 +162,7 @@ namespace Vulkitten {
     void WindowsWindow::OnUpdate()
     {
         glfwPollEvents();
-        m_Context->SwapBuffers();
+        // SwapBuffers is now handled by EndPass in RenderGraph
     }
 
     void WindowsWindow::SetVSync(bool enabled)

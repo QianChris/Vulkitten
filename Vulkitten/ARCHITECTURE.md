@@ -178,31 +178,33 @@ Scene::OnUpdate(Timestep)
                          ├─────────────────────────────────┐
                          │                                 │
                     RenderSystem                     Scene::RenderScene()
-                    (Path B: 新)                     (Path A: 旧/当前可用)
+                    (Path B: 新, ✅ 可用)             (Path A: 旧, 无System时回退)
                          │                                 │
                          ▼                                 ▼
                     RenderGraph                        Renderer2D
-                    (命令收集)                        (即时模式批处理)
+                    (命令收集+执行)                    (即时模式批处理)
                          │                                 │
                          ▼                                 ▼
                     Passes                            直接 OpenGL
-                    (Execute() 为空!!)                 (实际工作路径)
-                         │
-                    [未来：任意后端]
+                    (PreparePass → SpriteRenderPass    (回退路径)
+                     → EndPass)
                          │
                          ▼
-                    实际 Draw Call
+                    实际 Draw Call + SwapBuffers
+```
+
+> **注意**：当 Scene 注册了 System（如 RenderSystem）时，使用 Path B；否则回退到 Path A。Task 3 将移除 Path A。
 ```
 
 ### 六层抽象（自上而下）
 
 | 层 | 类/文件 | 职责 | 状态 |
 |----|---------|------|------|
-| **6. RenderSystem** | `Scene/Systems/RenderSystem` | ECS→RenderCommand 桥接，遍历实体生成 DrawQuadCommand | ✅ 可用，输出进入 Path B |
-| **5. RenderGraph** | `Renderer/RenderGraph/RenderGraph` | 命令式延迟渲染管线，管理 Passes 和 FrameCommands | 🚧 Execute() 为空 |
-| **4. Renderer** | `Renderer/Renderer` | 场景级抽象 (BeginScene/EndScene/Submit)，持有 RenderGraph 实例 | ✅ 可用但不被调用 |
-| **3. Renderer2D** | `Renderer/Renderer2D` | 即时模式批处理四边形渲染器 (10000 四边形/32 纹理槽) | ✅ 可用，Path A |
-| **2. Legacy::RenderCommand** | `Renderer/RenderCommand` | 静态代理类包装 RendererAPI* 单例，提供内联 Clear/Draw 方法 | ✅ 广泛使用 |
+| **6. RenderSystem** | `Scene/Systems/RenderSystem` | ECS→RenderCommand 桥接，遍历实体生成 DrawQuadCommand + ClearCommand | ✅ 可用 |
+| **5. RenderGraph** | `Renderer/RenderGraph/RenderGraph` | 命令式延迟渲染管线，管理 Passes 和 FrameCommands | ✅ Execute() 已实现，按 Pass 名称过滤命令 |
+| **4. Renderer** | `Renderer/Renderer` | 场景级抽象，持有 RenderGraph 实例，注册 Passes，提供 Render() | ✅ 已接入主循环 |
+| **3. Renderer2D** | `Renderer/Renderer2D` | 即时模式批处理四边形渲染器 (10000 四边形/32 纹理槽) | ✅ 被 SpriteRenderPass 内部使用 |
+| **2. Legacy::RenderCommand** | `Renderer/RenderCommand` | 静态代理类包装 RendererAPI* 单例，提供内联 Clear/Draw 方法 | ✅ 被 PreparePass 内部使用 |
 | **1. RendererAPI** | `Renderer/RendererAPI` | 最低层 GPU 抽象：Init, Clear, DrawIndexed 等纯虚接口 | ✅ OpenGL 实现 |
 
 ### 工厂模式（抽象 → 平台）
@@ -222,18 +224,46 @@ static Ref<Texture2D> Create(uint32_t width, uint32_t height);
 
 ## 5. RenderGraph 深度解析
 
-> **状态**：数据结构完整，Execute() 未实现。这是 Phase 1 的核心工作。
+> **状态**：核心执行流程已完成。Execute() 按 Pass 名称过滤命令 → 调用 onExecute 回调 → 渲染完成。
 
 ### 核心数据结构
 
 ```
 RenderGraph
-├── vector<RenderPass> m_Passes         // 已注册的 Pass
-├── vector<RenderCommand> m_FrameCommands  // 帧内所有渲染命令
-├── AddPass(pass)                       // 注册 Pass
+├── vector<RenderPass> m_Passes         // 已注册的 Pass (持久)
+├── vector<RenderCommand> m_FrameCommands  // 帧内所有渲染命令 (每帧清空)
+├── vector<RenderGraphResource> m_Resources  // 资源描述符
+├── void* m_BackendContext              // 后端上下文 (EndPass 用于 SwapBuffers)
+├── glm::mat4 m_ViewProjection          // 当前帧的 VP 矩阵
+├── Camera* m_SceneCamera               // 当前场景相机
+├── AddPass(pass)                       // 注册 Pass (在 Renderer::Init 中调用)
 ├── AddCommand(cmd)                     // 收集命令（由 RenderSystem 调用）
-├── Execute()                           // 🚧 空实现，需完成
-└── Clear()                             // 每帧清空命令
+├── Execute()                           // ✅ 遍历 Passes，按名过滤命令，执行 onExecute
+└── ClearFrameCommands()                // 每帧清空命令
+```
+
+### 已注册 Passes
+
+| Pass | 过滤命令类型 | onExecute 行为 |
+|------|-------------|---------------|
+| **PreparePass** | `ClearCommand` | 调用 `Legacy::RenderCommand::SetClearColor` + `Clear` |
+| **SpriteRenderPass** | `DrawQuadCommand` | 从 graph 获取 Camera，调用 `Renderer2D::BeginScene` → `DrawQuad` × N → `EndScene` |
+| **EndPass** | (无) | 将 `backendContext` 转为 `GraphicsContext*`，调用 `SwapBuffers` |
+
+### 执行流程
+
+```
+Scene::OnUpdate
+  └─ RenderSystem::OnUpdate → 添加 ClearCommand + DrawQuadCommand × N
+  └─ Scene 设置 Camera + VP 到 RenderGraph
+  └─ 返回 (不调用 RenderScene)
+
+Application::Run
+  └─ ... ImGui 渲染 ...
+  └─ Renderer::Render() → m_graph->Execute()
+       ├─ PreparePass::onExecute → ClearCommand → glClear
+       ├─ SpriteRenderPass::onExecute → Renderer2D 批量绘制
+       └─ EndPass::onExecute → SwapBuffers
 ```
 
 ### RenderPass
@@ -294,10 +324,10 @@ ResourceHandle<T> = { uint32_t index, uint16_t generation }
 
 ### 当前缺口（待实现）
 
-1. `RenderGraph::Execute()` 需要对每个 Pass 过滤匹配的 Commands，调用其 `onExecute`
-2. `ResourcePool` 需要在 Execute 期间分配/转换实际 GPU 资源
-3. Pass 的资源依赖分析和 barrier 插入（目前仅在 PassResourceUsage 中声明）
-4. QuadRenderPass::onExecute 需要实际调用 Renderer2D 来绘制四边形
+1. Pass 的资源依赖分析和 barrier 插入（目前仅在 PassResourceUsage 中声明，未被 Execute 使用）
+2. `ResourcePool` 的 GPU 资源分配/转换（数据结构和 Handle 已就绪，Execute 中未集成）
+3. GPU 粒子系统接入 RenderGraph（当前仍绕过所有抽象）
+4. EditorLayer 的 Framebuffer 配置迁移到 Pass 配置（Task 2）
 
 ---
 

@@ -184,8 +184,8 @@ namespace Vulkitten {
         // Phase 4: 渲染场景到 Viewport Framebuffer
         auto framebuffer = m_ViewportPanel->GetFramebuffer();
         framebuffer->Bind();
-        RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
-        RenderCommand::Clear();
+        Legacy::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
+        Legacy::RenderCommand::Clear();
         framebuffer->ClearAttachment(1, -1);
 
         if (m_Context.isEditorCameraActive)

@@ -2,6 +2,7 @@
 #include "Scene.h"
 #include "ScriptableEntity.h"
 #include "Entity.h"
+#include "Vulkitten/Renderer/Renderer.h"
 
 namespace Vulkitten {
 
@@ -74,9 +75,47 @@ namespace Vulkitten {
                 shouldRender = true;
             }
 		}
+
+        // RenderGraph path: systems have populated the graph with commands.
+        // Store camera for passes, skip direct RenderScene.
+        if (!m_Systems.empty() && shouldRender)
+        {
+            Camera* camera = m_EditorCamera;
+
+            if (!camera)
+            {
+                Entity cameraEntity(entt::null, this);
+                auto cameraView = m_Registry.view<CameraComponent>();
+                for (auto entity : cameraView)
+                {
+                    if (cameraView.get<CameraComponent>(entity).Primary)
+                    {
+                        cameraEntity = Entity(entity, this);
+                        break;
+                    }
+                }
+                if (cameraEntity)
+                {
+                    auto& cameraComponent = cameraEntity.GetComponent<CameraComponent>();
+                    auto& transform = cameraEntity.GetComponent<TransformComponent>();
+                    cameraComponent.Camera.SetTransform(transform.GetTransform());
+                    camera = &cameraComponent.Camera;
+                }
+            }
+
+            if (camera)
+            {
+                auto* graph = Renderer::GetRenderGraph();
+                graph->SetSceneCamera(camera);
+                graph->SetViewProjection(camera->GetViewProjectionMatrix());
+            }
+
+            return;  // RenderGraph will handle execution in Renderer::Render()
+        }
+
         if (!shouldRender) { return; }
 
-        // Render tick
+        // Legacy path (no systems registered): direct RenderScene call
         if (m_EditorCamera)
         {
             RenderScene(*m_EditorCamera);

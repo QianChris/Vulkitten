@@ -5,6 +5,8 @@
 #include "Vulkitten/Renderer/RenderGraph/RenderCommand.h"
 #include "Vulkitten/Renderer/RenderGraph/RenderPass.h"
 
+#include <glm/glm.hpp>
+
 namespace Vulkitten {
 
     class VKT_API RenderGraph {
@@ -21,14 +23,25 @@ namespace Vulkitten {
 
         void Execute();
 
+        void SetBackendContext(void* context) { m_BackendContext = context; }
+        void SetViewProjection(const glm::mat4& vp) { m_ViewProjection = vp; }
+        const glm::mat4& GetViewProjection() const { return m_ViewProjection; }
+
+        // Camera for passes that need it (e.g., SpriteRenderPass)
+        void SetSceneCamera(class Camera* camera) { m_SceneCamera = camera; }
+        class Camera* GetSceneCamera() const { return m_SceneCamera; }
+
     private:
-        void Clear() {
-            m_Passes.clear();
-			m_FrameCommands.clear();
+        void ClearFrameCommands() {
+            m_FrameCommands.clear();
         }
 
         std::vector<RenderPass> m_Passes{};
         std::vector<RenderCommand> m_FrameCommands{};
+        std::vector<RenderGraphResource> m_Resources{};
+        void* m_BackendContext = nullptr;
+        glm::mat4 m_ViewProjection{1.0f};
+        class Camera* m_SceneCamera = nullptr;
     };
-    
+
 }

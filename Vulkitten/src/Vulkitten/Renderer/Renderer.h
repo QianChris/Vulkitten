@@ -27,7 +27,8 @@ namespace Vulkitten {
 
         // RenderGraph
         inline static RenderGraph* GetRenderGraph() { return m_graph; }
-        inline static void Render();
+        static void Render();
+        inline static void SetViewProjection(const glm::mat4& vp) { if (m_graph) m_graph->SetViewProjection(vp); }
 
     private:
         struct SceneData

@@ -1,0 +1,4 @@
+1. 完成对RenderGraph最基本的调用：创建新的Pass类，SpriteRenderPass做DrawQuadCommand渲染，PreparePass做Clear相关的Command，EndPass做swapbuffer操作，之后Application和Scene类都不再直接调用独立的RenderAPI的功能（比如SwapBuffer）
+2. 把对FrameBuffer的配置也放到Pass配置中。用户在App（Sandbox）中配置Pass后，Pass实现整体的渲染流程。
+3. 清理原有直接调用Renderer2D的通路，让目前Sandbox（ExampleLayer2）的渲染直接依赖RenderGraph进行。
+4. 创建ClassFactory类，创建UUID方法，收拢所有的单例创建、管理，让ClassFactory成为唯一单例。

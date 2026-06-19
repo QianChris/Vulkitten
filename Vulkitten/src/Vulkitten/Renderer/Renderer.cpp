@@ -4,6 +4,11 @@
 #include "Shader.h"
 #include "Renderer2D.h"
 
+#include "Vulkitten/Renderer/Passes/PreparePass.h"
+#include "Vulkitten/Renderer/Passes/SpriteRenderPass.h"
+#include "Vulkitten/Renderer/Passes/EndPass.h"
+#include "Vulkitten/Core/Application.h"
+
 #include "Vulkitten/Perf/Instrumentor.h"
 
 namespace Vulkitten {
@@ -19,6 +24,14 @@ namespace Vulkitten {
         Renderer2D::Init();
 
         m_graph = new RenderGraph();
+
+        // Register default render passes
+        m_graph->AddPass(PreparePass{});
+        m_graph->AddPass(SpriteRenderPass{});
+        m_graph->AddPass(EndPass{});
+
+        // Set backend context for EndPass (SwapBuffers)
+        m_graph->SetBackendContext(Application::Get().GetWindow().GetGraphicsContext());
     }
 
     void Renderer::OnWindowResize(uint32_t width, uint32_t height)

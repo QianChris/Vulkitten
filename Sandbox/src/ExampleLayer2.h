@@ -65,8 +65,7 @@ public:
 
     void OnUpdate(Vulkitten::Timestep timestep) override
     {
-        Vulkitten::Legacy::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
-        Vulkitten::Legacy::RenderCommand::Clear();
+        // Clear is now handled by RenderSystem → RenderGraph PreparePass
         m_Scene->SetEditorCamera(nullptr);
         m_Scene->OnUpdate(timestep);
     }

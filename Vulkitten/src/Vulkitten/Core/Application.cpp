@@ -77,6 +77,12 @@ namespace Vulkitten
                 m_ImGuiLayer->End();
             }
 
+            // Execute RenderGraph (all passes, including present via EndPass)
+            {
+                VKT_PROFILE_SCOPE("RenderGraph execute");
+                Renderer::Render();
+            }
+
             auto frameEndTime = std::chrono::high_resolution_clock::now();
             m_FrameTime = std::chrono::duration<float>(frameEndTime - startTime).count();
 
