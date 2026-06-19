@@ -31,6 +31,10 @@ namespace Vulkitten {
         void SetSceneCamera(class Camera* camera) { m_SceneCamera = camera; }
         class Camera* GetSceneCamera() const { return m_SceneCamera; }
 
+        // Framebuffer for passes that render offscreen (nullptr = default backbuffer)
+        void SetFramebuffer(Ref<class Framebuffer> fb) { m_Framebuffer = fb; }
+        Ref<class Framebuffer> GetFramebuffer() const { return m_Framebuffer; }
+
     private:
         void ClearFrameCommands() {
             m_FrameCommands.clear();
@@ -42,6 +46,7 @@ namespace Vulkitten {
         void* m_BackendContext = nullptr;
         glm::mat4 m_ViewProjection{1.0f};
         class Camera* m_SceneCamera = nullptr;
+        Ref<class Framebuffer> m_Framebuffer;
     };
 
 }

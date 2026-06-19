@@ -246,9 +246,9 @@ RenderGraph
 
 | Pass | 过滤命令类型 | onExecute 行为 |
 |------|-------------|---------------|
-| **PreparePass** | `ClearCommand` | 调用 `Legacy::RenderCommand::SetClearColor` + `Clear` |
-| **SpriteRenderPass** | `DrawQuadCommand` | 从 graph 获取 Camera，调用 `Renderer2D::BeginScene` → `DrawQuad` × N → `EndScene` |
-| **EndPass** | (无) | 将 `backendContext` 转为 `GraphicsContext*`，调用 `SwapBuffers` |
+| **PreparePass** | `ClearCommand` | 若 graph 配置了 Framebuffer 则绑定额外 Framebuffer；调用 `Legacy::RenderCommand::SetClearColor` + `Clear`；解绑 |
+| **SpriteRenderPass** | `DrawQuadCommand` | 若 graph 配置了 Framebuffer 则绑定额外 Framebuffer；从 graph 获取 Camera，调用 `Renderer2D::BeginScene` → `DrawQuad` × N → `EndScene`；解绑 |
+| **EndPass** | (无) | 将 `backendContext` 转为 `GraphicsContext*`，调用 `SwapBuffers`（始终作用于默认 Backbuffer） |
 
 ### 执行流程
 

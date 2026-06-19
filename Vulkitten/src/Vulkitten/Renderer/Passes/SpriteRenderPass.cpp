@@ -2,8 +2,8 @@
 #include "SpriteRenderPass.h"
 
 #include "Vulkitten/Renderer/Renderer2D.h"
-#include "Vulkitten/Renderer/OrthographicCamera.h"
 #include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/Framebuffer.h"
 
 namespace Vulkitten {
 
@@ -22,6 +22,10 @@ SpriteRenderPass::SpriteRenderPass()
 
         if (!camera)
             return;
+
+        auto framebuffer = graph->GetFramebuffer();
+        if (framebuffer)
+            framebuffer->Bind();
 
         Renderer2D::BeginScene(*camera);
 
@@ -47,6 +51,9 @@ SpriteRenderPass::SpriteRenderPass()
         }
 
         Renderer2D::EndScene();
+
+        if (framebuffer)
+            framebuffer->Unbind();
     });
 }
 

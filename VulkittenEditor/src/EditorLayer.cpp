@@ -8,6 +8,7 @@
 #include "Vulkitten/Core/MouseButtonCode.h"
 #include "Vulkitten/Core/Input.h"
 #include "Vulkitten/Renderer/RenderCommand.h"
+#include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Scene/Entity.h"
 #include "Vulkitten/Scene/Components.h"
 #include "Vulkitten/Scene/SceneCamera.h"
@@ -181,12 +182,14 @@ namespace Vulkitten {
             );
         }
 
-        // Phase 4: 渲染场景到 Viewport Framebuffer
+        // Phase 4: 渲染场景到 Viewport Framebuffer (via RenderGraph)
         auto framebuffer = m_ViewportPanel->GetFramebuffer();
+        Renderer::GetRenderGraph()->SetFramebuffer(framebuffer);
+
+        // Clear entity ID attachment (editor-specific, not yet in RenderGraph)
         framebuffer->Bind();
-        Legacy::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
-        Legacy::RenderCommand::Clear();
         framebuffer->ClearAttachment(1, -1);
+        framebuffer->Unbind();
 
         if (m_Context.isEditorCameraActive)
             m_Scene->SetEditorCamera(&m_EditorCamera);
@@ -194,7 +197,6 @@ namespace Vulkitten {
             m_Scene->SetEditorCamera(nullptr);
 
         m_Scene->OnUpdate(timestep);
-        framebuffer->Unbind();
     }
 
     // ═════════════════════════════════════════════════════════════
