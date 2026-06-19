@@ -25,6 +25,11 @@
 - **End**: 2026-06-19
 - **Summary**: Added GetPassCount() and GetPassName(uint32_t index) public methods to RenderGraph, allowing external code (debug UI, editor panels, etc.) to query the number of registered passes and their names. Methods are inline in RenderGraph.h following the existing getter pattern. GetPassName includes a VKT_CORE_ASSERT for bounds checking. No other files required changes. All 3 targets compile.
 
+## Task 2: Device Abstraction + OpenGLDevice Stub
+- **Start**: 2026-06-19
+- **End**: 2026-06-19
+- **Summary**: Created abstract Device class (Vulkitten/src/Vulkitten/Renderer/Device.h) as the GPU device interface with pure virtual Init() and Shutdown(). Provides static Device& Get() convenience accessor that delegates to ClassFactory::GetInterface<Device>(). Created OpenGLDevice (Platform/OpenGL/OpenGLDevice.h/.cpp) as a placeholder implementation — Init/Shutdown are stubs with VKT_PROFILE_RENDER_FUNCTION markers; actual GL init is still handled by OpenGLContext + RendererAPI for now. Design follows the existing RendererAPI pattern (abstract base + platform impl), but at a higher level: Device represents the logical GPU device, while RendererAPI represents low-level draw commands. For Vulkan this would own VkDevice/VkPhysicalDevice; for OpenGL the GL context is the device. Device.h exported with VKT_API for DLL visibility. Source files auto-collected via CMake GLOB_RECURSE. All 3 targets compile.
+
 ---
 
 # Phase: App Layer Refactoring (New TASK.md 1-14)

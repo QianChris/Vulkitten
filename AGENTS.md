@@ -74,7 +74,8 @@ No test framework configured. Verify changes via successful builds and manual ex
 - **Event System**: Inherit from `Event`, use `EVENT_CLASS_TYPE`/`EVENT_CLASS_CATEGORY` macros, dispatch via `EventDispatcher`
 - **Layers**: `PushLayer` (in-order) or `PushOverlay` (always on top); Application runs OnUpdate then OnImguiRender for all layers
 - **ECS**: `Scene` owns `entt::registry`. `Entity` wraps `entt::entity` with `AddComponent`/`GetComponent`. Components are POD structs in `Components.h`. Systems implement `System::OnUpdate(Scene&, Timestep, bool)`.
-- **Renderer (6 layers, see [ARCHITECTURE.md](Vulkitten/ARCHITECTURE.md#4-分层渲染器架构))**:
+- **Renderer (7 layers, see [ARCHITECTURE.md](Vulkitten/ARCHITECTURE.md#4-分层渲染器架构))**:
+  - `Device` — abstract GPU device interface (Init/Shutdown); `OpenGLDevice` placeholder. For OpenGL the GL context IS the device; for Vulkan this will own VkDevice/VkPhysicalDevice. Accessed via `ClassFactory::GetInterface<Device>()`
   - `RendererAPI` — abstract base for platform backends (virtual: Init, Clear, DrawIndexed)
   - `Legacy::RenderCommand` — static proxy wrapping a `RendererAPI*` singleton
   - `Renderer` — scene-level Begin/End/Submit; owns `RenderGraph` instance

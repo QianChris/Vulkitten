@@ -239,6 +239,7 @@ Scene::OnUpdate(Timestep)
 | **3. Renderer2D** | `Renderer/Renderer2D` | 即时模式批处理四边形渲染器 (10000 四边形/32 纹理槽) | ✅ 被 SpriteRenderPass 内部使用 |
 | **2. Legacy::RenderCommand** | `Renderer/RenderCommand` | 静态代理类包装 RendererAPI* 单例，提供内联 Clear/Draw 方法 | ✅ 被 PreparePass 内部使用 |
 | **1. RendererAPI** | `Renderer/RendererAPI` | 最低层 GPU 抽象：Init, Clear, DrawIndexed 等纯虚接口 | ✅ OpenGL 实现 |
+| **0. Device** | `Renderer/Device` | GPU 设备抽象：Init/Shutdown。OpenGL 中 GL Context 即为 Device；Vulkan 中持有 VkDevice/VkPhysicalDevice | ✅ 抽象类 + OpenGLDevice 空壳占位 |
 
 ### 工厂模式（抽象 → 平台）
 
