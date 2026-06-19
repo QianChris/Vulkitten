@@ -71,6 +71,7 @@ No test framework configured. Verify changes via successful builds and manual ex
 
 ## Key Subsystems
 - **ClassFactory (DI Root)**: Meyer's singleton, engine's centralized DI container. `GetInstance<T>()` for singleton creation/retrieval, `RegisterInstance<T>(T*)` for externally-created objects. `GetInterface<I>()` / `RegisterInterface<I, Impl>()` for interface-implementation mapping (e.g., Device backend). All new engine singletons (Engine, RenderContext, GraphicContext) are created through ClassFactory.
+- **Engine (Core)**: Singleton created via `ClassFactory::GetInstance<Engine>()`. Owns FileSystem instance, manages Input lifecycle (keeps static `Input::IsKeyPressed()` access), provides `GetLogger()` → `Log::Get()`. Empty EventQueue/ThreadPool stubs for future use. `Engine::Init()`/`Shutdown()` lifecycle methods (not yet wired into main — Task 12).
 - **Event System**: Inherit from `Event`, use `EVENT_CLASS_TYPE`/`EVENT_CLASS_CATEGORY` macros, dispatch via `EventDispatcher`
 - **Layers**: `PushLayer` (in-order) or `PushOverlay` (always on top); Application runs OnUpdate then OnImguiRender for all layers
 - **ECS**: `Scene` owns `entt::registry`. `Entity` wraps `entt::entity` with `AddComponent`/`GetComponent`. Components are POD structs in `Components.h`. Systems implement `System::OnUpdate(Scene&, Timestep, bool)`.

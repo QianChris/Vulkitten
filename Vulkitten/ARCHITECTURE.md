@@ -35,6 +35,25 @@ VulkittenEngine/
 
 ## 2. 核心应用框架
 
+### Engine (引擎核心单例)
+
+```cpp
+class Engine {
+public:
+    void Init();                       // 初始化子系统
+    void Shutdown();                   // 清理子系统
+
+    FileSystem& GetFileSystem();       // 虚拟文件系统实例
+    static Log& GetLogger();           // Log 单例引用 (VKT_CORE_* 宏不变)
+    static Engine& Get();              // ClassFactory::GetInstance<Engine>()
+
+    struct EventQueue {};              // 空壳：预留 DeferredEvent 容器
+    struct ThreadPool {};              // 空壳：预留工作线程池
+};
+```
+
+`Engine` 通过 `ClassFactory::GetInstance<Engine>()` 创建（Meyer's singleton）。它持有所有引擎子系统：`FileSystem`(实例)、`Input`(生命周期管理)、`Log`(引用)。`Engine::Init()` 负责子系统初始化，`Engine::Shutdown()` 负责清理。当前 Engine 尚未接入 Application 主循环（Task 12 完成）。`EventQueue` 和 `ThreadPool` 为空壳 struct，待后续任务实现。
+
 ### 启动流程
 
 ```

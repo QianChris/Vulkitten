@@ -16,7 +16,17 @@ public:
     inline static std::shared_ptr<spdlog::logger>& GetCoreLogger() { return s_CoreLogger; }
     inline static std::shared_ptr<spdlog::logger>& GetClientLogger() { return s_ClientLogger; }
 
+    // Returns a reference to the Log singleton (token for Engine::GetLogger())
+    static Log& Get()
+    {
+        static Log instance;
+        return instance;
+    }
+
 private:
+    Log() = default;
+    ~Log() = default;
+
     static std::shared_ptr<spdlog::logger> s_CoreLogger;
     static std::shared_ptr<spdlog::logger> s_ClientLogger;
 };
