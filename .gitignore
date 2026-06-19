@@ -3,3 +3,4 @@ bin-int/
 build/
 token.txt
 *.spv
+.claude/
