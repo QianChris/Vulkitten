@@ -1,16 +1,22 @@
 #include "vktpch.h"
 #include "FileSystem.h"
 
+#include "Vulkitten/Core/Engine.h"
+
+#include <filesystem>
+
 namespace Vulkitten {
 
-    std::map<std::string, std::string> FileSystem::s_Paths;
+    // ============================================================
+    // Instance methods (_Impl suffix — Task 5 renames to original)
+    // ============================================================
 
-    void FileSystem::RegisterPath(const std::string& path, const std::string& protocol)
+    void FileSystem::RegisterPath_Impl(const std::string& path, const std::string& protocol)
     {
-        s_Paths[protocol] = path;
+        m_Paths[protocol] = path;
     }
 
-    std::string FileSystem::Resolve(const std::string& path)
+    std::string FileSystem::Resolve_Impl(const std::string& path)
     {
         size_t pos = path.find("://");
         if (pos == std::string::npos)
@@ -21,19 +27,39 @@ namespace Vulkitten {
         std::string protocol = path.substr(0, pos);
         std::string filePath = path.substr(pos + 3);
 
-        if (s_Paths.find(protocol) == s_Paths.end())
+        if (m_Paths.find(protocol) == m_Paths.end())
         {
             VKT_CORE_ERROR("Unknown protocol: {0}", protocol);
             return path;
         }
 
-        return s_Paths[protocol] + "/" + filePath;
+        return m_Paths[protocol] + "/" + filePath;
+    }
+
+    bool FileSystem::Exists_Impl(const std::string& path)
+    {
+        std::string resolved = Resolve_Impl(path);
+        return std::filesystem::exists(resolved);
+    }
+
+    // ============================================================
+    // Static wrappers (transitional — REMOVED in Task 5)
+    // Forward to Engine::Get().GetFileSystem().*_Impl()
+    // ============================================================
+
+    void FileSystem::RegisterPath(const std::string& path, const std::string& protocol)
+    {
+        Engine::Get().GetFileSystem().RegisterPath_Impl(path, protocol);
+    }
+
+    std::string FileSystem::Resolve(const std::string& path)
+    {
+        return Engine::Get().GetFileSystem().Resolve_Impl(path);
     }
 
     bool FileSystem::Exists(const std::string& path)
     {
-        std::string resolved = Resolve(path);
-        return std::filesystem::exists(resolved);
+        return Engine::Get().GetFileSystem().Exists_Impl(path);
     }
 
 }

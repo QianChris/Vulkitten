@@ -2,6 +2,7 @@
 #include "Engine.h"
 
 #include "Vulkitten/Core/ClassFactory.h"
+#include "Vulkitten/Core/FileSystem.h"
 #include "Vulkitten/Core/Input.h"
 #include "Vulkitten/Core/Log.h"
 #include "Vulkitten/Perf/Instrumentor.h"

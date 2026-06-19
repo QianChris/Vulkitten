@@ -161,7 +161,7 @@ UIRender order (within dockspace): Viewport → SceneHierarchy → Property → 
 - **SpriteRendererComponent**: Stores `Texture` (Ref) and `TexturePath` (string) for serialization
 - **YAML**: `TexturePath: "sandbox://assets/textures/Checkerboard.png"`
 - **Deserialization**: `sprite.Texture = Texture2D::Create(sprite.TexturePath);`
-- **FileSystem**: `FileSystem::RegisterPath("../../Sandbox", "sandbox");`
+- **FileSystem**: Instance-based (Engine-owned). Transitional static wrappers keep `FileSystem::RegisterPath("../../Sandbox", "sandbox");` working — forwarded to `Engine::Get().GetFileSystem().RegisterPath_Impl()`. Task 5 will migrate to `Engine::Get().GetFileSystem().RegisterPath()`.
 
 ---
 

@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Vulkitten/Core/Core.h"
-#include "Vulkitten/Core/FileSystem.h"
 
 namespace Vulkitten {
 
+class FileSystem;
 class Log;
 class Input;
 
