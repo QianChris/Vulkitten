@@ -6,8 +6,8 @@ namespace Vulkitten {
 
 GraphicContext* GraphicContext::s_Instance = nullptr;
 
-GraphicContext::GraphicContext(RenderContext& /*renderContext*/)
-    : m_Window(Window::Create())
+GraphicContext::GraphicContext(Window& window, RenderContext& /*renderContext*/)
+    : m_Window(window)
 {
     s_Instance = this;
 }

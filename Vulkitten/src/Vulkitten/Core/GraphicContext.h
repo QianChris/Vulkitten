@@ -10,28 +10,28 @@ class RenderContext;
 // ============================================================
 // GraphicContext — user-visible graphics shell singleton.
 //
-// Created via ClassFactory, receives a RenderContext reference.
-// Owns: Window (GLFW), SceneUtil (stub), GraphicUtil (stub).
+// Receives existing Window and RenderContext references.
+// Does NOT create its own Window — Application owns the Window
+// lifecycle and creates it before RenderContext::Init().
 // SwapBuffers is handled by EndPass via RenderContext's
-// RenderGraph backend context — GraphicContext does NOT
-// participate in the rendering pipeline.
+// RenderGraph backend context.
 // ============================================================
 class VKT_API GraphicContext
 {
 public:
-    explicit GraphicContext(RenderContext& renderContext);
+    GraphicContext(Window& window, RenderContext& renderContext);
     ~GraphicContext() = default;
 
-    Window&      GetWindow()      { return *m_Window; }
+    Window&      GetWindow()      { return m_Window; }
     SceneUtil&   GetSceneUtil()   { return m_SceneUtil; }
     GraphicUtil& GetGraphicUtil()  { return m_GraphicUtil; }
 
     static GraphicContext& Get() { return *s_Instance; }
 
 private:
-    Scope<Window> m_Window;
-    SceneUtil     m_SceneUtil;
-    GraphicUtil   m_GraphicUtil;
+    Window&      m_Window;       // Reference to Application-owned Window
+    SceneUtil    m_SceneUtil;
+    GraphicUtil  m_GraphicUtil;
 
     static GraphicContext* s_Instance;
 };

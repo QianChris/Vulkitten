@@ -23,7 +23,7 @@ void Engine::Init()
 {
     VKT_PROFILE_FUNCTION();
 
-    VKT_CORE_INFO("Engine::Init — engine subsystems initializing...");
+    VKT_CORE_INFO("Engine::Init - engine subsystems initializing...");
 
     // FileSystem: virtual paths are currently registered in Application::Application().
     // In a future task, RegisterPath calls will move here.
@@ -34,7 +34,7 @@ void Engine::Init()
     // Future: Engine::Init() will create the platform Input implementation and
     // set Input::s_Instance, removing the global static initializer.
 
-    VKT_CORE_INFO("Engine::Init — complete.");
+    VKT_CORE_INFO("Engine::Init - complete.");
 }
 
 void Engine::Shutdown()

@@ -10,6 +10,7 @@
 class Sandbox : public Vulkitten::Application {
 public:
     Sandbox() {
+        // For debugging
         auto currPath = std::filesystem::current_path().string();
         VKT_INFO("Current path is {0}", currPath);
         
