@@ -260,6 +260,7 @@ Scene::OnUpdate(Timestep)
 | **1. RendererAPI** | `Renderer/RendererAPI` | 最低层 GPU 抽象：Init, Clear, DrawIndexed 等纯虚接口 | ✅ OpenGL 实现 |
 | **0. Device** | `Renderer/Device` | GPU 设备抽象：Init/Shutdown。OpenGL 中 GL Context 即为 Device；Vulkan 中持有 VkDevice/VkPhysicalDevice | ✅ 抽象类 + OpenGLDevice 空壳占位 |
 | **GpuResourceManager** | `Renderer/GpuResourceManager` | 统一显存资源管理器：uint64_t 句柄 (index+generation)，CreateTexture/CreateBuffer 返回句柄，支持延时分配 (记录 desc，首次 Get 时分配 GPU 资源) | ✅ 骨架 (句柄分配/查找/延时创建占位) |
+| **ShaderManager** | `Renderer/ShaderManager` | Shader 加载 + #include 预处理：构造注入 FileSystem&，LoadShader(virtualPath) 解析路径→读取→递归展开 #include→返回 uint64_t 句柄 | ✅ 新增 (未替换旧 OpenGLShader 路径) |
 
 ### 工厂模式（抽象 → 平台）
 

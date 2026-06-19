@@ -78,6 +78,7 @@ No test framework configured. Verify changes via successful builds and manual ex
 - **Renderer (7 layers, see [ARCHITECTURE.md](Vulkitten/ARCHITECTURE.md#4-分层渲染器架构))**:
   - `Device` — abstract GPU device interface (Init/Shutdown); `OpenGLDevice` placeholder. For OpenGL the GL context IS the device; for Vulkan this will own VkDevice/VkPhysicalDevice. Accessed via `ClassFactory::GetInterface<Device>()`
   - `GpuResourceManager` — centralized VRAM resource manager. `CreateTexture(desc)` / `CreateBuffer(desc)` → uint64_t handle (index+generation encoding). `GetTexture(handle)` / `GetBuffer(handle)` for lookup. Deferred creation: descriptor recorded at Create, GPU allocation triggered on first Get. Existing Ref<Texture2D> NOT yet migrated.
+  - `ShaderManager` — shader loading + #include preprocessing. Constructor injects `FileSystem&`. `LoadShader(virtualPath)` resolves path → reads → recursively resolves #include → returns uint64_t handle. Preprocessed source stored in ShaderData map. Existing OpenGLShader loading path unchanged.
   - `RendererAPI` — abstract base for platform backends (virtual: Init, Clear, DrawIndexed)
   - `Legacy::RenderCommand` — static proxy wrapping a `RendererAPI*` singleton
   - `Renderer` — scene-level Begin/End/Submit; owns `RenderGraph` instance
