@@ -3,7 +3,6 @@
 #include "Vulkitten/Core/Core.h"
 #include "Vulkitten/Core/Timestep.h"
 #include "Vulkitten/Events/Event.h"
-#include "Vulkitten/Renderer/Renderer2D.h"
 #include "Vulkitten/Renderer/Camera.h"
 #include "Vulkitten/Scene/GpuParticle/GpuParticle.h"
 #include "Vulkitten/Scene/Systems/System.h"
@@ -56,10 +55,10 @@ namespace Vulkitten {
 
         entt::registry& GetRegistry() { return m_Registry; }
         void AddSystem(Scope<System> system) { m_Systems.push_back(std::move(system)); }
+        GpuEmitterManager& GetEmitterManager() { return m_EmitterManager; }
 
     private:
         void TickScripts(Timestep ts);
-        void RenderScene(Camera& camera);
 
     private:
         entt::registry m_Registry;

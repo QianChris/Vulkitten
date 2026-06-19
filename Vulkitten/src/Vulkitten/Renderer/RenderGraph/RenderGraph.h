@@ -35,6 +35,10 @@ namespace Vulkitten {
         void SetFramebuffer(Ref<class Framebuffer> fb) { m_Framebuffer = fb; }
         Ref<class Framebuffer> GetFramebuffer() const { return m_Framebuffer; }
 
+        // Scene for passes that need ECS access (e.g., GpuParticlePass)
+        void SetScene(class Scene* scene) { m_Scene = scene; }
+        class Scene* GetScene() const { return m_Scene; }
+
     private:
         void ClearFrameCommands() {
             m_FrameCommands.clear();
@@ -47,6 +51,7 @@ namespace Vulkitten {
         glm::mat4 m_ViewProjection{1.0f};
         class Camera* m_SceneCamera = nullptr;
         Ref<class Framebuffer> m_Framebuffer;
+        class Scene* m_Scene = nullptr;
     };
 
 }

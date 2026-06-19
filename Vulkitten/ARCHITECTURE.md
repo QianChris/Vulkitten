@@ -170,30 +170,25 @@ Scene::OnUpdate(Timestep)
 
 ## 4. 分层渲染器架构
 
-这是引擎最核心、最复杂的部分。当前存在**两条渲染路径**：
+渲染完全通过 RenderGraph 进行，旧版直接 Renderer2D 路径已移除。
 
 ```
                     ECS (Components)
                          │
-                         ├─────────────────────────────────┐
-                         │                                 │
-                    RenderSystem                     Scene::RenderScene()
-                    (Path B: 新, ✅ 可用)             (Path A: 旧, 无System时回退)
-                         │                                 │
-                         ▼                                 ▼
-                    RenderGraph                        Renderer2D
-                    (命令收集+执行)                    (即时模式批处理)
-                         │                                 │
-                         ▼                                 ▼
-                    Passes                            直接 OpenGL
-                    (PreparePass → SpriteRenderPass    (回退路径)
-                     → EndPass)
+                    RenderSystem
+                    (创建 DrawQuadCommand + ClearCommand)
+                         │
+                         ▼
+                    RenderGraph
+                    (命令收集+执行)
+                         │
+                         ▼
+                    Passes (顺序执行)
+                    PreparePass → GpuParticlePass → SpriteRenderPass → EndPass
                          │
                          ▼
                     实际 Draw Call + SwapBuffers
 ```
-
-> **注意**：当 Scene 注册了 System（如 RenderSystem）时，使用 Path B；否则回退到 Path A。Task 3 将移除 Path A。
 ```
 
 ### 六层抽象（自上而下）
@@ -247,6 +242,7 @@ RenderGraph
 | Pass | 过滤命令类型 | onExecute 行为 |
 |------|-------------|---------------|
 | **PreparePass** | `ClearCommand` | 若 graph 配置了 Framebuffer 则绑定额外 Framebuffer；调用 `Legacy::RenderCommand::SetClearColor` + `Clear`；解绑 |
+| **GpuParticlePass** | (无, 直接操作 ECS) | 从 graph 获取 Scene + Camera；遍历 `GpuEmitterComponent` 实体；调用 `Update()` + `Render()` |
 | **SpriteRenderPass** | `DrawQuadCommand` | 若 graph 配置了 Framebuffer 则绑定额外 Framebuffer；从 graph 获取 Camera，调用 `Renderer2D::BeginScene` → `DrawQuad` × N → `EndScene`；解绑 |
 | **EndPass** | (无) | 将 `backendContext` 转为 `GraphicsContext*`，调用 `SwapBuffers`（始终作用于默认 Backbuffer） |
 

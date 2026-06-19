@@ -76,69 +76,38 @@ namespace Vulkitten {
             }
 		}
 
-        // RenderGraph path: systems have populated the graph with commands.
-        // Store camera for passes, skip direct RenderScene.
-        if (!m_Systems.empty() && shouldRender)
-        {
-            Camera* camera = m_EditorCamera;
-
-            if (!camera)
-            {
-                Entity cameraEntity(entt::null, this);
-                auto cameraView = m_Registry.view<CameraComponent>();
-                for (auto entity : cameraView)
-                {
-                    if (cameraView.get<CameraComponent>(entity).Primary)
-                    {
-                        cameraEntity = Entity(entity, this);
-                        break;
-                    }
-                }
-                if (cameraEntity)
-                {
-                    auto& cameraComponent = cameraEntity.GetComponent<CameraComponent>();
-                    auto& transform = cameraEntity.GetComponent<TransformComponent>();
-                    cameraComponent.Camera.SetTransform(transform.GetTransform());
-                    camera = &cameraComponent.Camera;
-                }
-            }
-
-            if (camera)
-            {
-                auto* graph = Renderer::GetRenderGraph();
-                graph->SetSceneCamera(camera);
-                graph->SetViewProjection(camera->GetViewProjectionMatrix());
-            }
-
-            return;  // RenderGraph will handle execution in Renderer::Render()
-        }
-
         if (!shouldRender) { return; }
 
-        // Legacy path (no systems registered): direct RenderScene call
-        if (m_EditorCamera)
-        {
-            RenderScene(*m_EditorCamera);
-            return;
-        }
+        // RenderGraph path: populate graph with scene/camera for passes
+        Camera* camera = m_EditorCamera;
 
-        Entity cameraEntity(entt::null, this);
-        auto cameraView = m_Registry.view<CameraComponent>();
-        for (auto entity : cameraView)
+        if (!camera)
         {
-            if (cameraView.get<CameraComponent>(entity).Primary)
+            Entity cameraEntity(entt::null, this);
+            auto cameraView = m_Registry.view<CameraComponent>();
+            for (auto entity : cameraView)
             {
-                cameraEntity = Entity(entity, this);
-                break;
+                if (cameraView.get<CameraComponent>(entity).Primary)
+                {
+                    cameraEntity = Entity(entity, this);
+                    break;
+                }
+            }
+            if (cameraEntity)
+            {
+                auto& cameraComponent = cameraEntity.GetComponent<CameraComponent>();
+                auto& transform = cameraEntity.GetComponent<TransformComponent>();
+                cameraComponent.Camera.SetTransform(transform.GetTransform());
+                camera = &cameraComponent.Camera;
             }
         }
 
-        if (cameraEntity)
+        if (camera)
         {
-            auto& cameraComponent = cameraEntity.GetComponent<CameraComponent>();
-            auto& transform = cameraEntity.GetComponent<TransformComponent>();
-            cameraComponent.Camera.SetTransform(transform.GetTransform());
-            RenderScene(cameraComponent.Camera);
+            auto* graph = Renderer::GetRenderGraph();
+            graph->SetScene(this);
+            graph->SetSceneCamera(camera);
+            graph->SetViewProjection(camera->GetViewProjectionMatrix());
         }
     }
 
@@ -169,36 +138,6 @@ namespace Vulkitten {
                 scriptComponent.Instance->OnUpdate(ts);
             }
         }
-    }
-
-    void Scene::RenderScene(Camera& camera)
-    {
-        auto gpuEmitterView = m_Registry.view<GpuEmitterComponent>();
-        for (auto entity : gpuEmitterView)
-        {
-            auto emitterInstance = m_EmitterManager.GetOrCreateEmitterInstance(Entity(entity, this));
-            if (emitterInstance)
-            {
-                emitterInstance->Update();
-                emitterInstance->Render(camera);
-            }
-        }
-
-        Renderer2D::BeginScene(camera);
-
-        auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
-        for (auto entity : group) {
-            auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
-            int entityID = (int)entt::to_integral(entity);
-
-            if (sprite.Texture) {
-                Renderer2D::DrawQuad(transform.GetTransform(), sprite.Texture, sprite.TilingFactor, sprite.Color, entityID);
-            } else {
-                Renderer2D::DrawQuad(transform.GetTransform(), sprite.Color, entityID);
-            }
-        }
-
-        Renderer2D::EndScene();
     }
 
     void Scene::OnRuntimeStart()

@@ -5,6 +5,7 @@
 #include "Renderer2D.h"
 
 #include "Vulkitten/Renderer/Passes/PreparePass.h"
+#include "Vulkitten/Renderer/Passes/GpuParticlePass.h"
 #include "Vulkitten/Renderer/Passes/SpriteRenderPass.h"
 #include "Vulkitten/Renderer/Passes/EndPass.h"
 #include "Vulkitten/Core/Application.h"
@@ -25,10 +26,11 @@ namespace Vulkitten {
 
         m_graph = new RenderGraph();
 
-        // Register default render passes
-        m_graph->AddPass(PreparePass{});
-        m_graph->AddPass(SpriteRenderPass{});
-        m_graph->AddPass(EndPass{});
+        // Register default render passes (order matters)
+        m_graph->AddPass(PreparePass{});         // Clear
+        m_graph->AddPass(GpuParticlePass{});     // GPU particle update + render
+        m_graph->AddPass(SpriteRenderPass{});    // 2D quad batch
+        m_graph->AddPass(EndPass{});             // SwapBuffers
 
         // Set backend context for EndPass (SwapBuffers)
         m_graph->SetBackendContext(Application::Get().GetWindow().GetGraphicsContext());
