@@ -103,6 +103,22 @@ template<typename T> using Scope = std::unique_ptr<T>;
 #define CreateScope<T>(args) std::make_unique<T>(args)
 ```
 
+### ClassFactory (唯一单例)
+
+```cpp
+class ClassFactory {
+public:
+    static ClassFactory& Get();       // Meyer's Singleton
+
+    UUID GenerateUUID();              // 统一 UUID 生成
+    Application& GetApplication();    // 获取 Application
+    Window& GetWindow();              // 获取 Window
+    RenderGraph* GetRenderGraph();    // 获取 RenderGraph
+};
+```
+
+`ClassFactory` 是引擎的集中式访问点，所有子系统通过它获取。位于 `Vulkitten/Core/ClassFactory.h`，已加入 `Vulkitten.h` 统一头文件。
+
 ---
 
 ## 3. ECS 架构
