@@ -2,41 +2,64 @@
 
 #include "Vulkitten/Core/Core.h"
 #include "Vulkitten/Renderer/RendererAPI.h"
-#include "Vulkitten/Renderer/OrthographicCamera.h"
-//#include "Vulkitten/Renderer/Shader.h"
-
 #include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
 
 namespace Vulkitten {
 
-    class Shader;
-    class VertexArray;
+class Device;
+class GpuResourceManager;
+class ShaderManager;
 
-    class VKT_API Renderer
-    { 
-    public:
-        static void Init();
-        static void OnWindowResize(uint32_t width, uint32_t height);
-        static void Shutdown();
-        static void BeginScene(OrthographicCamera& camera);
-        static void EndScene();
+// ============================================================
+// Renderer — scene-level renderer instance.
+//
+// Created and owned by RenderContext. Holds references to the
+// GPU device, resource manager, and shader manager.
+//
+// Replaces the old static Renderer class. All methods are now
+// instance methods; callers go through RenderContext::Get().
+// ============================================================
 
-        static void Submit(const Ref<Shader>& shader, const Ref<VertexArray>& vertexArray, const glm::mat4& transform = glm::mat4(1.0f));
+class VKT_API Renderer
+{
+public:
+    Renderer(Device* device, GpuResourceManager& resources, ShaderManager& shaders);
+    ~Renderer() = default;
 
-        inline static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
+    // ---- Lifecycle ----
 
-        // RenderGraph
-        inline static RenderGraph* GetRenderGraph() { return m_graph; }
-        static void Render();
-        inline static void SetViewProjection(const glm::mat4& vp) { if (m_graph) m_graph->SetViewProjection(vp); }
+    void Init();
+    void Shutdown();
 
-    private:
-        struct SceneData
-        {
-            glm::mat4 ViewProjectionMatrix;
-        };
-        static SceneData* s_SceneData;
+    // ---- Per-Frame ----
 
-        static RenderGraph* m_graph;
+    void Execute();
+
+    // ---- Subsystem Access ----
+
+    Device&              GetDevice()          { return *m_Device; }
+    GpuResourceManager&  GetResourceManager() { return m_Resources; }
+    ShaderManager&       GetShaderManager()   { return m_Shaders; }
+    RenderGraph*         GetRenderGraph()     { return m_RenderGraph; }
+
+    // ---- Helpers ----
+
+    void SetViewProjection(const glm::mat4& vp);
+    void OnWindowResize(uint32_t width, uint32_t height);
+
+    inline static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
+
+private:
+    Device*             m_Device;
+    GpuResourceManager& m_Resources;
+    ShaderManager&      m_Shaders;
+    RenderGraph*        m_RenderGraph = nullptr;
+
+    struct SceneData
+    {
+        glm::mat4 ViewProjectionMatrix{1.0f};
     };
-}
+    SceneData m_SceneData;
+};
+
+} // namespace Vulkitten

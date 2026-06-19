@@ -36,6 +36,7 @@
 
 // Renderer
 #include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/RenderContext.h"
 #include "Vulkitten/Renderer/Renderer2D.h"
 #include "Vulkitten/Renderer/RenderCommand.h"
 #include "Vulkitten/Renderer/Buffer.h"

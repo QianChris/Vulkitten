@@ -2,7 +2,7 @@
 #include "Scene.h"
 #include "ScriptableEntity.h"
 #include "Entity.h"
-#include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/RenderContext.h"
 
 namespace Vulkitten {
 
@@ -104,7 +104,7 @@ namespace Vulkitten {
 
         if (camera)
         {
-            auto* graph = Renderer::GetRenderGraph();
+            auto* graph = RenderContext::Get().GetRenderGraph();
             graph->SetScene(this);
             graph->SetSceneCamera(camera);
             graph->SetViewProjection(camera->GetViewProjectionMatrix());

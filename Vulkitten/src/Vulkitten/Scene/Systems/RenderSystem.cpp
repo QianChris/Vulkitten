@@ -1,7 +1,7 @@
 #include "vktpch.h"
 #include "RenderSystem.h"
 #include "Vulkitten/Scene/Scene.h"
-#include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/RenderContext.h"
 
 namespace Vulkitten {
 
@@ -13,7 +13,7 @@ namespace Vulkitten {
             auto& [transform, sprite] = view.get<TransformComponent, SpriteRendererComponent>(entity);
             //Renderer2D::DrawQuad(transform.GetTransform(), sprite.Texture, sprite.TilingFactor, sprite.Color);
 
-            auto graph = Renderer::GetRenderGraph();
+            auto graph = RenderContext::Get().GetRenderGraph();
             graph->AddCommand(DrawQuadCommand{
                 sprite.Color,
                 sprite.Texture,
@@ -31,7 +31,7 @@ namespace Vulkitten {
         bool ret = false;
 
         // Add a clear command at the start of each frame
-        auto graph = Renderer::GetRenderGraph();
+        auto graph = RenderContext::Get().GetRenderGraph();
         graph->AddCommand(ClearCommand{
             glm::vec4(0.1f, 0.1f, 0.1f, 1.0f),  // color
             1.0f,                                   // depth

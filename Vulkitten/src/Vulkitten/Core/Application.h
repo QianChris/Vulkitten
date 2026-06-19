@@ -11,6 +11,11 @@
 
 namespace Vulkitten
 {
+    class RenderContext;
+    class OpenGLDevice;
+    class GpuResourceManager;
+    class ShaderManager;
+
     class VKT_API Application
     {
     public:
@@ -33,6 +38,11 @@ namespace Vulkitten
     private:
         bool OnWindowClose(WindowCloseEvent& e);
         bool OnWindowResize(WindowResizeEvent& e);
+
+		Scope<RenderContext> m_RenderContext;
+        Scope<OpenGLDevice> m_Device;
+        Scope<GpuResourceManager> m_Resources;
+        Scope<ShaderManager> m_ShaderMgr;
 
 		Scope<Window> m_Window;
         ImGuiLayer* m_ImGuiLayer;

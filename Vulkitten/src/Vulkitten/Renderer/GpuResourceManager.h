@@ -12,14 +12,14 @@ namespace Vulkitten {
 // Resource Descriptors (minimal — expanded in later tasks)
 // ============================================================
 
-struct TextureDesc
+struct GpuTextureDesc
 {
     uint32_t Width = 0;
     uint32_t Height = 0;
     // Future: format, mipLevels, samples, usage, etc.
 };
 
-struct BufferDesc
+struct GpuBufferDesc
 {
     size_t Size = 0;
     // Future: usage flags, memory properties, etc.
@@ -38,8 +38,8 @@ struct GpuResourceSlot
     bool deferred = true;       // Waiting for first Get to allocate GPU resource
     uint64_t gpuHandle = 0;    // Platform resource (GLuint / VkImage / VkBuffer)
 
-    TextureDesc textureDesc;
-    BufferDesc  bufferDesc;
+    GpuTextureDesc textureDesc;
+    GpuBufferDesc  bufferDesc;
     std::string debugName;
 };
 
@@ -65,8 +65,8 @@ public:
 
     // ---- Resource Creation (returns handle, defers GPU allocation) ----
 
-    uint64_t CreateTexture(const TextureDesc& desc, const std::string& debugName = "");
-    uint64_t CreateBuffer(const BufferDesc& desc, const std::string& debugName = "");
+    uint64_t CreateTexture(const GpuTextureDesc& desc, const std::string& debugName = "");
+    uint64_t CreateBuffer(const GpuBufferDesc& desc, const std::string& debugName = "");
 
     // ---- Resource Lookup (triggers deferred allocation on first call) ----
 

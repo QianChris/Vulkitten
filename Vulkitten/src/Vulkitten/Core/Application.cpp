@@ -5,7 +5,11 @@
 #include "Vulkitten/Core/Engine.h"
 #include "Vulkitten/Core/Input.h"
 
-#include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/RenderContext.h"
+#include "Vulkitten/Renderer/Device.h"
+#include "Platform/OpenGL/OpenGLDevice.h"
+#include "Vulkitten/Renderer/GpuResourceManager.h"
+#include "Vulkitten/Renderer/ShaderManager.h"
 #include "Vulkitten/Renderer/RenderCommand.h"
 
 #include <glm/glm.hpp>
@@ -29,7 +33,14 @@ namespace Vulkitten
         m_Window.reset(Window::Create());
         m_Window->SetEventCallback(VKT_BIND_EVENT_FN(Application::OnEvent));
 
-        Renderer::Init();
+        // Create renderer infrastructure
+        m_Device      = CreateScope<OpenGLDevice>();
+        m_Resources   = CreateScope<GpuResourceManager>();
+        m_ShaderMgr   = CreateScope<ShaderManager>(Engine::Get().GetFileSystem());
+
+        m_RenderContext = CreateScope<RenderContext>(
+            m_Device.get(), *m_Resources, *m_ShaderMgr);
+        m_RenderContext->Init();
 
         m_ImGuiLayer = new ImGuiLayer();
         PushOverlay(m_ImGuiLayer);
@@ -39,7 +50,8 @@ namespace Vulkitten
     {
         VKT_PROFILE_FUNCTION();
 
-        Renderer::Shutdown();
+        if (m_RenderContext)
+            m_RenderContext->Shutdown();
     }
 
     void Application::Run()
@@ -81,7 +93,7 @@ namespace Vulkitten
             // Execute RenderGraph (all passes, including present via EndPass)
             {
                 VKT_PROFILE_SCOPE("RenderGraph execute");
-                Renderer::Render();
+                m_RenderContext->Execute();
             }
 
             auto frameEndTime = std::chrono::high_resolution_clock::now();
@@ -147,7 +159,8 @@ namespace Vulkitten
         }
 
         m_Minimized = false;
-        Renderer::OnWindowResize(e.GetWidth(), e.GetHeight());
+        if (m_RenderContext)
+            m_RenderContext->OnWindowResize(e.GetWidth(), e.GetHeight());
         return false;
     }
 }

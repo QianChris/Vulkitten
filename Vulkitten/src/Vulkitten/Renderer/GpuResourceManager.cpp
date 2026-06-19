@@ -49,7 +49,7 @@ bool GpuResourceManager::ValidateHandle(uint32_t index, uint16_t generation) con
 // Resource Creation
 // ============================================================
 
-uint64_t GpuResourceManager::CreateTexture(const TextureDesc& desc, const std::string& debugName)
+uint64_t GpuResourceManager::CreateTexture(const GpuTextureDesc& desc, const std::string& debugName)
 {
     uint32_t index = AllocateSlot();
 
@@ -63,7 +63,7 @@ uint64_t GpuResourceManager::CreateTexture(const TextureDesc& desc, const std::s
     return MakeHandle(index, slot.generation);
 }
 
-uint64_t GpuResourceManager::CreateBuffer(const BufferDesc& desc, const std::string& debugName)
+uint64_t GpuResourceManager::CreateBuffer(const GpuBufferDesc& desc, const std::string& debugName)
 {
     uint32_t index = AllocateSlot();
 

@@ -2,7 +2,7 @@
 #include "SpriteRenderPass.h"
 
 #include "Vulkitten/Renderer/Renderer2D.h"
-#include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/RenderContext.h"
 #include "Vulkitten/Renderer/Framebuffer.h"
 
 namespace Vulkitten {
@@ -17,7 +17,7 @@ SpriteRenderPass::SpriteRenderPass()
         if (commands.empty())
             return;
 
-        auto* graph = Renderer::GetRenderGraph();
+        auto* graph = RenderContext::Get().GetRenderGraph();
         auto* camera = graph->GetSceneCamera();
 
         if (!camera)

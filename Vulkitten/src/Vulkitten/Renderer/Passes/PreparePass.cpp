@@ -2,7 +2,7 @@
 #include "PreparePass.h"
 
 #include "Vulkitten/Renderer/RenderCommand.h"
-#include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/RenderContext.h"
 #include "Vulkitten/Renderer/Framebuffer.h"
 
 namespace Vulkitten {
@@ -14,7 +14,7 @@ PreparePass::PreparePass()
     SetExecute([](const std::vector<RenderGraphResource>& /*resources*/,
                   const std::vector<RenderCommand>& commands,
                   void* /*backendContext*/) {
-        auto* graph = Renderer::GetRenderGraph();
+        auto* graph = RenderContext::Get().GetRenderGraph();
         auto framebuffer = graph->GetFramebuffer();
 
         // Bind custom framebuffer so clear goes to it
