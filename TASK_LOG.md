@@ -19,3 +19,17 @@
 - **Start**: 2026-06-19
 - **End**: 2026-06-19
 - **Summary**: Created ClassFactory as Meyer's singleton — the single centralized access point for all engine subsystems. Provides GenerateUUID() (central RNG), GetApplication(), GetWindow(), GetRenderGraph(). Added to Vulkitten.h umbrella header. Preserves existing UUID class for standalone use. All 3 targets compile.
+
+## Task 5: Add GetPassCount() and GetPassName() to RenderGraph
+- **Start**: 2026-06-19
+- **End**: 2026-06-19
+- **Summary**: Added GetPassCount() and GetPassName(uint32_t index) public methods to RenderGraph, allowing external code (debug UI, editor panels, etc.) to query the number of registered passes and their names. Methods are inline in RenderGraph.h following the existing getter pattern. GetPassName includes a VKT_CORE_ASSERT for bounds checking. No other files required changes. All 3 targets compile.
+
+---
+
+# Phase: App Layer Refactoring (New TASK.md 1-14)
+
+## Task 1: ClassFactory DI Primitives
+- **Start**: 2026-06-19
+- **End**: 2026-06-19
+- **Summary**: Enhanced ClassFactory (Vulkitten/src/Vulkitten/Core/ClassFactory.h) with five template DI primitives. `CreateInstance<T>()` provides Meyer's singleton lazy-creation. `RegisterInstance<T>(T*)` registers externally-created singletons into a type-erased `std::unordered_map<std::type_index, void*>`. `GetInstance<T>()` checks the registered map first, falls back to CreateInstance + caches. `RegisterInterface<I, Impl>()` maps an interface to an implementation type via a factory lambda stored in `std::unordered_map<std::type_index, std::function<void*()>>`. `RegisterInterface<I>(I* impl)` variant registers an existing instance as the interface implementation. `GetInterface<I>()` retrieves the registered implementation with a VKT_CORE_ASSERT guard. Added `<functional>`, `<typeindex>`, `<unordered_map>` includes. No changes to ClassFactory.cpp needed — all new methods are template/inline. Existing GetApplication/GetWindow/GetRenderGraph methods preserved as legacy accessors. All 3 targets compile.

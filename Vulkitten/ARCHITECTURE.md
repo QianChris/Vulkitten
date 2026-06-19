@@ -103,7 +103,7 @@ template<typename T> using Scope = std::unique_ptr<T>;
 #define CreateScope<T>(args) std::make_unique<T>(args)
 ```
 
-### ClassFactory (唯一单例)
+### ClassFactory (唯一单例 + DI 容器)
 
 ```cpp
 class ClassFactory {
@@ -111,13 +111,35 @@ public:
     static ClassFactory& Get();       // Meyer's Singleton
 
     UUID GenerateUUID();              // 统一 UUID 生成
-    Application& GetApplication();    // 获取 Application
-    Window& GetWindow();              // 获取 Window
-    RenderGraph* GetRenderGraph();    // 获取 RenderGraph
+
+    // ---- DI: 实例管理 ----
+    template<typename T>
+    static T& CreateInstance();       // Meyer's singleton lazy-create（每类型一个静态局部变量）
+
+    template<typename T>
+    static void RegisterInstance(T*); // 注册外部创建的单例，优先于 CreateInstance
+
+    template<typename T>
+    static T& GetInstance();          // 查找已注册实例 → 否则 CreateInstance + 缓存
+
+    // ---- DI: 接口管理 ----
+    template<typename I, typename Impl>
+    static void RegisterInterface();  // 注册接口实现类型（通过 GetInstance<Impl> 创建）
+
+    template<typename I>
+    static void RegisterInterface(I* impl); // 注册已有实例作为接口实现
+
+    template<typename I>
+    static I& GetInterface();         // 获取接口实现（未注册时 VKT_CORE_ASSERT 触发）
+
+    // ---- Legacy 访问器（将逐步迁移到 GetInstance<T>()） ----
+    Application& GetApplication();
+    Window& GetWindow();
+    RenderGraph* GetRenderGraph();
 };
 ```
 
-`ClassFactory` 是引擎的集中式访问点，所有子系统通过它获取。位于 `Vulkitten/Core/ClassFactory.h`，已加入 `Vulkitten.h` 统一头文件。
+`ClassFactory` 是引擎的 DI 根容器。所有后继单例（Engine、RenderContext、GraphicContext）通过它统一创建和管理。内部使用 `std::type_index → void*` 映射存储注册实例，`std::type_index → std::function<void*()>` 映射存储接口工厂。位于 `Vulkitten/Core/ClassFactory.h`，已加入 `Vulkitten.h` 统一头文件。
 
 ---
 
@@ -250,6 +272,8 @@ RenderGraph
 ├── AddPass(pass)                       // 注册 Pass (在 Renderer::Init 中调用)
 ├── AddCommand(cmd)                     // 收集命令（由 RenderSystem 调用）
 ├── Execute()                           // ✅ 遍历 Passes，按名过滤命令，执行 onExecute
+├── GetPassCount()                      // 🔍 返回已注册 Pass 数量
+├── GetPassName(index)                  // 🔍 返回指定索引 Pass 的名称
 └── ClearFrameCommands()                // 每帧清空命令
 ```
 

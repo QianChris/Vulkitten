@@ -70,6 +70,7 @@ No test framework configured. Verify changes via successful builds and manual ex
 ---
 
 ## Key Subsystems
+- **ClassFactory (DI Root)**: Meyer's singleton, engine's centralized DI container. `GetInstance<T>()` for singleton creation/retrieval, `RegisterInstance<T>(T*)` for externally-created objects. `GetInterface<I>()` / `RegisterInterface<I, Impl>()` for interface-implementation mapping (e.g., Device backend). All new engine singletons (Engine, RenderContext, GraphicContext) are created through ClassFactory.
 - **Event System**: Inherit from `Event`, use `EVENT_CLASS_TYPE`/`EVENT_CLASS_CATEGORY` macros, dispatch via `EventDispatcher`
 - **Layers**: `PushLayer` (in-order) or `PushOverlay` (always on top); Application runs OnUpdate then OnImguiRender for all layers
 - **ECS**: `Scene` owns `entt::registry`. `Entity` wraps `entt::entity` with `AddComponent`/`GetComponent`. Components are POD structs in `Components.h`. Systems implement `System::OnUpdate(Scene&, Timestep, bool)`.
@@ -78,7 +79,7 @@ No test framework configured. Verify changes via successful builds and manual ex
   - `Legacy::RenderCommand` — static proxy wrapping a `RendererAPI*` singleton
   - `Renderer` — scene-level Begin/End/Submit; owns `RenderGraph` instance
   - `Renderer2D` — immediate-mode batched quad renderer (10000 quads, 32 texture slots)
-  - `RenderGraph` — command-based pass system (**Execute() is currently a stub**)
+  - `RenderGraph` — command-based pass system with `Execute()` iterating passes and dispatching commands
   - `RenderSystem` — ECS System that creates `RenderCommand`s from components
 - **GPU Particles**: Direct OpenGL compute shaders (glDispatchCompute, SSBOs, indirect draw) — bypasses all abstractions
 - **Entry Point**: Implement `Vulkitten::CreateApplication()` returning `Application*`
@@ -87,13 +88,12 @@ No test framework configured. Verify changes via successful builds and manual ex
 
 ## RenderGraph Pipeline (In Progress)
 
-- **`RenderGraph`** owns `vector<RenderPass> m_Passes` and `vector<RenderCommand> m_FrameCommands`
+- **`RenderGraph`** owns `vector<RenderPass> m_Passes` and `vector<RenderCommand> m_FrameCommands`; exposes `GetPassCount()` / `GetPassName(index)` for external querying
 - **`RenderCommand`** is `std::variant<DrawQuadCommand, ClearCommand>` (extensible — DrawMesh, DrawParticle, DrawFullscreen are reserved but commented out)
 - **`RenderPass`** has inputs/outputs (`PassResourceUsage` with `AccessFlags`/`pipelineStages`/`imageLayout`), `writesToSwapchain` flag, and `onExecute` callback
 - **`ResourcePool`** provides type-erased GPU resource management with generation-counted handles (`Handle<T>`), free-list allocation, and per-frame deferred deletion (`MAX_FRAMES_IN_FLIGHT`)
 - **`RenderGraphResource`** describes a resource by name, type (Texture2D/TextureCube/Buffer/SwapchainImage), and descriptor union
-- **Current state**: `Execute()` is **empty**. Rendering still goes through `Scene::RenderScene()` → `Renderer2D`. `RenderSystem` populates commands into the graph but they are never executed.
-- **To complete**: Implement `Execute()` to iterate passes, filter commands per pass, dispatch `onExecute` callbacks; wire `Renderer::Render()` into the main loop; transition `Scene::RenderScene()` to use RenderGraph
+- **Current state**: `Execute()` dispatches commands to registered passes (PreparePass→GpuParticlePass→SpriteRenderPass→EndPass). `Renderer2D` draws within SpriteRenderPass. `Scene::OnUpdate` always routes through RenderGraph.
 
 ---
 

@@ -39,6 +39,13 @@ namespace Vulkitten {
         void SetScene(class Scene* scene) { m_Scene = scene; }
         class Scene* GetScene() const { return m_Scene; }
 
+        // Query registered pass count and names (for debug UI, editor panels, etc.)
+        uint32_t GetPassCount() const { return static_cast<uint32_t>(m_Passes.size()); }
+        const std::string& GetPassName(uint32_t index) const {
+            VKT_CORE_ASSERT(index < m_Passes.size(), "GetPassName: index out of range");
+            return m_Passes[index].name;
+        }
+
     private:
         void ClearFrameCommands() {
             m_FrameCommands.clear();
