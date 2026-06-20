@@ -102,6 +102,7 @@ GpuResourceSlot* GpuResourceManager::GetTexture(uint64_t handle)
                       slot.debugName, slot.textureDesc.Width, slot.textureDesc.Height);
     }
 
+    slot.lastUsedFrame = m_CurrentFrame;
     return &slot;
 }
 
@@ -125,6 +126,7 @@ GpuResourceSlot* GpuResourceManager::GetBuffer(uint64_t handle)
                       slot.debugName, slot.bufferDesc.Size);
     }
 
+    slot.lastUsedFrame = m_CurrentFrame;
     return &slot;
 }
 
@@ -157,6 +159,53 @@ void GpuResourceManager::DestroyResource(uint64_t handle)
     // Future: glDeleteTextures / vkDestroyImage using slot.gpuHandle
 
     m_FreeIndices.push_back(index);
+}
+
+// ============================================================
+// Frame Management
+// ============================================================
+
+void GpuResourceManager::TickFrame()
+{
+    m_CurrentFrame++;
+}
+
+void GpuResourceManager::Gc(uint32_t maxFramesInFlight)
+{
+    // Collect indices of resources eligible for garbage collection.
+    // A resource is eligible when:
+    //   1. It hasn't been accessed for `maxFramesInFlight` frames.
+    //   2. It is alive (not already destroyed).
+    // For now, we rely on the frame gap heuristic.
+    // When Task 5 integrates Ref<Texture2D>/Ref<Buffer>, external
+    // reference counting will be checked here before destruction.
+    std::vector<uint64_t> toDestroy;
+
+    for (uint32_t i = 0; i < m_Slots.size(); i++)
+    {
+        auto& slot = m_Slots[i];
+        if (!slot.alive)
+            continue;
+
+        uint32_t unusedFrames = m_CurrentFrame - slot.lastUsedFrame;
+        if (unusedFrames > maxFramesInFlight)
+        {
+            toDestroy.push_back(MakeHandle(i, slot.generation));
+        }
+    }
+
+    for (uint64_t handle : toDestroy)
+    {
+        uint32_t index = GetIndex(handle);
+        VKT_CORE_INFO("GpuResourceManager::Gc — destroying unused resource '{0}' "
+                      "(unused for {1} frames)",
+                      m_Slots[index].debugName,
+                      m_CurrentFrame - m_Slots[index].lastUsedFrame);
+        DestroyResource(handle);
+    }
+
+    if (!toDestroy.empty())
+        VKT_CORE_INFO("GpuResourceManager::Gc — cleaned up {0} resources", toDestroy.size());
 }
 
 } // namespace Vulkitten

@@ -102,6 +102,13 @@ namespace Vulkitten
                 m_RenderContext->Execute();
             }
 
+            // GpuResourceManager GC: advance frame counter, then collect
+            // resources that haven't been referenced for 3+ frames.
+            {
+                m_Resources->TickFrame();
+                m_Resources->Gc(3);
+            }
+
             auto frameEndTime = std::chrono::high_resolution_clock::now();
             m_FrameTime = std::chrono::duration<float>(frameEndTime - startTime).count();
 

@@ -1,5 +1,10 @@
 # TASK_LOG.md — Vulkitten Engine Task Execution Log
 
+## Task 4: GpuResourceManager延迟GC机制
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 为 GpuResourceManager 添加了帧计数器和延迟 GC 机制。新增 m_CurrentFrame 成员、TickFrame() 方法（每帧递增帧计数器）和 Gc(maxFramesInFlight) 方法（遍历所有 slot，清理超过 N 帧未被引用的资源）。GpuResourceSlot 新增 lastUsedFrame 字段，在每次 GetTexture/GetBuffer 时更新。GC 检查 slot.alive 且 currentFrame - lastUsedFrame > maxFramesInFlight 的资源进行销毁回收。在 Application::Run() 主循环中（RenderGraph 执行后、Window Update 前）调用 TickFrame() 和 Gc(3)。当 Task 5 集成 Ref 引用计数后，GC 将额外检查外部 shared_ptr 持有状态。所有 3 个目标编译通过。
+
 ## Task 3: ShaderLibrary移至RenderContext并从公开API移除
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

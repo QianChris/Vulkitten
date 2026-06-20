@@ -37,6 +37,7 @@ struct GpuResourceSlot
     bool alive = false;
     bool deferred = true;       // Waiting for first Get to allocate GPU resource
     uint64_t gpuHandle = 0;    // Platform resource (GLuint / VkImage / VkBuffer)
+    uint32_t lastUsedFrame = 0; // Frame number of last GetTexture/GetBuffer access
 
     GpuTextureDesc textureDesc;
     GpuBufferDesc  bufferDesc;
@@ -90,6 +91,15 @@ public:
         return (uint64_t(generation) << 32) | uint64_t(index);
     }
 
+    // ---- Frame Management ----
+
+    // Called each frame to advance the internal frame counter.
+    void TickFrame();
+
+    // Garbage-collect resources that haven't been accessed for
+    // maxFramesInFlight frames and have no external references.
+    void Gc(uint32_t maxFramesInFlight);
+
     // ---- Queries ----
 
     size_t GetResourceCount() const { return m_Slots.size() - m_FreeIndices.size(); }
@@ -101,6 +111,7 @@ private:
 
     std::vector<GpuResourceSlot> m_Slots;
     std::vector<uint32_t>        m_FreeIndices;   // Recycled slot indices
+    uint32_t                     m_CurrentFrame = 0;
 };
 
 } // namespace Vulkitten
