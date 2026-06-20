@@ -23,5 +23,4 @@ public:
     }
 
 private:
-    Vulkitten::ShaderLibrary m_ShaderLibrary;
 };

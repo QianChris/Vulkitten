@@ -1,5 +1,10 @@
 # TASK_LOG.md — Vulkitten Engine Task Execution Log
 
+## Task 3: ShaderLibrary移至RenderContext并从公开API移除
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 将 ShaderLibrary 所有权从 GpuEmitterManager 移至 RenderContext。RenderContext 现在持有 ShaderLibrary 成员并在 Init() 中预加载所有引擎 shader（4 个 compute + 1 个 render）。GpuEmitterManager 移除 m_ShaderLibrary 成员，GetShaderLibrary() 改为转发到 RenderContext::Get().GetShaderLibrary()，Initialize() 简化为仅设置标志。ShaderLibrary 构造器改为 private（仅 friend RenderContext 可创建），保留 VKT_API 导出以允许 DLL 消费者通过引用调用 Load/Get 方法。Sandbox ExampleLayer2 和 EmptyLayer 移除自有的 ShaderLibrary 成员，改为通过 RenderContext::Get().GetShaderLibrary() 引用加载 shader。所有 3 个目标编译通过。
+
 ## Task 2: 注册engine虚拟路径并更新Shader加载路径
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

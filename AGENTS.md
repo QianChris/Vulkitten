@@ -107,7 +107,7 @@ No test framework configured. Verify changes via successful builds and manual ex
 - **Double-buffered SSBO** pairs for particle data and indirect args
 - **4 compute passes per frame**: SimArg (reset args) → Sim (indirect dispatch, update existing) → Emit (direct dispatch, spawn new) → RenderArg (write indirect draw args)
 - Renders as `GL_POINTS` via `glDrawArraysIndirect`
-- Managed per-emitter by `GpuEmitterManager` (owns ShaderLibrary + instance map)
+- Managed per-emitter by `GpuEmitterManager` (references engine ShaderLibrary from RenderContext)
 - Shaders loaded from `engine://shaders/` and `engine://computeshaders/` (Vulkitten/assets/)
 - **Architectural note**: This is technical debt — future work should integrate compute into RenderGraph as a pass type
 

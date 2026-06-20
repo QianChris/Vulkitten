@@ -40,27 +40,8 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        // Load compute shaders into the ShaderLibrary.
-        // The .comp files use #include directives that are resolved by the
-        // custom preprocessor in OpenGLShader::CompileCompute.
-        m_ShaderLibrary.Add("ParticleSimArg",
-            Shader::CreateCompute("ParticleSimArg",
-                "engine://computeshaders/ParticleSimArg.comp"));
-
-        m_ShaderLibrary.Add("ParticleSim",
-            Shader::CreateCompute("ParticleSim",
-                "engine://computeshaders/ParticleSim.comp"));
-
-        m_ShaderLibrary.Add("ParticleEmit",
-            Shader::CreateCompute("ParticleEmit",
-                "engine://computeshaders/ParticleEmit.comp"));
-
-        m_ShaderLibrary.Add("ParticleRenderArg",
-            Shader::CreateCompute("ParticleRenderArg",
-                "engine://computeshaders/ParticleRenderArg.comp"));
-
-        // Load the particle render shader (vertex + fragment)
-        m_ShaderLibrary.Load("engine://shaders/Particle.shader");
+        // Engine shaders are now preloaded by RenderContext::Init().
+        // See RenderContext.cpp for the ShaderLibrary setup.
 
         m_Initialized = true;
     }

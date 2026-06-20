@@ -31,6 +31,7 @@ namespace Vulkitten {
 
     class VKT_API ShaderLibrary
     {
+        friend class RenderContext;
     public:
         void Add(const std::string& name, const Ref<Shader>& shader);
         void Add(const Ref<Shader>& shader);
@@ -39,6 +40,7 @@ namespace Vulkitten {
         Ref<Shader> Get(const std::string& name) const;
         bool Exists(const std::string& name) const;
     private:
+        ShaderLibrary() = default;
         std::unordered_map<std::string, Ref<Shader>> m_Shaders;
     };
 

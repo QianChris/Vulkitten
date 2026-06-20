@@ -9,7 +9,7 @@ public:
     ExampleLayer2() : Layer("Empty")
     {
         m_Scene = Vulkitten::Engine::Get().CreateEmptyScene();
-        m_ShaderLibrary.Load("sandbox://assets/shaders/FlatColor.shader");
+        Vulkitten::RenderContext::Get().GetShaderLibrary().Load("sandbox://assets/shaders/FlatColor.shader");
 
         using namespace Vulkitten;
         m_Texture = Texture2D::Create("sandbox://assets/textures/Checkerboard.png");
@@ -106,6 +106,4 @@ public:
 private:
     Vulkitten::Scope<Vulkitten::Scene> m_Scene;
     Vulkitten::Ref<Vulkitten::Texture2D> m_Texture;
-
-    Vulkitten::ShaderLibrary m_ShaderLibrary;
 };

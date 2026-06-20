@@ -22,6 +22,23 @@ void RenderContext::Init()
 
     m_Renderer.Init();
 
+    // Preload engine shaders into the engine-owned ShaderLibrary.
+    // GPU particle compute shaders
+    m_ShaderLibrary.Add("ParticleSimArg",
+        Shader::CreateCompute("ParticleSimArg",
+            "engine://computeshaders/ParticleSimArg.comp"));
+    m_ShaderLibrary.Add("ParticleSim",
+        Shader::CreateCompute("ParticleSim",
+            "engine://computeshaders/ParticleSim.comp"));
+    m_ShaderLibrary.Add("ParticleEmit",
+        Shader::CreateCompute("ParticleEmit",
+            "engine://computeshaders/ParticleEmit.comp"));
+    m_ShaderLibrary.Add("ParticleRenderArg",
+        Shader::CreateCompute("ParticleRenderArg",
+            "engine://computeshaders/ParticleRenderArg.comp"));
+    // GPU particle render shader
+    m_ShaderLibrary.Load("engine://shaders/Particle.shader");
+
     // Set backend context for EndPass (SwapBuffers)
     if (auto* graph = m_Renderer.GetRenderGraph())
     {

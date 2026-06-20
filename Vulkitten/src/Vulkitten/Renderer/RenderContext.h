@@ -3,6 +3,7 @@
 #include "Vulkitten/Core/Core.h"
 #include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Renderer/RenderUtils.h"
+#include "Vulkitten/Renderer/Shader.h"
 
 namespace Vulkitten {
 
@@ -44,13 +45,17 @@ public:
 
     void OnWindowResize(uint32_t width, uint32_t height);
 
+    // ---- ShaderLibrary Access ----
+    ShaderLibrary& GetShaderLibrary() { return m_ShaderLibrary; }
+
     // ---- Global accessor ----
     static RenderContext& Get() { return *s_Instance; }
 
 private:
     static RenderContext* s_Instance;
-    Renderer    m_Renderer;
-    RenderUtils m_RenderUtils;
+    Renderer     m_Renderer;
+    RenderUtils  m_RenderUtils;
+    ShaderLibrary m_ShaderLibrary;
 };
 
 } // namespace Vulkitten

@@ -398,7 +398,7 @@ ResourceHandle<T> = { uint32_t index, uint16_t generation }
 
 ```
 GpuEmitterManager (Scene 持有, GpuParticle/GpuParticle.h)
-├── ShaderLibrary (持有 compute shader 和 render shader)
+├── ShaderLibrary引用 (从 RenderContext 获取，引擎预加载)
 └── unordered_map<TexturePath, GpuEmitterInstance>
        └── GpuEmitterInstance:
             ├── VAO (Empty VAO, 使用 SSBO 作为顶点数据)
