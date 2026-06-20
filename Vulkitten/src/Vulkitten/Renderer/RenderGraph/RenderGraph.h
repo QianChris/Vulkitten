@@ -22,8 +22,7 @@ namespace Vulkitten {
         glm::mat4 ViewProjection{1.0f};
         class Scene* Scene = nullptr;
 
-        // Future: LightData, environment map, scene bounds, etc.
-        struct LightData {}; // Placeholder for light list
+        struct LightData {};
         LightData Lights;
     };
 
@@ -32,8 +31,9 @@ namespace Vulkitten {
         RenderGraph() = default;
         ~RenderGraph() = default;
 
-        void AddPass(const RenderPass& pass) {
-            m_Passes.push_back(pass);
+        // Takes ownership of the pass (avoids slicing of derived Pass types).
+        void AddPass(Ref<RenderPass> pass) {
+            m_Passes.push_back(std::move(pass));
         }
         void AddCommand(const RenderCommand& command) {
             m_FrameCommands.push_back(command);
@@ -54,7 +54,7 @@ namespace Vulkitten {
         uint32_t GetPassCount() const { return static_cast<uint32_t>(m_Passes.size()); }
         const std::string& GetPassName(uint32_t index) const {
             VKT_CORE_ASSERT(index < m_Passes.size(), "GetPassName: index out of range");
-            return m_Passes[index].name;
+            return m_Passes[index]->name;
         }
 
     private:
@@ -62,8 +62,8 @@ namespace Vulkitten {
             m_FrameCommands.clear();
         }
 
-        std::vector<RenderPass> m_Passes{};
-        std::vector<RenderCommand> m_FrameCommands{};
+        std::vector<Ref<RenderPass>> m_Passes{};
+        std::vector<RenderCommand>     m_FrameCommands{};
         std::vector<RenderGraphResource> m_Resources{};
         void* m_BackendContext = nullptr;
 

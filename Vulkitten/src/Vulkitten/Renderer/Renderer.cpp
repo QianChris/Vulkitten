@@ -34,10 +34,10 @@ void Renderer::Init()
     m_RenderGraph = new RenderGraph();
 
     // Register default render passes (order matters)
-    m_RenderGraph->AddPass(PreparePass{});       // Clear
-    m_RenderGraph->AddPass(GpuParticlePass{});   // GPU particle update + render
-    m_RenderGraph->AddPass(SpriteRenderPass{});  // 2D quad batch
-    m_RenderGraph->AddPass(EndPass{});           // SwapBuffers
+    m_RenderGraph->AddPass(CreateRef<PreparePass>());       // Clear
+    m_RenderGraph->AddPass(CreateRef<GpuParticlePass>());   // GPU particle update + render
+    m_RenderGraph->AddPass(CreateRef<SpriteRenderPass>());  // 2D quad batch
+    m_RenderGraph->AddPass(CreateRef<EndPass>());           // SwapBuffers
 }
 
 void Renderer::Shutdown()
