@@ -7,6 +7,7 @@
 #include "Vulkitten/Renderer/Camera.h"
 
 #include <glm/glm.hpp>
+#include <unordered_map>
 
 namespace Vulkitten {
 
@@ -33,6 +34,7 @@ namespace Vulkitten {
 
         // Takes ownership of the pass (avoids slicing of derived Pass types).
         void AddPass(Ref<RenderPass> pass) {
+            pass->m_Graph = this;
             m_Passes.push_back(std::move(pass));
         }
         void AddCommand(const RenderCommand& command) {
@@ -47,8 +49,11 @@ namespace Vulkitten {
         void SetPerFrameData(const PerFrameSceneData& data) { m_PerFrameData = data; }
         const PerFrameSceneData& GetPerFrameData() const { return m_PerFrameData; }
 
-        // ---- Pass Framebuffer configuration ----
-        void SetPassFramebuffer(const std::string& passName, Ref<class Framebuffer> fb);
+        // ---- Key-Value Framebuffer Map ----
+        // Passes retrieve FBs by key (e.g. "Viewport") via GetFramebuffer().
+        // On window resize, all registered FBs are resized automatically.
+        void SetFramebuffer(const std::string& key, Ref<class Framebuffer> fb);
+        Ref<class Framebuffer> GetFramebuffer(const std::string& key) const;
 
         // ---- Query registered pass count and names (for debug UI) ----
         uint32_t GetPassCount() const { return static_cast<uint32_t>(m_Passes.size()); }
@@ -65,6 +70,7 @@ namespace Vulkitten {
         std::vector<Ref<RenderPass>> m_Passes{};
         std::vector<RenderCommand>     m_FrameCommands{};
         std::vector<RenderGraphResource> m_Resources{};
+        std::unordered_map<std::string, Ref<class Framebuffer>> m_FramebufferMap;
         void* m_BackendContext = nullptr;
 
         PerFrameSceneData m_PerFrameData;

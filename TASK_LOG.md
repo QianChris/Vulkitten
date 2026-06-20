@@ -1,5 +1,10 @@
 # TASK_LOG.md — Vulkitten Engine Task Execution Log
 
+## Task 6: RenderGraph Framebuffer Key-Value模式
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 重构了 RenderGraph 的 Framebuffer 管理方式。RenderGraph 新增 m_FramebufferMap (key → Ref<Framebuffer>) 和 SetFramebuffer/GetFramebuffer 方法。RenderPass 新增 m_Graph 指针和 GetGraph() 公开访问器，在 AddPass 时自动设置。Execute() 不再自动 Bind/Unbind Framebuffer——PreparePass 和 SpriteRenderPass 各自通过 GetGraph()->GetFramebuffer("Viewport") 获取并自行管理 Bind/Unbind。移除了 RenderPass::SetTargetFramebuffer/GetTargetFramebuffer 和 RenderGraph::SetPassFramebuffer。EditorLayer 改为 graph->SetFramebuffer("Viewport", fb) 一行配置。所有 3 个目标编译通过。
+
 ## Task 5: Texture2D和Buffer纳入GpuResourceManager管理
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

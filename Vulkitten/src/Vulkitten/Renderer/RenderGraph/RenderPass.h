@@ -47,10 +47,11 @@ public:
     )>;
     
     ExecuteFunc onExecute;
-    
-    // ---- Framebuffer configuration (set per-frame before Execute) ----
-    void SetTargetFramebuffer(Ref<Framebuffer> fb) { m_TargetFramebuffer = fb; }
-    Ref<Framebuffer> GetTargetFramebuffer() const { return m_TargetFramebuffer; }
+
+    // ---- Graph Access ----
+    // Returns the owning RenderGraph (set by AddPass). Used by onExecute
+    // to retrieve configured Framebuffers by key.
+    class RenderGraph* GetGraph() const { return m_Graph; }
 
     // 辅助：快速声明
     RenderPass& Read(const std::string& res, AccessFlags flags = AccessFlags::Read);
@@ -58,7 +59,7 @@ public:
     RenderPass& SetExecute(ExecuteFunc func);
 
 private:
-    Ref<Framebuffer> m_TargetFramebuffer;
+    class RenderGraph* m_Graph = nullptr;
     friend class RenderGraph;
 };
 

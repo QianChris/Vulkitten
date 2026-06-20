@@ -5,17 +5,17 @@
 
 namespace Vulkitten {
 
-    void RenderGraph::SetPassFramebuffer(const std::string& passName, Ref<Framebuffer> fb)
+    void RenderGraph::SetFramebuffer(const std::string& key, Ref<Framebuffer> fb)
     {
-        for (auto& pass : m_Passes)
-        {
-            if (pass->name == passName)
-            {
-                pass->SetTargetFramebuffer(fb);
-                return;
-            }
-        }
-        VKT_CORE_WARN("RenderGraph::SetPassFramebuffer — pass not found: {0}", passName);
+        m_FramebufferMap[key] = fb;
+    }
+
+    Ref<Framebuffer> RenderGraph::GetFramebuffer(const std::string& key) const
+    {
+        auto it = m_FramebufferMap.find(key);
+        if (it != m_FramebufferMap.end())
+            return it->second;
+        return nullptr;
     }
 
     void RenderGraph::Execute()
@@ -38,14 +38,7 @@ namespace Vulkitten {
 
             if (pass->onExecute)
             {
-                auto fb = pass->GetTargetFramebuffer();
-                if (fb)
-                    fb->Bind();
-
                 pass->onExecute(m_Resources, passCommands, m_BackendContext);
-
-                if (fb)
-                    fb->Unbind();
             }
         }
 

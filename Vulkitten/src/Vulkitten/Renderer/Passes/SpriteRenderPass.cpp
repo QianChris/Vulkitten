@@ -2,7 +2,9 @@
 #include "SpriteRenderPass.h"
 
 #include "Vulkitten/Renderer/RenderContext.h"
+#include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
 #include "Vulkitten/Renderer/Camera.h"
+#include "Vulkitten/Renderer/Framebuffer.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -74,6 +76,12 @@ SpriteRenderPass::SpriteRenderPass()
         if (!camera)
             return;
 
+        // Bind the configured Framebuffer (nullptr = default backbuffer)
+        auto* graph = GetGraph();
+        auto fb = graph ? graph->GetFramebuffer("Viewport") : nullptr;
+        if (fb)
+            fb->Bind();
+
         BeginScene(*camera);
 
         for (auto& cmd : commands)
@@ -93,6 +101,9 @@ SpriteRenderPass::SpriteRenderPass()
         }
 
         EndScene();
+
+        if (fb)
+            fb->Unbind();
     });
 }
 
