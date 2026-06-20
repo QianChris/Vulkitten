@@ -1,5 +1,10 @@
 # TASK_LOG.md — Vulkitten Engine Task Execution Log
 
+## Task 1: 引擎Shader资产文件夹创建与文件迁移
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 创建了 Vulkitten/assets/shaders/ 和 Vulkitten/assets/computeshaders/common/ 目录结构。将引擎 Pass 使用的 6 组 shader 文件（FlatColor、SolidColor、Texture、TextureEntity、Particle 的 .shader/.vert/.frag/.spv）从 Sandbox/assets/shaders/ 移至 Vulkitten/assets/shaders/。将 GPU 粒子 4 个 compute shader（ParticleSimArg、ParticleSim、ParticleEmit、ParticleRenderArg 的 .comp/.spv）和 common/math_hash.h 从 Sandbox/assets/computeshaders/ 移至 Vulkitten/assets/computeshaders/。Sandbox/assets/ 现在仅保留 textures/（Checkerboard.png、ChernoLogo.png）。.shader JSON 文件内的路径引用将在 Task 2 中更新。所有 3 个目标编译通过。
+
 ## Task 1: Complete Basic RenderGraph Invocation
 - **Start**: 2026-06-19
 - **End**: 2026-06-19

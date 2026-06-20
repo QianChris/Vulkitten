@@ -16,6 +16,7 @@ VulkittenEngine/
 │   │       ├── ImGui/      # ImGui 集成层
 │   │       ├── Perf/       # 性能分析（Instrumentor, Timer）
 │   │       └── Utils/      # 工具（FileDialogs, YAMLConversions）
+│   ├── assets/             # 引擎 Shader 资产（shaders/, computeshaders/）
 │   ├── Platform/
 │   │   ├── Windows/        # GLFW 窗口 + 输入实现
 │   │   └── OpenGL/         # OpenGL 渲染后端全实现
