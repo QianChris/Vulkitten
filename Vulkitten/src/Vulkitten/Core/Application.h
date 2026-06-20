@@ -16,6 +16,12 @@ namespace Vulkitten
     class OpenGLDevice;
     class GpuResourceManager;
     class ShaderManager;
+    class VulkanInstance;
+    class VkRenderer;
+    class IRenderer;
+
+    // Backend selection
+    enum class RendererBackend { OpenGL, Vulkan };
 
     class VKT_API Application
     {
@@ -36,6 +42,10 @@ namespace Vulkitten
         inline float GetFPS() const { return m_FPS; }
         inline float GetFrameTime() const { return m_FrameTime; }
 
+        // Set backend before constructing app (called by client)
+        static void SetBackend(RendererBackend backend) { s_Backend = backend; }
+        static RendererBackend GetBackend() { return s_Backend; }
+
     private:
         bool OnWindowClose(WindowCloseEvent& e);
         bool OnWindowResize(WindowResizeEvent& e);
@@ -44,6 +54,10 @@ namespace Vulkitten
         Scope<OpenGLDevice> m_Device;
         Scope<GpuResourceManager> m_Resources;
         Scope<ShaderManager> m_ShaderMgr;
+
+		// Vulkan backend (optional)
+		Scope<VulkanInstance> m_VulkanInstance;
+		Scope<VkRenderer> m_VkRenderer;
 
 		Scope<GraphicContext> m_GraphicContext;
 		Scope<Window> m_Window;
@@ -59,9 +73,10 @@ namespace Vulkitten
         float m_FrameTime = 0.0f;
         float m_FrameCount = 0.0f;
         float m_FrameTimeAccumulator = 0.0f;
-        
+
     private:
         static Application* s_Instance;
+        static RendererBackend s_Backend;
     };
 
     // to be defined in client

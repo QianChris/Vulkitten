@@ -4,12 +4,15 @@
 #include "Vulkitten/Core/Layer.h"
 #include "Vulkitten/Core/Engine.h"
 #include "Vulkitten/Core/Input.h"
+#include "Vulkitten/Core/IWindow.h"
 #include "Vulkitten/Core/GraphicContext.h"
 
 #include "Vulkitten/Renderer/RendererSubsystem.h"
 #include "Vulkitten/Scene/SceneContext.h"
 #include "Vulkitten/Renderer/Device.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLDevice.h"
+#include "Vulkitten/Renderer/Backend/Vulkan/VulkanInstance.h"
+#include "Vulkitten/Renderer/Backend/Vulkan/VkRenderer.h"
 #include "Vulkitten/Renderer/GpuResourceManager.h"
 #include "Vulkitten/Renderer/ShaderManager.h"
 
@@ -21,6 +24,7 @@
 namespace Vulkitten
 {
     Application* Application::s_Instance = nullptr;
+    RendererBackend Application::s_Backend = RendererBackend::OpenGL; // default
 
     Application::Application()
     {
@@ -37,17 +41,37 @@ namespace Vulkitten
         m_Window.reset(Window::Create());
         m_Window->SetEventCallback(VKT_BIND_EVENT_FN(Application::OnEvent));
 
-        // Create renderer infrastructure
-        m_Device      = CreateScope<OpenGLDevice>();
-        m_Resources   = CreateScope<GpuResourceManager>();
-        m_ShaderMgr   = CreateScope<ShaderManager>(Engine::Get().GetFileSystem());
+        if (s_Backend == RendererBackend::Vulkan)
+        {
+            // ---- Vulkan Backend ----
+            m_VulkanInstance = CreateScope<VulkanInstance>();
+            m_VulkanInstance->Init(true);
 
-        m_RendererSubsystem = CreateScope<RendererSubsystem>(
-            m_Device.get(), *m_Resources, *m_ShaderMgr);
-        m_RendererSubsystem->Init();
+            // Get IWindow from the window
+            auto* iwindow = dynamic_cast<IWindow*>(m_Window.get());
 
-        // GraphicContext wraps existing window + RendererSubsystem (no duplicate window)
-        m_GraphicContext = CreateScope<GraphicContext>(*m_Window, *m_RendererSubsystem);
+            RendererConfig config;
+            m_VkRenderer = CreateScope<VkRenderer>(config, *m_VulkanInstance, *iwindow);
+            m_VkRenderer->Init();
+
+            // Use Vulkan renderer as the backend
+            // GraphicContext is not used for Vulkan
+            VKT_CORE_INFO("Application: Vulkan backend initialized");
+        }
+        else
+        {
+            // ---- OpenGL Backend (default) ----
+            m_Device      = CreateScope<OpenGLDevice>();
+            m_Resources   = CreateScope<GpuResourceManager>();
+            m_ShaderMgr   = CreateScope<ShaderManager>(Engine::Get().GetFileSystem());
+
+            m_RendererSubsystem = CreateScope<RendererSubsystem>(
+                m_Device.get(), *m_Resources, *m_ShaderMgr);
+            m_RendererSubsystem->Init();
+
+            // GraphicContext wraps existing window + RendererSubsystem
+            m_GraphicContext = CreateScope<GraphicContext>(*m_Window, *m_RendererSubsystem);
+        }
 
         m_ImGuiLayer = new ImGuiLayer();
         PushOverlay(m_ImGuiLayer);
@@ -59,6 +83,8 @@ namespace Vulkitten
 
         if (m_RendererSubsystem)
             m_RendererSubsystem->Shutdown();
+        if (m_VkRenderer)
+            m_VkRenderer->Shutdown();
     }
 
     void Application::Run()
@@ -84,20 +110,36 @@ namespace Vulkitten
             }
 
             if (!m_Minimized) {
-                // ---- IRenderer Lifecycle: BeginFrame ----
+                if (s_Backend == RendererBackend::Vulkan && m_VkRenderer)
                 {
-                    VKT_PROFILE_SCOPE("IRenderer BeginFrame");
-                    m_RendererSubsystem->GetRenderer().BeginFrame();
+                    m_VkRenderer->BeginFrame();
+                    auto* graph = m_VkRenderer->GetRenderGraph();
+                    if (graph)
+                    {
+                        Vulkitten::SceneContext sceneCtx(*m_VkRenderer, *graph);
+                        for (Layer *layer : m_LayerStack) {
+                            VKT_PROFILE_SCOPE("Layer update");
+                            layer->OnUpdate(timestep, sceneCtx);
+                        }
+                    }
                 }
+                else if (m_RendererSubsystem)
+                {
+                    // ---- IRenderer Lifecycle: BeginFrame ----
+                    {
+                        VKT_PROFILE_SCOPE("IRenderer BeginFrame");
+                        m_RendererSubsystem->GetRenderer().BeginFrame();
+                    }
 
-                // Create SceneContext for dependency injection into Layers/Scenes
-                auto& renderer = m_RendererSubsystem->GetRenderer();
-                auto* graph = m_RendererSubsystem->GetRenderGraph();
-                Vulkitten::SceneContext sceneCtx(renderer, *graph);
+                    // Create SceneContext for dependency injection into Layers/Scenes
+                    auto& renderer = m_RendererSubsystem->GetRenderer();
+                    auto* graph = m_RendererSubsystem->GetRenderGraph();
+                    Vulkitten::SceneContext sceneCtx(renderer, *graph);
 
-                for (Layer *layer : m_LayerStack) {
-                    VKT_PROFILE_SCOPE("Layer update");
-                    layer->OnUpdate(timestep, sceneCtx);
+                    for (Layer *layer : m_LayerStack) {
+                        VKT_PROFILE_SCOPE("Layer update");
+                        layer->OnUpdate(timestep, sceneCtx);
+                    }
                 }
             }
             {
@@ -109,12 +151,24 @@ namespace Vulkitten
             }
 
             // Execute RenderGraph (all passes)
+            if (s_Backend == RendererBackend::Vulkan && m_VkRenderer)
+            {
+                VKT_PROFILE_SCOPE("RenderGraph execute (Vulkan)");
+                m_VkRenderer->Execute();
+            }
+            else if (m_RendererSubsystem)
             {
                 VKT_PROFILE_SCOPE("RenderGraph execute");
                 m_RendererSubsystem->Execute();
             }
 
             // ---- IRenderer Lifecycle: EndFrame (Submit + Present) ----
+            if (s_Backend == RendererBackend::Vulkan && m_VkRenderer)
+            {
+                VKT_PROFILE_SCOPE("IRenderer EndFrame (Vulkan)");
+                m_VkRenderer->EndFrame();
+            }
+            else if (m_RendererSubsystem)
             {
                 VKT_PROFILE_SCOPE("IRenderer EndFrame");
                 m_RendererSubsystem->GetRenderer().EndFrame();
@@ -192,6 +246,8 @@ namespace Vulkitten
         m_Minimized = false;
         if (m_RendererSubsystem)
             m_RendererSubsystem->OnWindowResize(e.GetWidth(), e.GetHeight());
+        if (m_VkRenderer)
+            m_VkRenderer->OnWindowResize(e.GetWidth(), e.GetHeight());
         return false;
     }
 }

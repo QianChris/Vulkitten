@@ -91,6 +91,7 @@ No test framework configured. Verify changes via successful builds and manual ex
   - `Renderer` — scene-level IRenderer implementation (owns RenderGraph instance, registers Passes).
   - `RenderGraph` — command-based pass system with `Execute()` iterating passes and dispatching commands.
   - `RenderSystem` — ECS System that creates `RenderCommand`s from components. Receives RenderGraph via SceneContext injection.
+- **Vulkan Backend** (`Renderer/Backend/Vulkan/`): Skeleton implementation with all IRenderer/IDevice/IGpuResourceManager interfaces satisfied. `VulkanInstance` wraps VkInstance + validation; `VulkanDevice` handles physical/logical device creation; `VkSwapchain` manages surface + swapchain; `VkFrameContext`/`VkRenderContext` per-frame/per-pass state; `VkGpuResourceManager` handle-based resource management; `VkShader`/`VkPipeline` pipeline creation stubs; `VkRenderer` top-level IRenderer impl. Select backend via `Application::SetBackend(RendererBackend::Vulkan)` before construction.
 - **GPU Particles**: Direct OpenGL compute shaders (glDispatchCompute, SSBOs, indirect draw) — bypasses all abstractions
 - **Entry Point**: Implement `Vulkitten::CreateApplication()` returning `Application*`
 

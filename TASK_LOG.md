@@ -149,6 +149,46 @@
 - **End**: 2026-06-20
 - **Summary**: 将 src/Platform/OpenGL/ 下 18 个文件（OpenGLBuffer/Context/Device/Framebuffer/RendererAPI/Shader/Texture/Util/VertexArray .h/.cpp）移至 src/Vulkitten/Renderer/Backend/OpenGL/。将 src/Platform/Windows/ 下 7 个文件（WindowsWindow/Input/Surface/FileDialogs .h/.cpp）移至 src/Vulkitten/Window/Platform/Windows/。更新 11 个文件中的 #include "Platform/..." 引用为新路径（Vulkitten/Renderer/Backend/OpenGL/、Vulkitten/Window/Platform/Windows/）。CMake GLOB_RECURSE 自动适配新目录。所有 3 个目标编译通过。
 
+## Task 10: Vulkan SDK 集成 + VulkanInstance
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 添加 find_package(Vulkan QUIET) 和 target_link_libraries(Vulkan::Vulkan) 到 CMakeLists.txt，定义 VKT_HAS_VULKAN 编译宏（Vulkan SDK 1.3.296 已检测到）。创建 VulkanInstance 类（Vulkitten/Renderer/Backend/Vulkan/VulkanInstance.h/.cpp），封装 vkCreateInstance + Validation Layer + VK_EXT_debug_utils 扩展加载。使用 void* 存储 Vulkan 句柄以保证在无 SDK 环境下也能编译。所有 3 个目标编译通过。
+
+## Task 11: VulkanDevice 实现 IDevice
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 VulkanDevice 类（VulkanDevice.h/.cpp）继承 IDevice。Init() 实现物理设备枚举（优先独立 GPU VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU）、Queue Family 查询（Graphics+Present+Transfer）、逻辑设备创建（vkCreateDevice）。使用 void* 存储 VkPhysicalDevice/VkDevice 避免 Vulkan 头文件依赖。类名使用 VulkanDevice（非 VkDevice）以避免与 Vulkan typedef 冲突。所有 3 个目标编译通过。
+
+## Task 12: VkSwapchain + VkSurface
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 VkSwapchain 类（VkSwapchain.h/.cpp），管理 VkSurfaceKHR 和 VkSwapchainKHR 生命周期。通过 IWindow 获取平台表面，Create() 以指定宽高创建/重建 swapchain，AcquireNextImage/Present 处理帧循环。含 Per-Image VkImageView 管理预留。所有 3 个目标编译通过。
+
+## Task 13: VkFrameContext + VkRenderContext
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 VkFrameContext（继承 FrameContext，含 VkCommandPool 数组 + Init/Reset 方法）和 VkRenderContext（per-pass 翻译器，TranslateCommand 派发 DrawQuadCommand/ClearCommand，BindPipeline/BindGeometry 含冗余绑定跳过）。两者均为桩实现，方法体预留 vkCmd* 调用。所有 3 个目标编译通过。
+
+## Task 14: VkGpuResourceManager
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 VkGpuResourceManager（VkGpuResourceManager.h/.cpp）实现 IGpuResourceManager 接口。管理 VkBuffer/VkImage 资源创建（通过句柄 index+generation）、外部引用追踪（weak_ptr）、延迟分配、GC（maxFramesInFlight）。实现 CreateTexture/CreateBuffer/CreateShader/CreatePipeline/CreateGeometry 及 TrackExternalRef/SetGpuHandle/DestroyResource/TickFrame/Gc 全部接口方法。所有 3 个目标编译通过。
+
+## Task 15: VkShader + VkPipeline
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 VkShader（Compile 方法桩实现：GLSL→SPIR-V→VkShaderModule）和 VkPipeline（Create 方法桩实现：VkPipelineLayout→VkDescriptorSetLayout→ShaderStages→vkCreateGraphicsPipelines）。两者均使用 void* 存储 Vulkan 句柄，支持 SpriteRenderPass 的 BatchVertex 顶点布局。所有 3 个目标编译通过。
+
+## Task 16: VkRenderer 实现 IRenderer
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 VkRenderer（VkRenderer.h/.cpp）实现 IRenderer 接口，串联全部 Vulkan 组件。Init() 创建 VulkanDevice + VkSwapchain + VkGpuResourceManager + RenderGraph。BeginFrame（AcquireNextImage+创建 FrameContext）→ Execute（RenderGraph::Execute）→ EndFrame（Present+帧资源回收）。OnWindowResize 销毁并重建 Swapchain。持有 VulkanInstance& 和 IWindow& 引用。所有 3 个目标编译通过。
+
+## Task 17: 端到端集成 Vulkan 后端 + Sandbox 切换
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: Application 类新增 RendererBackend 枚举（OpenGL/Vulkan）和 SetBackend/GetBackend 静态方法。Application 构造函数根据 s_Backend 分支创建 Vulkan 或 OpenGL 后端：Vulkan 路径创建 VulkanInstance→VkRenderer（通过 dynamic_cast<IWindow*> 获取 IWindow）；OpenGL 路径保持原 RendererSubsystem。主循环（BeginFrame→Update→Execute→EndFrame）和 OnWindowResize 均支持双后端路径。SandboxApp.cpp 在 CreateApplication() 中调用 Application::SetBackend(RendererBackend::Vulkan) 选择 Vulkan 后端。所有 3 个目标编译通过。
+
 ## Task 9: GraphicContext Singleton
 - **Start**: 2026-06-19
 - **End**: 2026-06-19

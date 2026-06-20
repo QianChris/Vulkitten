@@ -25,5 +25,7 @@ public:
 };
 
 Vulkitten::Application* Vulkitten::CreateApplication() {
+    // Select Vulkan backend
+    Vulkitten::Application::SetBackend(Vulkitten::RendererBackend::Vulkan);
     return new Sandbox();
 }

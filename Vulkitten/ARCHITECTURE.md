@@ -566,7 +566,16 @@ Vulkitten/
 │   │   │   ├── OpenGLFramebuffer.h/cpp  # FBO
 │   │   │   ├── OpenGLUtil.h/cpp         # GLenum 转换
 │   │   │   └── OpenGLDevice.h/cpp       # IDevice 实现
-│   │   └── Vulkan/              # Vulkan 后端 (待实现)
+│   │   └── Vulkan/              # Vulkan 后端 (骨架)
+│   │       ├── VulkanInstance    # VkInstance + Validation
+│   │       ├── VulkanDevice      # IDevice 实现
+│   │       ├── VkSwapchain       # Surface + Swapchain
+│   │       ├── VkFrameContext    # Per-frame sync
+│   │       ├── VkRenderContext   # Command recording
+│   │       ├── VkGpuResourceManager # Resource mgmt
+│   │       ├── VkShader          # GLSL→SPIR-V
+│   │       ├── VkPipeline        # Graphics pipeline
+│   │       └── VkRenderer        # IRenderer 实现
 │   ├── RenderGraph/             # RenderGraph 系统
 │   ├── Passes/                  # 渲染 Pass
 │   └── ...
