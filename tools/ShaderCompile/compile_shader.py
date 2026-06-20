@@ -28,7 +28,7 @@ BLACKLIST_DIRS = {
 # 留空则不添加额外 include 路径
 INCLUDE_DIRS = [
     'Vulkitten/src',
-    'Sandbox/assets/computeshaders/common'
+    'Vulkitten/assets/computeshaders/common'
 ]
 
 # ==================== 逻辑区 ====================

@@ -1,4 +1,4 @@
 {
-    "vertex": "sandbox://assets/shaders/Particle.vert",
-    "fragment": "sandbox://assets/shaders/Particle.frag"
+    "vertex": "engine://shaders/Particle.vert",
+    "fragment": "engine://shaders/Particle.frag"
 }

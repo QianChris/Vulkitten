@@ -1,5 +1,10 @@
 # TASK_LOG.md — Vulkitten Engine Task Execution Log
 
+## Task 2: 注册engine虚拟路径并更新Shader加载路径
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 在 Engine::Init() 中注册了 `engine` → `../../Vulkitten/assets` 虚拟路径映射。更新了 GpuEmitterManager::Initialize() 中 4 个 compute shader 加载路径（`sandbox://assets/computeshaders/` → `engine://computeshaders/`）和 Particle.shader 加载路径。更新了 SpriteRenderPass 构造函数中 TextureEntity.shader 加载路径。更新了所有 5 个 .shader JSON 描述文件的内部 vert/frag 路径。更新了 compile_shader.py 的 INCLUDE_DIRS 从 Sandbox 路径改为 Vulkitten 路径。所有 3 个目标编译通过。
+
 ## Task 1: 引擎Shader资产文件夹创建与文件迁移
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

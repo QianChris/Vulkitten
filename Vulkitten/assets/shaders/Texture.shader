@@ -1,4 +1,4 @@
 {
-    "vertex": "sandbox://assets/shaders/Texture.vert",
-    "fragment": "sandbox://assets/shaders/Texture.frag"
+    "vertex": "engine://shaders/Texture.vert",
+    "fragment": "engine://shaders/Texture.frag"
 }

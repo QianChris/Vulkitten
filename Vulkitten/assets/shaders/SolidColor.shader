@@ -1,4 +1,4 @@
 {
-    "vertex": "sandbox://assets/shaders/SolidColor.vert",
-    "fragment": "sandbox://assets/shaders/SolidColor.frag"
+    "vertex": "engine://shaders/SolidColor.vert",
+    "fragment": "engine://shaders/SolidColor.frag"
 }

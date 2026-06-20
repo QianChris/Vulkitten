@@ -25,9 +25,8 @@ void Engine::Init()
 
     VKT_CORE_INFO("Engine::Init - engine subsystems initializing...");
 
-    // FileSystem: virtual paths are currently registered in Application::Application().
-    // In a future task, RegisterPath calls will move here.
-    // For now, the FileSystem instance is ready but empty — paths are added externally.
+    // Register engine asset paths for shader/asset loading.
+    m_FileSystem->RegisterPath("../../Vulkitten/assets", "engine");
 
     // Input: currently initialized as a global static (WindowsInput.cpp line 10).
     // Engine owns the lifecycle: Shutdown() will clean it up.

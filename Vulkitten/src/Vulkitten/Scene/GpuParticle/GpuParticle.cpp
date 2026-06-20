@@ -45,22 +45,22 @@ namespace Vulkitten {
         // custom preprocessor in OpenGLShader::CompileCompute.
         m_ShaderLibrary.Add("ParticleSimArg",
             Shader::CreateCompute("ParticleSimArg",
-                "sandbox://assets/computeshaders/ParticleSimArg.comp"));
+                "engine://computeshaders/ParticleSimArg.comp"));
 
         m_ShaderLibrary.Add("ParticleSim",
             Shader::CreateCompute("ParticleSim",
-                "sandbox://assets/computeshaders/ParticleSim.comp"));
+                "engine://computeshaders/ParticleSim.comp"));
 
         m_ShaderLibrary.Add("ParticleEmit",
             Shader::CreateCompute("ParticleEmit",
-                "sandbox://assets/computeshaders/ParticleEmit.comp"));
+                "engine://computeshaders/ParticleEmit.comp"));
 
         m_ShaderLibrary.Add("ParticleRenderArg",
             Shader::CreateCompute("ParticleRenderArg",
-                "sandbox://assets/computeshaders/ParticleRenderArg.comp"));
+                "engine://computeshaders/ParticleRenderArg.comp"));
 
         // Load the particle render shader (vertex + fragment)
-        m_ShaderLibrary.Load("sandbox://assets/shaders/Particle.shader");
+        m_ShaderLibrary.Load("engine://shaders/Particle.shader");
 
         m_Initialized = true;
     }
