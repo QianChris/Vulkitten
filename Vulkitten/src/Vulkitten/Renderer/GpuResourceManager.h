@@ -4,7 +4,9 @@
 
 #include <vector>
 #include <string>
+#include <unordered_map>
 #include <cstdint>
+#include <memory>
 
 namespace Vulkitten {
 
@@ -78,6 +80,16 @@ public:
 
     GpuResourceSlot* GetSlot(uint32_t index);
 
+    // ---- External Reference Tracking ----
+
+    // Register a weak_ptr that tracks an external Ref (Texture2D/Buffer).
+    // The GC will skip this resource as long as the external Ref is alive.
+    void TrackExternalRef(uint64_t handle, const std::weak_ptr<void>& tracker);
+
+    // Set the platform GPU handle on an already-created slot (for
+    // resources created externally via Texture2D::Create / Buffer::Create).
+    void SetGpuHandle(uint64_t handle, uint64_t gpuHandle);
+
     // ---- Resource Destruction ----
 
     void DestroyResource(uint64_t handle);
@@ -112,6 +124,9 @@ private:
     std::vector<GpuResourceSlot> m_Slots;
     std::vector<uint32_t>        m_FreeIndices;   // Recycled slot indices
     uint32_t                     m_CurrentFrame = 0;
+
+    // External Ref tracking: slot index → weak_ptr aliasing the Texture2D/Buffer shared_ptr.
+    std::unordered_map<uint32_t, std::weak_ptr<void>> m_ExternalTrackers;
 };
 
 } // namespace Vulkitten

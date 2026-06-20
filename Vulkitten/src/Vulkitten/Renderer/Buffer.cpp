@@ -1,6 +1,8 @@
 #include "Buffer.h"
 
 #include "Renderer.h"
+#include "RenderContext.h"
+#include "GpuResourceManager.h"
 #include "Platform/OpenGL/OpenGLBuffer.h"
 
 #include "Vulkitten/Perf/Instrumentor.h"
@@ -11,50 +13,80 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
     {
         VKT_PROFILE_FUNCTION();
 
+        Ref<VertexBuffer> result;
         switch (Renderer::GetAPI())
         {
             case RendererAPI::API::None:
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
                 return nullptr;
             case RendererAPI::API::OpenGL:
-                return CreateRef<OpenGLVertexBuffer>(vertices, size);
+                result = CreateRef<OpenGLVertexBuffer>(vertices, size);
+                break;
         }
 
-        VKT_CORE_ASSERT(false, "Unknown RendererAPI!");
-        return nullptr;
+        if (!result)
+            return nullptr;
+
+        auto& resources = RenderContext::Get().GetRenderer().GetResourceManager();
+        GpuBufferDesc desc;
+        desc.Size = size;
+        uint64_t handle = resources.CreateBuffer(desc, "VertexBuffer");
+        resources.TrackExternalRef(handle, result);
+
+        return result;
     }
 
     Ref<VertexBuffer> VertexBuffer::Create(uint32_t size)
     {
         VKT_PROFILE_FUNCTION();
 
+        Ref<VertexBuffer> result;
         switch (Renderer::GetAPI())
         {
             case RendererAPI::API::None:
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
                 return nullptr;
             case RendererAPI::API::OpenGL:
-                return CreateRef<OpenGLVertexBuffer>(size);
+                result = CreateRef<OpenGLVertexBuffer>(size);
+                break;
         }
 
-        VKT_CORE_ASSERT(false, "Unknown RendererAPI!");
-        return nullptr;
+        if (!result)
+            return nullptr;
+
+        auto& resources = RenderContext::Get().GetRenderer().GetResourceManager();
+        GpuBufferDesc desc;
+        desc.Size = size;
+        uint64_t handle = resources.CreateBuffer(desc, "VertexBuffer");
+        resources.TrackExternalRef(handle, result);
+
+        return result;
     }
 
     Ref<IndexBuffer> IndexBuffer::Create(uint32_t* indices, uint32_t count)
     {
         VKT_PROFILE_FUNCTION();
 
+        Ref<IndexBuffer> result;
         switch (Renderer::GetAPI())
         {
             case RendererAPI::API::None:
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
                 return nullptr;
             case RendererAPI::API::OpenGL:
-                return CreateRef<OpenGLIndexBuffer>(indices, count);
+                result = CreateRef<OpenGLIndexBuffer>(indices, count);
+                break;
         }
 
-        VKT_CORE_ASSERT(false, "Unknown RendererAPI!");
-        return nullptr;
+        if (!result)
+            return nullptr;
+
+        auto& resources = RenderContext::Get().GetRenderer().GetResourceManager();
+        GpuBufferDesc desc;
+        desc.Size = count * sizeof(uint32_t);
+        uint64_t handle = resources.CreateBuffer(desc, "IndexBuffer");
+        resources.TrackExternalRef(handle, result);
+
+        return result;
     }
 }

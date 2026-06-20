@@ -2,6 +2,8 @@
 #include "Texture.h"
 
 #include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/RenderContext.h"
+#include "Vulkitten/Renderer/GpuResourceManager.h"
 #include "Platform/OpenGL/OpenGLTexture.h"
 
 #include "Vulkitten/Perf/Instrumentor.h"
@@ -12,34 +14,60 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
+        Ref<Texture2D> result;
         switch (Renderer::GetAPI())
         {
             case RendererAPI::API::None:
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
                 return nullptr;
             case RendererAPI::API::OpenGL:
-                return CreateRef<OpenGLTexture2D>(width, height);
+                result = CreateRef<OpenGLTexture2D>(width, height);
+                break;
         }
 
-        VKT_CORE_ASSERT(false, "Unknown RendererAPI!");
-        return nullptr;
+        if (!result)
+            return nullptr;
+
+        // Register with GpuResourceManager for lifecycle tracking.
+        auto& resources = RenderContext::Get().GetRenderer().GetResourceManager();
+        GpuTextureDesc desc;
+        desc.Width = result->GetWidth();
+        desc.Height = result->GetHeight();
+        uint64_t handle = resources.CreateTexture(desc, "Texture2D");
+        resources.SetGpuHandle(handle, result->GetRendererID());
+        resources.TrackExternalRef(handle, result);
+
+        return result;
     }
 
     Ref<Texture2D> Texture2D::Create(const std::string& path)
     {
         VKT_PROFILE_FUNCTION();
 
+        Ref<Texture2D> result;
         switch (Renderer::GetAPI())
         {
             case RendererAPI::API::None:
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
                 return nullptr;
             case RendererAPI::API::OpenGL:
-                return CreateRef<OpenGLTexture2D>(path);
+                result = CreateRef<OpenGLTexture2D>(path);
+                break;
         }
 
-        VKT_CORE_ASSERT(false, "Unknown RendererAPI!");
-        return nullptr;
+        if (!result)
+            return nullptr;
+
+        // Register with GpuResourceManager for lifecycle tracking.
+        auto& resources = RenderContext::Get().GetRenderer().GetResourceManager();
+        GpuTextureDesc desc;
+        desc.Width = result->GetWidth();
+        desc.Height = result->GetHeight();
+        uint64_t handle = resources.CreateTexture(desc, path);
+        resources.SetGpuHandle(handle, result->GetRendererID());
+        resources.TrackExternalRef(handle, result);
+
+        return result;
     }
 
 }

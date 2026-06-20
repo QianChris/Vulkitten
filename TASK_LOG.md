@@ -1,5 +1,10 @@
 # TASK_LOG.md — Vulkitten Engine Task Execution Log
 
+## Task 5: Texture2D和Buffer纳入GpuResourceManager管理
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 将 Texture2D::Create 和 Buffer::Create (VertexBuffer/IndexBuffer) 工厂方法接入 GpuResourceManager。每个资源创建后调用 CreateTexture/CreateBuffer 注册 handle，通过 SetGpuHandle 记录平台 GPU 句柄，通过 TrackExternalRef 建立 weak_ptr<void> 外部引用追踪。GpuResourceManager 新增 m_ExternalTrackers 映射表（slot index → weak_ptr<void>）和 TrackExternalRef/SetGpuHandle 方法。Gc 方法现在检查 weak_ptr 是否过期——仅当外部 Ref 已全部释放时才会 GC 资源。DestroyResource 同步清理 tracker 条目。用户 API (Ref<T>) 完全不变。所有 3 个目标编译通过。
+
 ## Task 4: GpuResourceManager延迟GC机制
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

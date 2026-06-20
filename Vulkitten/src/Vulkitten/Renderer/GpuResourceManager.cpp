@@ -142,6 +142,33 @@ GpuResourceSlot* GpuResourceManager::GetSlot(uint32_t index)
 }
 
 // ============================================================
+// External Reference Tracking
+// ============================================================
+
+void GpuResourceManager::TrackExternalRef(uint64_t handle, const std::weak_ptr<void>& tracker)
+{
+    uint32_t index = GetIndex(handle);
+    uint16_t gen   = GetGeneration(handle);
+
+    if (!ValidateHandle(index, gen))
+        return;
+
+    m_ExternalTrackers[index] = tracker;
+}
+
+void GpuResourceManager::SetGpuHandle(uint64_t handle, uint64_t gpuHandle)
+{
+    uint32_t index = GetIndex(handle);
+    uint16_t gen   = GetGeneration(handle);
+
+    if (!ValidateHandle(index, gen))
+        return;
+
+    m_Slots[index].gpuHandle = gpuHandle;
+    m_Slots[index].deferred = false;
+}
+
+// ============================================================
 // Resource Destruction
 // ============================================================
 
@@ -158,6 +185,7 @@ void GpuResourceManager::DestroyResource(uint64_t handle)
     slot.type  = GpuResourceSlot::Type::None;
     // Future: glDeleteTextures / vkDestroyImage using slot.gpuHandle
 
+    m_ExternalTrackers.erase(index);
     m_FreeIndices.push_back(index);
 }
 
@@ -174,11 +202,9 @@ void GpuResourceManager::Gc(uint32_t maxFramesInFlight)
 {
     // Collect indices of resources eligible for garbage collection.
     // A resource is eligible when:
-    //   1. It hasn't been accessed for `maxFramesInFlight` frames.
-    //   2. It is alive (not already destroyed).
-    // For now, we rely on the frame gap heuristic.
-    // When Task 5 integrates Ref<Texture2D>/Ref<Buffer>, external
-    // reference counting will be checked here before destruction.
+    //   1. It is alive.
+    //   2. It hasn't been accessed for `maxFramesInFlight` frames.
+    //   3. No external Ref (Texture2D/Buffer shared_ptr) still holds it.
     std::vector<uint64_t> toDestroy;
 
     for (uint32_t i = 0; i < m_Slots.size(); i++)
@@ -190,6 +216,13 @@ void GpuResourceManager::Gc(uint32_t maxFramesInFlight)
         uint32_t unusedFrames = m_CurrentFrame - slot.lastUsedFrame;
         if (unusedFrames > maxFramesInFlight)
         {
+            // Check if the resource is still externally held via Ref<>.
+            auto it = m_ExternalTrackers.find(i);
+            if (it != m_ExternalTrackers.end() && !it->second.expired())
+            {
+                // Still has external owners — skip this resource.
+                continue;
+            }
             toDestroy.push_back(MakeHandle(i, slot.generation));
         }
     }
