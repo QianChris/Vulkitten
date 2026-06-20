@@ -59,6 +59,12 @@ void Renderer::OnWindowResize(uint32_t width, uint32_t height)
     VKT_PROFILE_FUNCTION();
 
     m_RendererAPI->SetViewport(0, 0, width, height);
+
+    // Resize all registered framebuffers in the RenderGraph
+    // (e.g. editor Viewport, off-screen render targets).
+    // Passes automatically receive the updated FB via GetFramebuffer(key).
+    if (m_RenderGraph)
+        m_RenderGraph->ResizeAllFramebuffers(width, height);
 }
 
 } // namespace Vulkitten

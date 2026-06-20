@@ -54,6 +54,7 @@ namespace Vulkitten {
         // On window resize, all registered FBs are resized automatically.
         void SetFramebuffer(const std::string& key, Ref<class Framebuffer> fb);
         Ref<class Framebuffer> GetFramebuffer(const std::string& key) const;
+        void ResizeAllFramebuffers(uint32_t width, uint32_t height);
 
         // ---- Query registered pass count and names (for debug UI) ----
         uint32_t GetPassCount() const { return static_cast<uint32_t>(m_Passes.size()); }

@@ -18,6 +18,17 @@ namespace Vulkitten {
         return nullptr;
     }
 
+    void RenderGraph::ResizeAllFramebuffers(uint32_t width, uint32_t height)
+    {
+        for (auto& [key, fb] : m_FramebufferMap)
+        {
+            if (fb)
+            {
+                fb->Resize(width, height);
+            }
+        }
+    }
+
     void RenderGraph::Execute()
     {
         for (auto& pass : m_Passes)

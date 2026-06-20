@@ -1,5 +1,10 @@
 # TASK_LOG.md — Vulkitten Engine Task Execution Log
 
+## Task 7: 窗口Resize统一更新Framebuffer
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 在 RenderGraph 添加了 ResizeAllFramebuffers(uint32_t, uint32_t) 方法，遍历 m_FramebufferMap 对所有已注册 Framebuffer 调用 Resize()。Renderer::OnWindowResize 现在在设置 viewport 后自动调用此方法，统一更新引擎中所有已注册的 Framebuffer。Pass 无需任何修改——每帧通过 GetFramebuffer(key) 自动获取已更新尺寸的 FB。EditorLayer 和 Sandbox 无需单独处理 FB 的 resize。ViewportPanel 保留自己的 resize 逻辑以处理面板尺寸独立变化。所有 3 个目标编译通过。
+
 ## Task 6: RenderGraph Framebuffer Key-Value模式
 - **Start**: 2026-06-20
 - **End**: 2026-06-20
