@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vulkitten/Core/Window.h"
+#include "Vulkitten/Core/IWindow.h"
 #include "Platform/OpenGL/OpenGLContext.h"
 
 #include <glad/glad.h>
@@ -9,7 +10,9 @@
 
 namespace Vulkitten
 {
-    class WindowsWindow : public Window
+    class WindowsSurface;
+
+    class WindowsWindow : public Window, public IWindow
     {
     public:
         WindowsWindow(const WindowProps& props);
@@ -28,6 +31,10 @@ namespace Vulkitten
         void SetVSync(bool enabled) override;
         bool IsVSync() const override;
 
+        // ---- IWindow interface ----
+        SurfaceDesc GetSurfaceDesc() const override;
+        ISurface* GetSurface() override;
+
     private:
         virtual void Init(const WindowProps& props);
         virtual void Shutdown();
@@ -35,6 +42,7 @@ namespace Vulkitten
     private:
         GLFWwindow* m_Window;
         OpenGLContext* m_Context;
+        Scope<WindowsSurface> m_Surface;
 
         struct WindowData
         {

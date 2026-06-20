@@ -70,6 +70,7 @@ No test framework configured. Verify changes via successful builds and manual ex
 ---
 
 ## Key Subsystems
+- **Platform (Window & Surface)**: Two-tier window interface — `Window` (application layer: events, VSync, OnUpdate) and `IWindow` (backend layer: `GetSurfaceDesc()`, `GetSurface() → ISurface*`). `ISurface` abstracts the platform drawable (wraps GLFWwindow / HWND) and exposes `GetNativeHandle()` for Vulkan surface creation. `WindowsWindow` implements both `Window` and `IWindow`; `WindowsSurface` implements `ISurface`.
 - **ClassFactory (DI Root)**: Meyer's singleton, engine's centralized DI container. `GetInstance<T>()` for singleton creation/retrieval, `RegisterInstance<T>(T*)` for externally-created objects. `GetInterface<I>()` / `RegisterInterface<I, Impl>()` for interface-implementation mapping (e.g., Device backend). All new engine singletons (Engine, RenderContext, GraphicContext) are created through ClassFactory.
 - **Engine (Core)**: Singleton created via `ClassFactory::GetInstance<Engine>()`. Owns FileSystem instance, manages Input lifecycle (keeps static `Input::IsKeyPressed()` access), provides `GetLogger()` → `Log::Get()`. Empty EventQueue/ThreadPool stubs for future use. `Engine::Init()`/`Shutdown()` lifecycle methods (not yet wired into main — Task 12).
 - **Event System**: Inherit from `Event`, use `EVENT_CLASS_TYPE`/`EVENT_CLASS_CATEGORY` macros, dispatch via `EventDispatcher`

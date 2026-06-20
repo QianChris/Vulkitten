@@ -536,7 +536,8 @@ EditorLayer::OnImguiRender()
 ```
 Platform/
 ├── Windows/
-│   ├── WindowsWindow.h/cpp     # GLFW 窗口实现，实现 Window 接口
+│   ├── WindowsWindow.h/cpp     # GLFW 窗口实现，实现 Window + IWindow 接口
+│   ├── WindowsSurface.h/cpp    # ISurface 实现，封装 GLFWwindow 为平台绘制表面
 │   ├── WindowsInput.h/cpp      # GLFW 输入实现，实现 Input 接口（单例）
 │   └── WindowsFileDialogs.cpp  # Win32 文件对话框
 └── OpenGL/
@@ -553,10 +554,27 @@ Platform/
 ### 关键抽象接口
 
 ```cpp
-// Window.h — 抽象窗口接口
+// Window.h — 抽象窗口接口（应用层使用）
 class Window {
     static Scope<Window> Create(const WindowProps& props);
     virtual void OnUpdate() = 0;  // PollEvents + SwapBuffers
+};
+
+// IWindow.h — 平台窗口接口（后端使用）
+// 与 Window 分离：Window 服务于应用层（事件、VSync），
+// IWindow 服务于渲染后端（Surface 查询、交换链创建）
+class IWindow {
+    virtual SurfaceDesc GetSurfaceDesc() const = 0;  // 查询表面属性
+    virtual ISurface* GetSurface() = 0;              // 获取平台绘制表面
+};
+
+// ISurface.h — 平台绘制表面抽象
+// 封装 OS 原生窗口绘制区域。GL 下为 GLFWwindow 包装，
+// Vulkan 下用于创建 VkSurfaceKHR
+struct SurfaceDesc { uint32_t Width, Height; };
+class ISurface {
+    virtual SurfaceDesc GetDesc() const = 0;
+    virtual void* GetNativeHandle() const = 0;  // HWND / GLFWwindow*
 };
 
 // Input.h — 抽象输入接口（静态单例）

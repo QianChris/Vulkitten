@@ -1,5 +1,10 @@
 # TASK_LOG.md — Vulkitten Engine Task Execution Log
 
+## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 创建了平台层抽象接口 IWindow（Vulkitten/Core/IWindow.h）和 ISurface（Vulkitten/Core/ISurface.h），定义了 SurfaceDesc 结构体（Width/Height）。IWindow 提供 GetSurfaceDesc() 和 GetSurface() 纯虚方法，使后端通过统一接口查询窗口表面属性。创建了 WindowsSurface（Platform/Windows/WindowsSurface.h/.cpp）实现 ISurface，封装 GLFWwindow 作为平台绘制表面。WindowsWindow 现在多重继承 Window + IWindow，在 Init() 中创建 m_Surface（Scope<WindowsSurface>），实现 GetSurfaceDesc()/GetSurface()。IWindow.h 和 ISurface.h 已加入 Vulkitten.h 统一头文件。所有 3 个目标编译通过。
+
 ## Task 7: 窗口Resize统一更新Framebuffer
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

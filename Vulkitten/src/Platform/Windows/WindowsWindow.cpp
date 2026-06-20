@@ -1,5 +1,6 @@
 #include "vktpch.h"
 #include "WindowsWindow.h"
+#include "WindowsSurface.h"
 #include "Vulkitten/Core/Assert.h"
 
 #include "Vulkitten/Events/ApplicationEvent.h"
@@ -65,6 +66,8 @@ namespace Vulkitten {
         
         m_Context = new OpenGLContext(m_Window);
         m_Context->Init();
+
+        m_Surface = CreateScope<WindowsSurface>(m_Window);
 
         glfwSetWindowUserPointer(m_Window, &m_Data);
         SetVSync(true);
@@ -178,6 +181,18 @@ namespace Vulkitten {
     bool WindowsWindow::IsVSync() const
     {
         return m_Data.VSync;
+    }
+
+    // ---- IWindow interface ----
+
+    SurfaceDesc WindowsWindow::GetSurfaceDesc() const
+    {
+        return {m_Data.Width, m_Data.Height};
+    }
+
+    ISurface* WindowsWindow::GetSurface()
+    {
+        return m_Surface.get();
     }
 
 }

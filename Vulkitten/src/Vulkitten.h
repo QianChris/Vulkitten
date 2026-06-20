@@ -8,8 +8,10 @@
 #include "Vulkitten/Core/Layer.h"
 #include "Vulkitten/Events/Event.h"
 
-// Window
+// Window (Platform)
 #include "Vulkitten/Core/Window.h"
+#include "Vulkitten/Core/IWindow.h"
+#include "Vulkitten/Core/ISurface.h"
 
 // IO
 #include "Vulkitten/Core/Input.h"
