@@ -3,7 +3,7 @@
 #include "Renderer.h"
 #include "RendererSubsystem.h"
 #include "GpuResourceManager.h"
-#include "Platform/OpenGL/OpenGLBuffer.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLBuffer.h"
 
 #include "Vulkitten/Perf/Instrumentor.h"
 

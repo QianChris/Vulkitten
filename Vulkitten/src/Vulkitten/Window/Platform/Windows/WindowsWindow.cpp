@@ -7,7 +7,7 @@
 #include "Vulkitten/Events/KeyEvent.h"
 #include "Vulkitten/Events/MouseEvent.h"
 
-#include "Platform/OpenGL/OpenGLContext.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLContext.h"
 
 #include "Vulkitten/Perf/Instrumentor.h"
 

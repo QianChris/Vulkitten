@@ -1,7 +1,7 @@
 #include "vktpch.h"
 #include "RenderCommand.h"
 
-#include "Platform/OpenGL/OpenGLRendererAPI.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRendererAPI.h"
 
 namespace Vulkitten {
 

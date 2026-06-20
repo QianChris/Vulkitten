@@ -4,7 +4,7 @@
 #include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Renderer/RendererSubsystem.h"
 #include "Vulkitten/Renderer/GpuResourceManager.h"
-#include "Platform/OpenGL/OpenGLTexture.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLTexture.h"
 
 #include "Vulkitten/Perf/Instrumentor.h"
 

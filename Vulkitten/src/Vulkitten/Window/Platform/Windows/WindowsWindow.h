@@ -2,7 +2,7 @@
 
 #include "Vulkitten/Core/Window.h"
 #include "Vulkitten/Core/IWindow.h"
-#include "Platform/OpenGL/OpenGLContext.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLContext.h"
 
 #include <glad/glad.h>
 #define GLFW_INCLUDE_NONE

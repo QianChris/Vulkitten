@@ -3,7 +3,7 @@
 
 #include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Renderer/RendererAPI.h"
-#include "Platform/OpenGL/OpenGLShader.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLShader.h"
 
 #include "Vulkitten/Perf/Instrumentor.h"
 

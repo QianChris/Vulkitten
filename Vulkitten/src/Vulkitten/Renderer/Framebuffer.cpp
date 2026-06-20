@@ -3,7 +3,7 @@
 
 #include "Vulkitten/Renderer/Renderer.h"
 
-#include "Platform/OpenGL/OpenGLFrameBuffer.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLFrameBuffer.h"
 
 namespace Vulkitten {
 

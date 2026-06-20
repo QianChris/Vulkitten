@@ -1,7 +1,7 @@
 #include "vktpch.h"
 #include "VertexArray.h"
 
-#include "Platform/OpenGL/OpenGLVertexArray.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLVertexArray.h"
 #include "Vulkitten/Renderer/Renderer.h"
 
 #include "Vulkitten/Perf/Instrumentor.h"

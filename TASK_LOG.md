@@ -144,6 +144,11 @@
 - **End**: 2026-06-19
 - **Summary**: Created RenderContext (Vulkitten/src/Vulkitten/Renderer/RenderContext.h/.cpp) as the rendering subsystem singleton, owning Renderer (instance, no longer static) and RenderUtils (empty stub). Renderer.h/.cpp refactored from static class to instance class: Init/Shutdown/Execute/GetRenderGraph/SetViewProjection/OnWindowResize are now instance methods. RenderContext owns the Renderer and provides static Get() for global access. Application.cpp now creates GpuResourceManager + ShaderManager + OpenGLDevice + RenderContext (via Scope<...> members). Updated 10 caller files (Application, ClassFactory, EditorLayer, Scene, RenderSystem, SpriteRenderPass, PreparePass, GpuParticlePass, Vulkitten.h umbrella) to use RenderContext::Get().GetRenderGraph() instead of Renderer::GetRenderGraph(). Renamed GpuResourceManager's TextureDesc/BufferDesc to GpuTextureDesc/GpuBufferDesc to avoid conflict with RenderGraphResource.h. All 3 targets compile.
 
+## Task 9: 文件夹结构迁移
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 将 src/Platform/OpenGL/ 下 18 个文件（OpenGLBuffer/Context/Device/Framebuffer/RendererAPI/Shader/Texture/Util/VertexArray .h/.cpp）移至 src/Vulkitten/Renderer/Backend/OpenGL/。将 src/Platform/Windows/ 下 7 个文件（WindowsWindow/Input/Surface/FileDialogs .h/.cpp）移至 src/Vulkitten/Window/Platform/Windows/。更新 11 个文件中的 #include "Platform/..." 引用为新路径（Vulkitten/Renderer/Backend/OpenGL/、Vulkitten/Window/Platform/Windows/）。CMake GLOB_RECURSE 自动适配新目录。所有 3 个目标编译通过。
+
 ## Task 9: GraphicContext Singleton
 - **Start**: 2026-06-19
 - **End**: 2026-06-19

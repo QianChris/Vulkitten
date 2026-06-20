@@ -1,6 +1,6 @@
 #include "vktpch.h"
 #include "Renderer.h"
-#include "Platform/OpenGL/OpenGLRendererAPI.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRendererAPI.h"
 
 #include "Vulkitten/Renderer/Passes/PreparePass.h"
 #include "Vulkitten/Renderer/Passes/GpuParticlePass.h"

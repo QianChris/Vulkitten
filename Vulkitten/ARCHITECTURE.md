@@ -9,17 +9,17 @@ VulkittenEngine/
 │   │   ├── Vulkitten.h     # 统一对外头文件
 │   │   ├── vktpch.h/cpp    # 预编译头
 │   │   └── Vulkitten/
-│   │       ├── Core/       # 应用框架、窗口、输入、日志
+│   │       ├── Core/       # 应用框架、Window/IWindow、日志
 │   │       ├── Events/     # 事件系统
-│   │       ├── Renderer/   # 渲染器抽象 + RenderGraph + Renderer2D
+│   │       ├── Renderer/   # 渲染器抽象 (IRenderer/IFrameContext) + RenderGraph
+│   │       │   └── Backend/ # OpenGL/Vulkan 后端实现
+│   │       ├── Window/     # 平台窗口实现
+│   │       │   └── Platform/Windows/ # GLFW 窗口 + 输入
 │   │       ├── Scene/      # ECS（Scene, Entity, Components, Systems）
 │   │       ├── ImGui/      # ImGui 集成层
 │   │       ├── Perf/       # 性能分析（Instrumentor, Timer）
 │   │       └── Utils/      # 工具（FileDialogs, YAMLConversions）
 │   ├── assets/             # 引擎 Shader 资产（shaders/, computeshaders/）
-│   ├── Platform/
-│   │   ├── Windows/        # GLFW 窗口 + 输入实现
-│   │   └── OpenGL/         # OpenGL 渲染后端全实现
 │   └── vendor/             # 8 个 git submodule + 手动依赖
 ├── Sandbox/                # 测试应用 (Sandbox.exe)
 ├── VulkittenEditor/        # 编辑器应用 (VulkittenEditor.exe)
@@ -547,21 +547,30 @@ EditorLayer::OnImguiRender()
 ### 目录结构
 
 ```
-Platform/
-├── Windows/
-│   ├── WindowsWindow.h/cpp     # GLFW 窗口实现，实现 Window + IWindow 接口
-│   ├── WindowsSurface.h/cpp    # ISurface 实现，封装 GLFWwindow 为平台绘制表面
-│   ├── WindowsInput.h/cpp      # GLFW 输入实现，实现 Input 接口（单例）
-│   └── WindowsFileDialogs.cpp  # Win32 文件对话框
-└── OpenGL/
-    ├── OpenGLContext.h/cpp      # GLAD 初始化 + SwapBuffers
-    ├── OpenGLRendererAPI.h/cpp  # RendererAPI 实现 (glClear, glDrawElements…)
-    ├── OpenGLBuffer.h/cpp       # VertexBuffer + IndexBuffer (GLuint)
-    ├── OpenGLVertexArray.h/cpp  # VAO (glGenVertexArrays, vertex attrib)
-    ├── OpenGLShader.h/cpp       # Shader 编译 + Uniform 上传 (含 #include 预处理)
-    ├── OpenGLTexture.h/cpp      # Texture2D (stb_image 加载)
-    ├── OpenGLFramebuffer.h/cpp  # FBO (含 MSAA 支持)
-    └── OpenGLUtil.h/cpp         # ShaderDataType → GLenum 转换
+Vulkitten/
+├── Core/                        # 核心接口 (Window, IWindow, ISurface, Layer 等)
+├── Window/Platform/Windows/     # Windows 平台窗口实现
+│   ├── WindowsWindow.h/cpp      # GLFW 窗口，实现 Window + IWindow
+│   ├── WindowsSurface.h/cpp     # ISurface 实现
+│   ├── WindowsInput.h/cpp       # GLFW 输入
+│   └── WindowsFileDialogs.cpp   # Win32 文件对话框
+├── Renderer/                    # 渲染器抽象接口
+│   ├── Backend/
+│   │   ├── OpenGL/              # OpenGL 后端实现
+│   │   │   ├── OpenGLContext.h/cpp      # GLAD 初始化 + SwapBuffers
+│   │   │   ├── OpenGLRendererAPI.h/cpp  # RendererAPI 实现
+│   │   │   ├── OpenGLBuffer.h/cpp       # Vertex/Index Buffer
+│   │   │   ├── OpenGLVertexArray.h/cpp  # VAO
+│   │   │   ├── OpenGLShader.h/cpp       # Shader 编译 + Uniform
+│   │   │   ├── OpenGLTexture.h/cpp      # Texture2D
+│   │   │   ├── OpenGLFramebuffer.h/cpp  # FBO
+│   │   │   ├── OpenGLUtil.h/cpp         # GLenum 转换
+│   │   │   └── OpenGLDevice.h/cpp       # IDevice 实现
+│   │   └── Vulkan/              # Vulkan 后端 (待实现)
+│   ├── RenderGraph/             # RenderGraph 系统
+│   ├── Passes/                  # 渲染 Pass
+│   └── ...
+└── Scene/                       # ECS
 ```
 
 ### 关键抽象接口

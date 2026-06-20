@@ -9,7 +9,7 @@
 #include "Vulkitten/Renderer/RendererSubsystem.h"
 #include "Vulkitten/Scene/SceneContext.h"
 #include "Vulkitten/Renderer/Device.h"
-#include "Platform/OpenGL/OpenGLDevice.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLDevice.h"
 #include "Vulkitten/Renderer/GpuResourceManager.h"
 #include "Vulkitten/Renderer/ShaderManager.h"
 
