@@ -2,7 +2,7 @@
 #include "Scene.h"
 #include "ScriptableEntity.h"
 #include "Entity.h"
-#include "Vulkitten/Renderer/RenderContext.h"
+#include "SceneContext.h"
 #include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
 
 namespace Vulkitten {
@@ -64,7 +64,7 @@ namespace Vulkitten {
         return Entity{ entt::entity(id), this };
     }
 
-    void Scene::OnUpdate(Timestep ts)
+    void Scene::OnUpdate(Timestep ts, SceneContext& ctx)
     {
         // Logic tick
         TickScripts(ts);
@@ -75,7 +75,7 @@ namespace Vulkitten {
         {
             for (auto& system : m_Systems)
             {
-                if (system->OnUpdate(*this, ts, shouldRender))
+                if (system->OnUpdate(*this, ts, shouldRender, ctx))
                     shouldRender = true;
             }
         }
@@ -99,10 +99,10 @@ namespace Vulkitten {
             }
 
             for (auto* system : ordered)
-                if (system->OnUpdate(*this, ts, shouldRender))
+                if (system->OnUpdate(*this, ts, shouldRender, ctx))
                     shouldRender = true;
             for (auto* system : unordered)
-                if (system->OnUpdate(*this, ts, shouldRender))
+                if (system->OnUpdate(*this, ts, shouldRender, ctx))
                     shouldRender = true;
         }
 
@@ -138,7 +138,7 @@ namespace Vulkitten {
             perFrameData.Camera = camera;
             perFrameData.ViewProjection = camera->GetViewProjectionMatrix();
             perFrameData.Scene = this;
-            RenderContext::Get().GetRenderGraph()->SetPerFrameData(perFrameData);
+            ctx.GetRenderGraph().SetPerFrameData(perFrameData);
         }
     }
 

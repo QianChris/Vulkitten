@@ -28,7 +28,7 @@ namespace Vulkitten {
         Entity GetPrimaryCameraEntity();
         Entity GetEntityByID(uint32_t id);
 
-        void OnUpdate(Timestep ts);
+        void OnUpdate(Timestep ts, class SceneContext& ctx);
 
 		// With scripts/graph
         void OnUpdateRuntime(Timestep ts);

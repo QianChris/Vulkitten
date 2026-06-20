@@ -10,7 +10,7 @@ public:
     {
     }
 
-    void OnUpdate(Vulkitten::Timestep timestep) override
+    void OnUpdate(Vulkitten::Timestep timestep, Vulkitten::SceneContext& ctx) override
     {
     }
 

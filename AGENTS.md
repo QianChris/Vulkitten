@@ -76,17 +76,21 @@ No test framework configured. Verify changes via successful builds and manual ex
 - **Event System**: Inherit from `Event`, use `EVENT_CLASS_TYPE`/`EVENT_CLASS_CATEGORY` macros, dispatch via `EventDispatcher`
 - **Layers**: `PushLayer` (in-order) or `PushOverlay` (always on top); Application runs OnUpdate then OnImguiRender for all layers
 - **ECS**: `Scene` owns `entt::registry`. `Entity` wraps `entt::entity` with `AddComponent`/`GetComponent`. Components are POD structs in `Components.h`. Systems implement `System::OnUpdate(Scene&, Timestep, bool)`.
-- **Renderer (7 layers, see [ARCHITECTURE.md](Vulkitten/ARCHITECTURE.md#4-分层渲染器架构))**:
-  - `Device` — abstract GPU device interface (Init/Shutdown); `OpenGLDevice` placeholder. For OpenGL the GL context IS the device; for Vulkan this will own VkDevice/VkPhysicalDevice. Accessed via `ClassFactory::GetInterface<Device>()`
-  - `GpuResourceManager` — centralized VRAM resource manager. `CreateTexture(desc)` / `CreateBuffer(desc)` → uint64_t handle (index+generation encoding). `GetTexture(handle)` / `GetBuffer(handle)` for lookup. Deferred creation: descriptor recorded at Create, GPU allocation triggered on first Get. Existing Ref<Texture2D> NOT yet migrated.
-  - `ShaderManager` — shader loading + #include preprocessing. Constructor injects `FileSystem&`. `LoadShader(virtualPath)` resolves path → reads → recursively resolves #include → returns uint64_t handle. Preprocessed source stored in ShaderData map. Existing OpenGLShader loading path unchanged.
-  - `GltfLoader` (`Renderer/Gltf/`) — glTF 2.0 loader wrapping tinygltf. Constructor injects `FileSystem&`. `Load(virtualPath)` resolves path, detects GLB/glTF format, extracts vertex positions/normals/texcoords and indices into `GltfMeshData` structs. Supports indexed and non-indexed geometry.
-  - `RendererAPI` — abstract base for platform backends (virtual: Init, Clear, DrawIndexed)
-  - `Legacy::RenderCommand` — static proxy wrapping a `RendererAPI*` singleton
-  - `Renderer` — scene-level Begin/End/Submit; owns `RenderGraph` instance
-  - `Renderer2D` — immediate-mode batched quad renderer (10000 quads, 32 texture slots)
-  - `RenderGraph` — command-based pass system with `Execute()` iterating passes and dispatching commands
-  - `RenderSystem` — ECS System that creates `RenderCommand`s from components
+- **Renderer (see [ARCHITECTURE.md](Vulkitten/ARCHITECTURE.md#4-分层渲染器架构))**:
+  - `IRenderer` — sole backend interface (Init/Shutdown/BeginFrame/EndFrame/Execute/OnWindowResize). Platform & scene layers only interact with this interface.
+  - `RendererConfig` — packs IDevice*/RenderGraph*/IGpuResourceManager* for IRenderer creation.
+  - `IDevice` — abstract GPU device interface (Init/Shutdown); `OpenGLDevice` placeholder. For Vulkan this will own VkDevice/VkPhysicalDevice. Accessed via `ClassFactory::GetInterface<IDevice>()`.
+  - `IGpuResourceManager` — GPU resource management interface (CreateTexture/CreateBuffer/CreateShader/CreatePipeline/CreateGeometry → uint64_t handles). All GPU resources go through this. `GpuResourceManager` implements it.
+  - `GpuResourceManager` — centralized VRAM resource manager implementing IGpuResourceManager. Handle encoding (index+generation), deferred allocation, reference tracking, GC.
+  - `ShaderManager` — shader loading + #include preprocessing. Constructor injects `FileSystem&`.
+  - `GltfLoader` — glTF 2.0 loader wrapping tinygltf.
+  - `RendererAPI` — abstract base for low-level draw commands (Init, Clear, DrawIndexed). Being superseded by IRenderer + per-pass RenderContext.
+  - `FrameContext` — per-frame state (FrameIndex, SwapchainIndex, CommandPool, Fence, Semaphore). Created by IRenderer::BeginFrame(). OpenGL no-ops for Vulkan concepts.
+  - `RenderContext` (per-pass) — translates RenderCommands to API drawcalls. Holds FrameContext& + IRenderer&. Uses PipelineHandle/GeometryHandle for state caching.
+  - `RendererSubsystem` — rendering subsystem singleton (was RenderContext). Owns Renderer (the IRenderer impl), RenderGraph, RenderUtils, ShaderLibrary.
+  - `Renderer` — scene-level IRenderer implementation (owns RenderGraph instance, registers Passes).
+  - `RenderGraph` — command-based pass system with `Execute()` iterating passes and dispatching commands.
+  - `RenderSystem` — ECS System that creates `RenderCommand`s from components. Receives RenderGraph via SceneContext injection.
 - **GPU Particles**: Direct OpenGL compute shaders (glDispatchCompute, SSBOs, indirect draw) — bypasses all abstractions
 - **Entry Point**: Implement `Vulkitten::CreateApplication()` returning `Application*`
 

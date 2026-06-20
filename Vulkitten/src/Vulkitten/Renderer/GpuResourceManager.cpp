@@ -78,6 +78,44 @@ uint64_t GpuResourceManager::CreateBuffer(const GpuBufferDesc& desc, const std::
 }
 
 // ============================================================
+// Stub implementations for shader/pipeline/geometry (Task 3)
+// These are placeholders until the Vulkan backend provides real allocators.
+// ============================================================
+
+uint64_t GpuResourceManager::CreateShader(const std::string& name, const std::string& source)
+{
+    uint32_t index = AllocateSlot();
+    auto& slot = m_Slots[index];
+    slot.type = GpuResourceSlot::Type::None; // Future: Type::Shader
+    slot.deferred = true;
+    slot.gpuHandle = 0;
+    slot.debugName = name;
+    return MakeHandle(index, slot.generation);
+}
+
+uint64_t GpuResourceManager::CreatePipeline(const void* pipelineDesc)
+{
+    uint32_t index = AllocateSlot();
+    auto& slot = m_Slots[index];
+    slot.type = GpuResourceSlot::Type::None; // Future: Type::Pipeline
+    slot.deferred = true;
+    slot.gpuHandle = 0;
+    slot.debugName = "Pipeline";
+    return MakeHandle(index, slot.generation);
+}
+
+uint64_t GpuResourceManager::CreateGeometry(const void* geometryDesc)
+{
+    uint32_t index = AllocateSlot();
+    auto& slot = m_Slots[index];
+    slot.type = GpuResourceSlot::Type::None; // Future: Type::Geometry
+    slot.deferred = true;
+    slot.gpuHandle = 0;
+    slot.debugName = "Geometry";
+    return MakeHandle(index, slot.generation);
+}
+
+// ============================================================
 // Resource Lookup (triggers deferred allocation)
 // ============================================================
 

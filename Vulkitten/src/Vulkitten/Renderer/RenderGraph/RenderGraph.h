@@ -44,6 +44,7 @@ namespace Vulkitten {
         void Execute();
 
         void SetBackendContext(void* context) { m_BackendContext = context; }
+        void* GetBackendContext() const { return m_BackendContext; }
 
         // ---- Per-Frame Scene Data ----
         void SetPerFrameData(const PerFrameSceneData& data) { m_PerFrameData = data; }

@@ -6,7 +6,8 @@
 #include "Vulkitten/Core/Input.h"
 #include "Vulkitten/Core/GraphicContext.h"
 
-#include "Vulkitten/Renderer/RenderContext.h"
+#include "Vulkitten/Renderer/RendererSubsystem.h"
+#include "Vulkitten/Scene/SceneContext.h"
 #include "Vulkitten/Renderer/Device.h"
 #include "Platform/OpenGL/OpenGLDevice.h"
 #include "Vulkitten/Renderer/GpuResourceManager.h"
@@ -32,7 +33,7 @@ namespace Vulkitten
         VKT_ASSERT(!s_Instance, "Application already exists!");
         s_Instance = this;
 
-         //Create window first (RenderContext::Init needs it for backend context)
+         //Create window first (RendererSubsystem::Init needs it for backend context)
         m_Window.reset(Window::Create());
         m_Window->SetEventCallback(VKT_BIND_EVENT_FN(Application::OnEvent));
 
@@ -41,12 +42,12 @@ namespace Vulkitten
         m_Resources   = CreateScope<GpuResourceManager>();
         m_ShaderMgr   = CreateScope<ShaderManager>(Engine::Get().GetFileSystem());
 
-        m_RenderContext = CreateScope<RenderContext>(
+        m_RendererSubsystem = CreateScope<RendererSubsystem>(
             m_Device.get(), *m_Resources, *m_ShaderMgr);
-        m_RenderContext->Init();
+        m_RendererSubsystem->Init();
 
-        // GraphicContext wraps existing window + RenderContext (no duplicate window)
-        m_GraphicContext = CreateScope<GraphicContext>(*m_Window, *m_RenderContext);
+        // GraphicContext wraps existing window + RendererSubsystem (no duplicate window)
+        m_GraphicContext = CreateScope<GraphicContext>(*m_Window, *m_RendererSubsystem);
 
         m_ImGuiLayer = new ImGuiLayer();
         PushOverlay(m_ImGuiLayer);
@@ -56,8 +57,8 @@ namespace Vulkitten
     {
         VKT_PROFILE_FUNCTION();
 
-        if (m_RenderContext)
-            m_RenderContext->Shutdown();
+        if (m_RendererSubsystem)
+            m_RendererSubsystem->Shutdown();
     }
 
     void Application::Run()
@@ -83,9 +84,20 @@ namespace Vulkitten
             }
 
             if (!m_Minimized) {
+                // ---- IRenderer Lifecycle: BeginFrame ----
+                {
+                    VKT_PROFILE_SCOPE("IRenderer BeginFrame");
+                    m_RendererSubsystem->GetRenderer().BeginFrame();
+                }
+
+                // Create SceneContext for dependency injection into Layers/Scenes
+                auto& renderer = m_RendererSubsystem->GetRenderer();
+                auto* graph = m_RendererSubsystem->GetRenderGraph();
+                Vulkitten::SceneContext sceneCtx(renderer, *graph);
+
                 for (Layer *layer : m_LayerStack) {
                     VKT_PROFILE_SCOPE("Layer update");
-                    layer->OnUpdate(timestep);
+                    layer->OnUpdate(timestep, sceneCtx);
                 }
             }
             {
@@ -96,10 +108,16 @@ namespace Vulkitten
                 m_ImGuiLayer->End();
             }
 
-            // Execute RenderGraph (all passes, including present via EndPass)
+            // Execute RenderGraph (all passes)
             {
                 VKT_PROFILE_SCOPE("RenderGraph execute");
-                m_RenderContext->Execute();
+                m_RendererSubsystem->Execute();
+            }
+
+            // ---- IRenderer Lifecycle: EndFrame (Submit + Present) ----
+            {
+                VKT_PROFILE_SCOPE("IRenderer EndFrame");
+                m_RendererSubsystem->GetRenderer().EndFrame();
             }
 
             // GpuResourceManager GC: advance frame counter, then collect
@@ -172,8 +190,8 @@ namespace Vulkitten
         }
 
         m_Minimized = false;
-        if (m_RenderContext)
-            m_RenderContext->OnWindowResize(e.GetWidth(), e.GetHeight());
+        if (m_RendererSubsystem)
+            m_RendererSubsystem->OnWindowResize(e.GetWidth(), e.GetHeight());
         return false;
     }
 }

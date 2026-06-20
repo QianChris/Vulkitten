@@ -6,11 +6,12 @@
 namespace Vulkitten {
 
     class Scene;
+    class SceneContext;
 
     class VKT_API System {
     public:
         virtual ~System() = default;
-        virtual bool OnUpdate(Scene& scene, Timestep timestep, bool shouldRender) = 0;
+        virtual bool OnUpdate(Scene& scene, Timestep timestep, bool shouldRender, SceneContext& ctx) = 0;
         // Returns the system name for ordering via Scene::SetSystemOrder().
         virtual const std::string& GetName() const = 0;
     };

@@ -228,25 +228,38 @@ Scene::OnUpdate(Timestep)
 
 ## 4. 分层渲染器架构
 
-渲染完全通过 RenderGraph 进行，旧版直接 Renderer2D 路径已移除。
+渲染完全通过 RenderGraph 进行，旧版直接 Renderer2D 路径已移除。Scene 通过 SceneContext 注入获取 RenderGraph。
 
 ```
-                    ECS (Components)
-                         │
-                    RenderSystem
-                    (创建 DrawQuadCommand + ClearCommand)
-                         │
-                         ▼
-                    RenderGraph
-                    (命令收集+执行)
-                         │
-                         ▼
-                    Passes (顺序执行)
-                    PreparePass → GpuParticlePass → SpriteRenderPass → EndPass
-                         │
-                         ▼
-                    实际 Draw Call + SwapBuffers
+Application::Run()
+  ├─ IRenderer::BeginFrame()         → 创建 FrameContext
+  ├─ SceneContext(IRenderer&, RenderGraph&) → 注入到 Layer::OnUpdate
+  │
+  ├─ Layer::OnUpdate(timestep, sceneCtx)
+  │    └─ Scene::OnUpdate(ts, ctx)
+  │         └─ RenderSystem::OnUpdate(..., ctx)
+  │              └─ ctx.GetRenderGraph().AddCommand(ClearCommand/DrawQuadCommand)
+  │         └─ ctx.GetRenderGraph().SetPerFrameData(...)
+  │
+  ├─ ImGui 绘制
+  ├─ IRenderer::Execute()           → RenderGraph::Execute()
+  │    └─ PreparePass → GpuParticlePass → SpriteRenderPass → EndPass(no-op)
+  └─ IRenderer::EndFrame()          → SwapBuffers + GPU 同步
 ```
+
+SwapBuffers 已从 EndPass 迁移至 IRenderer::EndFrame()。
+```
+```
+### 六层抽象（自上而下）
+
+| 层 | 类/文件 | 职责 | 状态 |
+|----|---------|------|------|
+| **7. SceneContext** | `Scene/SceneContext` | 注入 IRenderer& + RenderGraph&，解耦 Scene 与全局单例 | ✅ 新增 |
+| **6. RenderSystem** | `Scene/Systems/RenderSystem` | ECS→RenderCommand 桥接，遍历实体生成 DrawQuadCommand + ClearCommand，通过 SceneContext 获取 RenderGraph | ✅ 已注入化 |
+| **5. RenderGraph** | `Renderer/RenderGraph/RenderGraph` | 命令式延迟渲染管线，管理 Passes 和 FrameCommands | ✅ Execute() 已实现 |
+| **4. IRenderer** | `Renderer/IRenderer` | 后端统一接口：BeginFrame→Execute→EndFrame 生命周期 | ✅ Renderer 实现 |
+| **3. Renderer** | `Renderer/Renderer` | IRenderer 实现，持有 RenderGraph 实例，注册 Passes，管理 FrameContext | ✅ 接入主循环 |
+| **2. Renderer2D / SpriteRenderPass** | `Renderer/Passes/SpriteRenderPass` | 即时模式批处理四边形渲染器 (10000 四边形/32 纹理槽) | ✅ 被 SpriteRenderPass 内部使用 |
 ```
 
 ### 六层抽象（自上而下）

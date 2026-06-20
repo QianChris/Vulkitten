@@ -5,21 +5,21 @@
 #include "Vulkitten/Utils/GraphicUtil.h"
 
 namespace Vulkitten {
-class RenderContext;
+class RendererSubsystem;
 
 // ============================================================
 // GraphicContext — user-visible graphics shell singleton.
 //
-// Receives existing Window and RenderContext references.
+// Receives existing Window and RendererSubsystem references.
 // Does NOT create its own Window — Application owns the Window
-// lifecycle and creates it before RenderContext::Init().
-// SwapBuffers is handled by EndPass via RenderContext's
+// lifecycle and creates it before RendererSubsystem::Init().
+// SwapBuffers is handled by EndPass via RendererSubsystem's
 // RenderGraph backend context.
 // ============================================================
 class VKT_API GraphicContext
 {
 public:
-    GraphicContext(Window& window, RenderContext& renderContext);
+    GraphicContext(Window& window, RendererSubsystem& renderSubsystem);
     ~GraphicContext() = default;
 
     Window&      GetWindow()      { return m_Window; }

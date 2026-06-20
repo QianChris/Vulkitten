@@ -12,7 +12,7 @@ namespace Vulkitten {
 // and shutdown paths. In a future Vulkan backend, the Device
 // implementation would own VkDevice / VkPhysicalDevice.
 // ============================================================
-class VKT_API OpenGLDevice : public Device
+class VKT_API OpenGLDevice : public IDevice
 {
 public:
     virtual void Init() override;

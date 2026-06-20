@@ -12,7 +12,7 @@ namespace Vulkitten {
         RenderSystem() = default;
         virtual ~RenderSystem() = default;
 
-        bool OnUpdate(Scene& scene, Timestep timestep, bool shouldRender) override;
+        bool OnUpdate(Scene& scene, Timestep timestep, bool shouldRender, SceneContext& ctx) override;
         const std::string& GetName() const override { return s_Name; }
 
     private:

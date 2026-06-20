@@ -248,7 +248,7 @@ void ExampleLayer3D::UpdateCamera(float /*dt*/)
 // Per-frame Update
 // ============================================================
 
-void ExampleLayer3D::OnUpdate(Vulkitten::Timestep timestep)
+void ExampleLayer3D::OnUpdate(Vulkitten::Timestep timestep, Vulkitten::SceneContext& /*ctx*/)
 {
     UpdateCamera(timestep.GetSeconds());
 

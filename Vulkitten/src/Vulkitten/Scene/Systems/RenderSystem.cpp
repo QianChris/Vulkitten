@@ -1,23 +1,21 @@
 #include "vktpch.h"
 #include "RenderSystem.h"
 #include "Vulkitten/Scene/Scene.h"
+#include "Vulkitten/Scene/SceneContext.h"
 
 namespace Vulkitten {
 const std::string RenderSystem::s_Name = "RenderSystem";
 }
-#include "Vulkitten/Renderer/RenderContext.h"
 
 namespace Vulkitten {
 
-    bool RenderQuadComponent(entt::registry& registry)
+    static bool RenderQuadComponent(entt::registry& registry, RenderGraph* graph)
     {
         auto view = registry.view<const TransformComponent, SpriteRendererComponent>();
         for (auto entity : view)
         {
             auto& [transform, sprite] = view.get<TransformComponent, SpriteRendererComponent>(entity);
-            //Renderer2D::DrawQuad(transform.GetTransform(), sprite.Texture, sprite.TilingFactor, sprite.Color);
 
-            auto graph = RenderContext::Get().GetRenderGraph();
             graph->AddCommand(DrawQuadCommand{
                 sprite.Color,
                 sprite.Texture,
@@ -29,13 +27,14 @@ namespace Vulkitten {
         return true;
     }
 
-    bool RenderSystem::OnUpdate(Scene& scene, Timestep timestep, bool shouldRender)
+    bool RenderSystem::OnUpdate(Scene& scene, Timestep timestep, bool shouldRender, SceneContext& ctx)
     {
         auto& registry = scene.GetRegistry();
         bool ret = false;
 
+        auto* graph = &ctx.GetRenderGraph();
+
         // Add a clear command at the start of each frame
-        auto graph = RenderContext::Get().GetRenderGraph();
         graph->AddCommand(ClearCommand{
             glm::vec4(0.1f, 0.1f, 0.1f, 1.0f),  // color
             1.0f,                                   // depth
@@ -45,7 +44,7 @@ namespace Vulkitten {
             false                                   // clearStencil
         });
 
-        ret = RenderQuadComponent(registry) || ret;
+        ret = RenderQuadComponent(registry, graph) || ret;
 
         return ret || shouldRender;
     }

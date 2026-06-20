@@ -1,7 +1,7 @@
 #include "vktpch.h"
 #include "SpriteRenderPass.h"
 
-#include "Vulkitten/Renderer/RenderContext.h"
+#include "Vulkitten/Renderer/RendererSubsystem.h"
 #include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
 #include "Vulkitten/Renderer/Camera.h"
 #include "Vulkitten/Renderer/Framebuffer.h"
@@ -71,7 +71,7 @@ SpriteRenderPass::SpriteRenderPass()
         if (commands.empty())
             return;
 
-        const auto& perFrame = RenderContext::Get().GetRenderGraph()->GetPerFrameData();
+        const auto& perFrame = RendererSubsystem::Get().GetRenderGraph()->GetPerFrameData();
         auto* camera = perFrame.Camera;
         if (!camera)
             return;
@@ -224,7 +224,7 @@ void SpriteRenderPass::Flush()
     m_QuadVA->Bind();
 
     // Use RendererAPI directly instead of Legacy::RenderCommand
-    auto* api = RenderContext::Get().GetRenderer().GetRendererAPI();
+    auto* api = RendererSubsystem::Get().GetRenderer().GetRendererAPI();
     api->DrawIndexed(m_QuadVA, m_QuadCount * 6);
 
     m_QuadCount = 0;

@@ -1,7 +1,7 @@
 #include "vktpch.h"
 #include "PreparePass.h"
 
-#include "Vulkitten/Renderer/RenderContext.h"
+#include "Vulkitten/Renderer/RendererSubsystem.h"
 #include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
 #include "Vulkitten/Renderer/Framebuffer.h"
 
@@ -14,7 +14,7 @@ PreparePass::PreparePass()
     SetExecute([this](const std::vector<RenderGraphResource>& /*resources*/,
                       const std::vector<RenderCommand>& commands,
                       void* /*backendContext*/) {
-        auto* api = RenderContext::Get().GetRenderer().GetRendererAPI();
+        auto* api = RendererSubsystem::Get().GetRenderer().GetRendererAPI();
 
         // Bind the configured Framebuffer (nullptr = default backbuffer)
         auto* graph = GetGraph();

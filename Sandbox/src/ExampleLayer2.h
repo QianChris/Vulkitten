@@ -9,7 +9,7 @@ public:
     ExampleLayer2() : Layer("Empty")
     {
         m_Scene = Vulkitten::Engine::Get().CreateEmptyScene();
-        Vulkitten::RenderContext::Get().GetShaderLibrary().Load("engine://shaders/FlatColor.shader");
+        Vulkitten::RendererSubsystem::Get().GetShaderLibrary().Load("engine://shaders/FlatColor.shader");
 
         using namespace Vulkitten;
         m_Texture = Texture2D::Create("sandbox://assets/textures/Checkerboard.png");
@@ -63,11 +63,11 @@ public:
         }
     }
 
-    void OnUpdate(Vulkitten::Timestep timestep) override
+    void OnUpdate(Vulkitten::Timestep timestep, Vulkitten::SceneContext& ctx) override
     {
         // Clear is now handled by RenderSystem → RenderGraph PreparePass
         m_Scene->SetEditorCamera(nullptr);
-        m_Scene->OnUpdate(timestep);
+        m_Scene->OnUpdate(timestep, ctx);
     }
 
     virtual void OnImguiRender() override

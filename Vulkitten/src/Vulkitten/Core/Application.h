@@ -11,7 +11,7 @@
 
 namespace Vulkitten
 {
-    class RenderContext;
+    class RendererSubsystem;
     class GraphicContext;
     class OpenGLDevice;
     class GpuResourceManager;
@@ -40,7 +40,7 @@ namespace Vulkitten
         bool OnWindowClose(WindowCloseEvent& e);
         bool OnWindowResize(WindowResizeEvent& e);
 
-		Scope<RenderContext> m_RenderContext;
+		Scope<RendererSubsystem> m_RendererSubsystem;
         Scope<OpenGLDevice> m_Device;
         Scope<GpuResourceManager> m_Resources;
         Scope<ShaderManager> m_ShaderMgr;

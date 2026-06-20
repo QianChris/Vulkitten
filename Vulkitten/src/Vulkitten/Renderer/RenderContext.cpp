@@ -1,66 +1,49 @@
 #include "vktpch.h"
 #include "RenderContext.h"
 
-#include "Vulkitten/Renderer/Device.h"
-#include "Vulkitten/Core/Application.h"
-
-#include "Vulkitten/Perf/Instrumentor.h"
+#include "Vulkitten/Renderer/IRenderer.h"
+#include "Vulkitten/Renderer/IGpuResourceManager.h"
 
 namespace Vulkitten {
 
-RenderContext* RenderContext::s_Instance = nullptr;
-
-RenderContext::RenderContext(Device* device, GpuResourceManager& resources, ShaderManager& shaders)
-    : m_Renderer(device, resources, shaders)
+RenderContext::RenderContext(FrameContext& frameContext, IRenderer& renderer)
+    : m_FrameContext(frameContext)
+    , m_Renderer(renderer)
 {
-    s_Instance = this;
 }
 
-void RenderContext::Init()
+void RenderContext::TranslateCommand(const RenderCommand& command)
 {
-    VKT_PROFILE_FUNCTION();
+    std::visit([this](auto&& cmd) {
+        using T = std::decay_t<decltype(cmd)>;
 
-    m_Renderer.Init();
-
-    // Preload engine shaders into the engine-owned ShaderLibrary.
-    // GPU particle compute shaders
-    m_ShaderLibrary.Add("ParticleSimArg",
-        Shader::CreateCompute("ParticleSimArg",
-            "engine://computeshaders/ParticleSimArg.comp"));
-    m_ShaderLibrary.Add("ParticleSim",
-        Shader::CreateCompute("ParticleSim",
-            "engine://computeshaders/ParticleSim.comp"));
-    m_ShaderLibrary.Add("ParticleEmit",
-        Shader::CreateCompute("ParticleEmit",
-            "engine://computeshaders/ParticleEmit.comp"));
-    m_ShaderLibrary.Add("ParticleRenderArg",
-        Shader::CreateCompute("ParticleRenderArg",
-            "engine://computeshaders/ParticleRenderArg.comp"));
-    // GPU particle render shader
-    m_ShaderLibrary.Load("engine://shaders/Particle.shader");
-
-    // Set backend context for EndPass (SwapBuffers)
-    if (auto* graph = m_Renderer.GetRenderGraph())
-    {
-        graph->SetBackendContext(Application::Get().GetWindow().GetGraphicsContext());
-    }
+        if constexpr (std::is_same_v<T, DrawQuadCommand>)
+        {
+            // TODO Task 6: translate to backend drawcall via RendererAPI
+            (void)cmd;
+        }
+        else if constexpr (std::is_same_v<T, ClearCommand>)
+        {
+            // TODO Task 6: translate to backend clear via RendererAPI
+            (void)cmd;
+        }
+    }, command);
 }
 
-void RenderContext::Shutdown()
+void RenderContext::BindPipeline(PipelineHandle handle)
 {
-    VKT_PROFILE_FUNCTION();
+    if (m_ActivePipeline == handle) return;
+    m_ActivePipeline = handle;
 
-    m_Renderer.Shutdown();
+    // TODO Task 6: bind pipeline via backend
 }
 
-void RenderContext::Execute()
+void RenderContext::BindGeometry(GeometryHandle handle)
 {
-    m_Renderer.Execute();
-}
+    if (m_ActiveGeometry == handle) return;
+    m_ActiveGeometry = handle;
 
-void RenderContext::OnWindowResize(uint32_t width, uint32_t height)
-{
-    m_Renderer.OnWindowResize(width, height);
+    // TODO Task 6: bind geometry via backend
 }
 
 } // namespace Vulkitten

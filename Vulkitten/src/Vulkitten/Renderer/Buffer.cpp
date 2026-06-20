@@ -1,7 +1,7 @@
 #include "Buffer.h"
 
 #include "Renderer.h"
-#include "RenderContext.h"
+#include "RendererSubsystem.h"
 #include "GpuResourceManager.h"
 #include "Platform/OpenGL/OpenGLBuffer.h"
 
@@ -27,7 +27,7 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
         if (!result)
             return nullptr;
 
-        auto& resources = RenderContext::Get().GetRenderer().GetResourceManager();
+        auto& resources = RendererSubsystem::Get().GetRenderer().GetResourceManager();
         GpuBufferDesc desc;
         desc.Size = size;
         uint64_t handle = resources.CreateBuffer(desc, "VertexBuffer");
@@ -54,7 +54,7 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
         if (!result)
             return nullptr;
 
-        auto& resources = RenderContext::Get().GetRenderer().GetResourceManager();
+        auto& resources = RendererSubsystem::Get().GetRenderer().GetResourceManager();
         GpuBufferDesc desc;
         desc.Size = size;
         uint64_t handle = resources.CreateBuffer(desc, "VertexBuffer");
@@ -81,7 +81,7 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
         if (!result)
             return nullptr;
 
-        auto& resources = RenderContext::Get().GetRenderer().GetResourceManager();
+        auto& resources = RendererSubsystem::Get().GetRenderer().GetResourceManager();
         GpuBufferDesc desc;
         desc.Size = count * sizeof(uint32_t);
         uint64_t handle = resources.CreateBuffer(desc, "IndexBuffer");

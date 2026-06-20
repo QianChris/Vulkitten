@@ -31,7 +31,7 @@ namespace Vulkitten {
 
     class VKT_API ShaderLibrary
     {
-        friend class RenderContext;
+        friend class RendererSubsystem;
     public:
         void Add(const std::string& name, const Ref<Shader>& shader);
         void Add(const Ref<Shader>& shader);

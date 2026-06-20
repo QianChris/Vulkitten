@@ -30,6 +30,7 @@
 
 // Scene
 #include "Vulkitten/Scene/Scene.h"
+#include "Vulkitten/Scene/SceneContext.h"
 #include "Vulkitten/Scene/Components.h"
 #include "Vulkitten/Scene/Entity.h"
 #include "Vulkitten/Scene/ScriptableEntity.h"
@@ -38,7 +39,10 @@
 
 // Renderer
 #include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/RendererSubsystem.h"
 #include "Vulkitten/Renderer/RenderContext.h"
+#include "Vulkitten/Renderer/IRenderer.h"
+#include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Buffer.h"
 #include "Vulkitten/Renderer/Framebuffer.h"
 #include "Vulkitten/Renderer/VertexArray.h"

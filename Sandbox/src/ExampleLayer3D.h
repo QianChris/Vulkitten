@@ -21,7 +21,7 @@ public:
 
     void OnAttach() override;
     void OnDetach() override;
-    void OnUpdate(Vulkitten::Timestep timestep) override;
+    void OnUpdate(Vulkitten::Timestep timestep, Vulkitten::SceneContext& ctx) override;
     void OnImguiRender() override;
     void OnEvent(Vulkitten::Event& event) override;
 

@@ -5,6 +5,41 @@
 - **End**: 2026-06-20
 - **Summary**: 创建了平台层抽象接口 IWindow（Vulkitten/Core/IWindow.h）和 ISurface（Vulkitten/Core/ISurface.h），定义了 SurfaceDesc 结构体（Width/Height）。IWindow 提供 GetSurfaceDesc() 和 GetSurface() 纯虚方法，使后端通过统一接口查询窗口表面属性。创建了 WindowsSurface（Platform/Windows/WindowsSurface.h/.cpp）实现 ISurface，封装 GLFWwindow 作为平台绘制表面。WindowsWindow 现在多重继承 Window + IWindow，在 Init() 中创建 m_Surface（Scope<WindowsSurface>），实现 GetSurfaceDesc()/GetSurface()。IWindow.h 和 ISurface.h 已加入 Vulkitten.h 统一头文件。所有 3 个目标编译通过。
 
+## Task 2: 后端接口 IRenderer 和 RendererConfig
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 创建了 IRenderer 抽象后端接口（Vulkitten/Renderer/IRenderer.h），定义生命周期纯虚方法 Init/Shutdown/BeginFrame/EndFrame/Execute/OnWindowResize 以及 GetDevice/GetResourceManager/GetRenderGraph 访问器。RendererConfig 结构体打包 IDevice*/RenderGraph*/IGpuResourceManager* 三个必须依赖。IRenderer 作为平台层和场景层接触的唯一后端接口，具体实现（OpenGL/Vulkan）由 Application 根据 RendererConfig 选择创建。已加入 Vulkitten.h 统一头文件。所有 3 个目标编译通过。
+
+## Task 3: Device→IDevice 重命名 + IGpuResourceManager 接口
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 将 Device 类重命名为 IDevice（Renderer/Device.h/.cpp），统一 I 前缀命名规范。更新 OpenGLDevice、Renderer、RenderContext/RendererSubsystem、Application 等全部引用。创建 IGpuResourceManager 抽象接口（IGpuResourceManager.h），定义 CreateTexture/CreateBuffer/CreateShader/CreatePipeline/CreateGeometry 纯虚方法返回安全句柄，以及 TrackExternalRef/SetGpuHandle/DestroyResource/TickFrame/Gc 资源管理方法。GpuResourceManager 继承 IGpuResourceManager 并 override 所有虚方法；CreateShader/CreatePipeline/CreateGeometry 为预留桩实现。后续 GPU 资源必须通过 IGpuResourceManager 创建。已加入 Vulkitten.h。所有 3 个目标编译通过。
+
+## Task 4: FrameContext 每帧状态结构体
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 创建 FrameContext 结构体（Vulkitten/Renderer/FrameContext.h），承载 FrameIndex/SwapchainIndex/CommandPool(OpenGL 空壳)/CommandBuffer/Fence/Semaphore/PerFrameResourcePool。接口层面为 Vulkan 后端预留完整结构——CommandPool/Fence/Semaphore 使用 void* 占位，Vulkan 后端创建 VkFrameContext 时可填入真实 Vulkan 对象。PerFrameResourcePool 提供 Reset() 桩方法供每帧资源回收。所有 3 个目标编译通过。
+
+## Task 5: RenderContext→RendererSubsystem 重命名 + Per-Pass RenderContext
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 将渲染子系统单例 RenderContext 重命名为 RendererSubsystem（新文件 RendererSubsystem.h/.cpp），更新全部引用（Vulkitten.h/Application/Scene/RenderSystem/ClassFactory/SpriteRenderPass/PreparePass/GpuParticlePass/GpuParticle/Buffer/Texture/GraphicContext/EditorLayer/ExampleLayer2 等 15+ 文件）。ShaderLibrary 的 friend 声明同步更新为 friend class RendererSubsystem。创建新的 Per-Pass RenderContext（Vulkitten/Renderer/RenderContext.h/.cpp），持有 FrameContext& 和 IRenderer&，提供 TranslateCommand(RenderCommand) 方法通过 std::visit 派发命令类型（DrawQuadCommand/ClearCommand），PipelineHandle/GeometryHandle 为 uint64_t 别名。所有 3 个目标编译通过。
+
+## Task 6: Renderer 实现 IRenderer + EndPass SwapBuffers 迁移
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: Renderer 继承 IRenderer 接口，添加 BeginFrame()/EndFrame() 实现。BeginFrame 创建新的 FrameContext（递增全局帧计数器），EndFrame 从 RenderGraph 获取 backendContext 调用 SwapBuffers（SwapBuffers 从 EndPass 迁移至此）。EndPass 的 onExecute 改为 no-op。Renderer 头文件改为 include GpuResourceManager.h（非前向声明）以支持内联 GetResourceManager() 的协变返回类型。RenderGraph 新增 GetBackendContext() 公开访问器。IGpuResourceManager 接口补全 TrackExternalRef/SetGpuHandle 虚方法。所有 3 个目标编译通过。
+
+## Task 7: SceneContext + Scene::OnUpdate 参数注入
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: 创建 SceneContext 结构体（Vulkitten/Scene/SceneContext.h），包含 IRenderer& 和 RenderGraph& 引用，提供 GetRenderer()/GetRenderGraph() 访问器。Scene::OnUpdate 签名改为 OnUpdate(Timestep, SceneContext&)，替代内部直接调用 RendererSubsystem 单例。System 基类 OnUpdate 同步增加 SceneContext& 参数。RenderSystem::OnUpdate 从 SceneContext 获取 RenderGraph 写入 RenderCommand。更新所有调用处：ExampleLayer2/EditorLayer 通过注入的 SceneContext 传递，不再内部创建。SceneContext.h 已加入 Vulkitten.h 统一头文件。所有 3 个目标编译通过。
+
+## Task 8: Application 主循环 IRenderer 生命周期 + ExampleLayer2 集成
+- **Start**: 2026-06-20
+- **End**: 2026-06-20
+- **Summary**: Application::Run 主循环更新为 IRenderer 生命周期：BeginFrame（创建 FrameContext）→ SceneContext 创建（从 Renderer 获取 IRenderer& + RenderGraph&）→ Layer::OnUpdate(timestep, sceneCtx) 参数注入 → ImGui 绘制 → RenderGraph::Execute → EndFrame（SwapBuffers/Present）→ GC。Layer 基类 OnUpdate 签名改为 OnUpdate(Timestep, SceneContext&)。迁移所有 Layer 子类签名：ExampleLayer2（使用注入 ctx 替代自建 SceneContext）、ExampleLayer3D（忽略 ctx 参数）、EmptyLayer、EditorLayer（使用注入 ctx）。EditorLayer 移除自建 SceneContext 代码。所有 3 个目标编译通过。
+
 ## Task 7: 窗口Resize统一更新Framebuffer
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

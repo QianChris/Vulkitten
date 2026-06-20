@@ -1,61 +1,77 @@
 #pragma once
 
 #include "Vulkitten/Core/Core.h"
-#include "Vulkitten/Renderer/Renderer.h"
-#include "Vulkitten/Renderer/RenderUtils.h"
-#include "Vulkitten/Renderer/Shader.h"
+#include "Vulkitten/Renderer/FrameContext.h"
+#include "Vulkitten/Renderer/RenderGraph/RenderCommand.h"
+
+#include <cstdint>
+#include <unordered_map>
 
 namespace Vulkitten {
 
-// ============================================================
-// RenderContext — rendering subsystem singleton.
-//
-// Created via ClassFactory with a specified backend (OpenGL/Vulkan).
-// Owns the Renderer instance, RenderGraph, and RenderUtils.
-// Replaces the old static Renderer::Init/Render/Shutdown pattern.
-//
-// Usage:
-//   RenderContext::Get().Init();
-//   RenderContext::Get().Execute();          // per-frame
-//   RenderContext::Get().GetRenderGraph();   // graph access
-// ============================================================
+class IRenderer;
 
-class VKT_API RenderContext
+// ============================================================
+// PipelineHandle — lightweight handle for cached pipeline state.
+//
+// Points to a compiled pipeline (VkPipeline / GL program) stored
+// in IGpuResourceManager. Used by RenderContext to bind the
+// correct pipeline before issuing drawcalls.
+// ============================================================
+using PipelineHandle = uint64_t;
+
+// ============================================================
+// GeometryHandle — lightweight handle for geometry data.
+//
+// Points to vertex + index buffer resources in IGpuResourceManager.
+// ============================================================
+using GeometryHandle = uint64_t;
+
+// ============================================================
+// RenderContext — per-pass command translation context.
+//
+// Created at the start of each render pass. Translates abstract
+// RenderCommands into concrete API drawcalls (OpenGL glDraw*
+// or Vulkan vkCmdDraw*). Maintains temporary state mappings
+// (active pipeline, bound geometry) to avoid redundant binds.
+//
+// For OpenGL: immediately executes drawcalls via RendererAPI.
+// For Vulkan: records commands into the active VkCommandBuffer.
+// ============================================================
+class RenderContext
 {
 public:
-    RenderContext(Device* device, GpuResourceManager& resources, ShaderManager& shaders);
+    RenderContext(FrameContext& frameContext, IRenderer& renderer);
     ~RenderContext() = default;
 
-    // ---- Lifecycle ----
+    // ---- Accessors ----
 
-    void Init();
-    void Shutdown();
+    FrameContext& GetFrameContext() { return m_FrameContext; }
+    IRenderer&   GetRenderer()     { return m_Renderer; }
 
-    // ---- Per-Frame Execution ----
+    // ---- Command Translation ----
 
-    void Execute();
+    // Translate a single RenderCommand variant into API drawcalls.
+    // Dispatches on the variant type and calls the appropriate
+    // backend-specific draw method.
+    void TranslateCommand(const RenderCommand& command);
 
-    // ---- Subsystem Access ----
+    // ---- Pipeline & Geometry State ----
 
-    Renderer&            GetRenderer()     { return m_Renderer; }
-    RenderGraph*         GetRenderGraph()  { return m_Renderer.GetRenderGraph(); }
-    RenderUtils&         GetRenderUtils()  { return m_RenderUtils; }
+    // Bind a pipeline for subsequent drawcalls. Cached to avoid
+    // redundant binds (no-op if handle matches active pipeline).
+    void BindPipeline(PipelineHandle handle);
 
-    // ---- Window Events ----
-
-    void OnWindowResize(uint32_t width, uint32_t height);
-
-    // ---- ShaderLibrary Access ----
-    ShaderLibrary& GetShaderLibrary() { return m_ShaderLibrary; }
-
-    // ---- Global accessor ----
-    static RenderContext& Get() { return *s_Instance; }
+    // Bind geometry (vertex + index buffers) for subsequent draws.
+    void BindGeometry(GeometryHandle handle);
 
 private:
-    static RenderContext* s_Instance;
-    Renderer     m_Renderer;
-    RenderUtils  m_RenderUtils;
-    ShaderLibrary m_ShaderLibrary;
+    FrameContext& m_FrameContext;
+    IRenderer&    m_Renderer;
+
+    // ---- Temporary State Cache ----
+    PipelineHandle m_ActivePipeline = 0;
+    GeometryHandle m_ActiveGeometry = 0;
 };
 
 } // namespace Vulkitten

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vulkitten/Core/Core.h"
+#include "Vulkitten/Renderer/IGpuResourceManager.h"
 
 #include <vector>
 #include <string>
@@ -60,7 +61,7 @@ struct GpuResourceSlot
 // replace them.
 // ============================================================
 
-class VKT_API GpuResourceManager
+class VKT_API GpuResourceManager : public IGpuResourceManager
 {
 public:
     GpuResourceManager() = default;
@@ -68,31 +69,37 @@ public:
 
     // ---- Resource Creation (returns handle, defers GPU allocation) ----
 
-    uint64_t CreateTexture(const GpuTextureDesc& desc, const std::string& debugName = "");
-    uint64_t CreateBuffer(const GpuBufferDesc& desc, const std::string& debugName = "");
+    uint64_t CreateTexture(const GpuTextureDesc& desc, const std::string& debugName = "") override;
+    uint64_t CreateBuffer(const GpuBufferDesc& desc, const std::string& debugName = "") override;
+
+    // Stub implementations for shader/pipeline/geometry creation.
+    // These are placeholders until the Vulkan backend provides real implementations.
+    uint64_t CreateShader(const std::string& name, const std::string& source) override;
+    uint64_t CreatePipeline(const void* pipelineDesc) override;
+    uint64_t CreateGeometry(const void* geometryDesc) override;
 
     // ---- Resource Lookup (triggers deferred allocation on first call) ----
 
-    GpuResourceSlot* GetTexture(uint64_t handle);
-    GpuResourceSlot* GetBuffer(uint64_t handle);
+    GpuResourceSlot* GetTexture(uint64_t handle) override;
+    GpuResourceSlot* GetBuffer(uint64_t handle) override;
 
     // ---- Low-level Slot Access ----
 
-    GpuResourceSlot* GetSlot(uint32_t index);
+    GpuResourceSlot* GetSlot(uint32_t index) override;
 
     // ---- External Reference Tracking ----
 
     // Register a weak_ptr that tracks an external Ref (Texture2D/Buffer).
     // The GC will skip this resource as long as the external Ref is alive.
-    void TrackExternalRef(uint64_t handle, const std::weak_ptr<void>& tracker);
+    void TrackExternalRef(uint64_t handle, const std::weak_ptr<void>& tracker) override;
 
     // Set the platform GPU handle on an already-created slot (for
     // resources created externally via Texture2D::Create / Buffer::Create).
-    void SetGpuHandle(uint64_t handle, uint64_t gpuHandle);
+    void SetGpuHandle(uint64_t handle, uint64_t gpuHandle) override;
 
     // ---- Resource Destruction ----
 
-    void DestroyResource(uint64_t handle);
+    void DestroyResource(uint64_t handle) override;
 
     // ---- Handle Encoding (index + generation → uint64_t) ----
 
@@ -106,15 +113,15 @@ public:
     // ---- Frame Management ----
 
     // Called each frame to advance the internal frame counter.
-    void TickFrame();
+    void TickFrame() override;
 
     // Garbage-collect resources that haven't been accessed for
     // maxFramesInFlight frames and have no external references.
-    void Gc(uint32_t maxFramesInFlight);
+    void Gc(uint32_t maxFramesInFlight) override;
 
     // ---- Queries ----
 
-    size_t GetResourceCount() const { return m_Slots.size() - m_FreeIndices.size(); }
+    size_t GetResourceCount() const override { return m_Slots.size() - m_FreeIndices.size(); }
     size_t GetSlotCount()    const { return m_Slots.size(); }
 
 private:

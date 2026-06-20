@@ -7,7 +7,7 @@
 #include "Vulkitten/Scene/Components.h"
 #include "Vulkitten/Renderer/Camera.h"
 #include "Vulkitten/Renderer/Shader.h"
-#include "Vulkitten/Renderer/RenderContext.h"
+#include "Vulkitten/Renderer/RendererSubsystem.h"
 #include "Vulkitten/Scene/GpuParticle/ParticleStruct.h"
 
 #include <glm/glm.hpp>
@@ -63,7 +63,7 @@ namespace Vulkitten {
 
         GpuEmitterInstance* GetOrCreateEmitterInstance(Entity entity);
 
-		const ShaderLibrary& GetShaderLibrary() { return RenderContext::Get().GetShaderLibrary(); }
+		const ShaderLibrary& GetShaderLibrary() { return RendererSubsystem::Get().GetShaderLibrary(); }
 
     private:
         void Initialize();

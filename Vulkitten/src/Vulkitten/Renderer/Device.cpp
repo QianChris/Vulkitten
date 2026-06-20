@@ -5,9 +5,9 @@
 
 namespace Vulkitten {
 
-Device& Device::Get()
+IDevice& IDevice::Get()
 {
-    return ClassFactory::GetInterface<Device>();
+    return ClassFactory::GetInterface<IDevice>();
 }
 
 } // namespace Vulkitten

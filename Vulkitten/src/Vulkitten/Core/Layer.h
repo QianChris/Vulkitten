@@ -7,6 +7,8 @@
 
 namespace Vulkitten
 {
+    class SceneContext;
+
     class VKT_API Layer
     {
     public:
@@ -15,7 +17,7 @@ namespace Vulkitten
 
         virtual void OnAttach() {}
         virtual void OnDetach() {}
-        virtual void OnUpdate(Timestep timestep) {}
+        virtual void OnUpdate(Timestep timestep, SceneContext& ctx) {}
         virtual void OnImguiRender() {}
         virtual void OnEvent(Event& event) {}
 
