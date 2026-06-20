@@ -1,11 +1,14 @@
 #pragma once
 #include <vector>
 #include <functional>
+#include <memory>
 
 #include "RenderCommand.h"
 #include "RenderGraphResource.h"
 
 namespace Vulkitten {
+
+class Framebuffer;
 
 // 资源访问标志
 enum class AccessFlags {
@@ -45,10 +48,18 @@ public:
     
     ExecuteFunc onExecute;
     
+    // ---- Framebuffer configuration (set per-frame before Execute) ----
+    void SetTargetFramebuffer(Ref<Framebuffer> fb) { m_TargetFramebuffer = fb; }
+    Ref<Framebuffer> GetTargetFramebuffer() const { return m_TargetFramebuffer; }
+
     // 辅助：快速声明
     RenderPass& Read(const std::string& res, AccessFlags flags = AccessFlags::Read);
     RenderPass& Write(const std::string& res, AccessFlags flags = AccessFlags::Write);
     RenderPass& SetExecute(ExecuteFunc func);
+
+private:
+    Ref<Framebuffer> m_TargetFramebuffer;
+    friend class RenderGraph;
 };
 
 } // namespace Vulkitten

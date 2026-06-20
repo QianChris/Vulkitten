@@ -1,7 +1,22 @@
 #include "vktpch.h"
 #include "RenderGraph.h"
 
+#include "Vulkitten/Renderer/Framebuffer.h"
+
 namespace Vulkitten {
+
+    void RenderGraph::SetPassFramebuffer(const std::string& passName, Ref<Framebuffer> fb)
+    {
+        for (auto& pass : m_Passes)
+        {
+            if (pass.name == passName)
+            {
+                pass.SetTargetFramebuffer(fb);
+                return;
+            }
+        }
+        VKT_CORE_WARN("RenderGraph::SetPassFramebuffer — pass not found: {0}", passName);
+    }
 
     void RenderGraph::Execute()
     {
@@ -23,7 +38,18 @@ namespace Vulkitten {
             }
 
             if (pass.onExecute)
+            {
+                // Bind pass-specific framebuffer before execution
+                auto fb = pass.GetTargetFramebuffer();
+                if (fb)
+                    fb->Bind();
+
                 pass.onExecute(m_Resources, passCommands, m_BackendContext);
+
+                // Unbind after execution
+                if (fb)
+                    fb->Unbind();
+            }
         }
 
         ClearFrameCommands();

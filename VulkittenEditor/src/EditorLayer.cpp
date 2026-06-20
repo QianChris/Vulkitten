@@ -185,7 +185,9 @@ namespace Vulkitten {
 
         // Phase 4: 渲染场景到 Viewport Framebuffer (via RenderGraph)
         auto framebuffer = m_ViewportPanel->GetFramebuffer();
-        RenderContext::Get().GetRenderGraph()->SetFramebuffer(framebuffer);
+        auto* graph = RenderContext::Get().GetRenderGraph();
+        graph->SetPassFramebuffer("PreparePass", framebuffer);
+        graph->SetPassFramebuffer("SpriteRenderPass", framebuffer);
 
         // Clear entity ID attachment (editor-specific, not yet in RenderGraph)
         framebuffer->Bind();

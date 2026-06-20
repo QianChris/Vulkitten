@@ -47,9 +47,8 @@ namespace Vulkitten {
         void SetPerFrameData(const PerFrameSceneData& data) { m_PerFrameData = data; }
         const PerFrameSceneData& GetPerFrameData() const { return m_PerFrameData; }
 
-        // ---- Framebuffer (migrating to Pass config in Task 2) ----
-        void SetFramebuffer(Ref<class Framebuffer> fb) { m_Framebuffer = fb; }
-        Ref<class Framebuffer> GetFramebuffer() const { return m_Framebuffer; }
+        // ---- Pass Framebuffer configuration ----
+        void SetPassFramebuffer(const std::string& passName, Ref<class Framebuffer> fb);
 
         // ---- Query registered pass count and names (for debug UI) ----
         uint32_t GetPassCount() const { return static_cast<uint32_t>(m_Passes.size()); }
@@ -69,7 +68,6 @@ namespace Vulkitten {
         void* m_BackendContext = nullptr;
 
         PerFrameSceneData m_PerFrameData;
-        Ref<class Framebuffer> m_Framebuffer;
     };
 
 }
