@@ -72,6 +72,14 @@ target_link_libraries(Vulkitten PUBLIC opengl32)
 # yaml-cpp
 target_link_libraries(Vulkitten PUBLIC yaml-cpp::yaml-cpp)
 
+# tinygltf (glTF 2.0 loader) — header-only to avoid stb_image conflicts
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_INSTALL OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_HEADER_ONLY ON CACHE BOOL "" FORCE)
+add_subdirectory(vendor/tinygltf)
+target_link_libraries(Vulkitten PUBLIC tinygltf)
+
 # 公开头文件目录 (供SandBox使用)
 target_include_directories(Vulkitten 
     PUBLIC 

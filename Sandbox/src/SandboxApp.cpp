@@ -6,6 +6,7 @@
 //#include "ExampleLayer.h"
 //#include "Sandbox2D.h"
 #include "ExampleLayer2.h"
+//#include "ExampleLayer3D.h"   // Uncomment to test 3D glTF loading
 
 class Sandbox : public Vulkitten::Application {
 public:

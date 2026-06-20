@@ -10,7 +10,7 @@ Guidelines for AI agents contributing to the Vulkitten Engine, a C++17 game engi
 - **Renderer**: OpenGL 4 (GLAD) via abstract `RendererAPI`; RenderGraph pipeline (in-progress); Vulkan planned
 - **ECS**: EnTT-based with `Scene` owning `entt::registry`, `Entity` wrappers, `System` interface
 - **Editor**: Docked ImGui panels, ImGuizmo, undo/redo command system, entity picking
-- **Key Dependencies**: spdlog, glm, glfw, glad, imgui, entt, yaml-cpp, imguizmo, imnodes
+- **Key Dependencies**: spdlog, glm, glfw, glad, imgui, entt, yaml-cpp, imguizmo, imnodes, tinygltf
 
 ---
 
@@ -79,6 +79,7 @@ No test framework configured. Verify changes via successful builds and manual ex
   - `Device` — abstract GPU device interface (Init/Shutdown); `OpenGLDevice` placeholder. For OpenGL the GL context IS the device; for Vulkan this will own VkDevice/VkPhysicalDevice. Accessed via `ClassFactory::GetInterface<Device>()`
   - `GpuResourceManager` — centralized VRAM resource manager. `CreateTexture(desc)` / `CreateBuffer(desc)` → uint64_t handle (index+generation encoding). `GetTexture(handle)` / `GetBuffer(handle)` for lookup. Deferred creation: descriptor recorded at Create, GPU allocation triggered on first Get. Existing Ref<Texture2D> NOT yet migrated.
   - `ShaderManager` — shader loading + #include preprocessing. Constructor injects `FileSystem&`. `LoadShader(virtualPath)` resolves path → reads → recursively resolves #include → returns uint64_t handle. Preprocessed source stored in ShaderData map. Existing OpenGLShader loading path unchanged.
+  - `GltfLoader` (`Renderer/Gltf/`) — glTF 2.0 loader wrapping tinygltf. Constructor injects `FileSystem&`. `Load(virtualPath)` resolves path, detects GLB/glTF format, extracts vertex positions/normals/texcoords and indices into `GltfMeshData` structs. Supports indexed and non-indexed geometry.
   - `RendererAPI` — abstract base for platform backends (virtual: Init, Clear, DrawIndexed)
   - `Legacy::RenderCommand` — static proxy wrapping a `RendererAPI*` singleton
   - `Renderer` — scene-level Begin/End/Submit; owns `RenderGraph` instance
@@ -188,6 +189,7 @@ Git submodules (in `Vulkitten/vendor/`):
 | `yaml-cpp` | YAML serialization |
 | `ImGuizmo` | 3D gizmo for ImGui (Translate/Rotate/Scale) |
 | `imnodes` | Node editor for ImGui (future use) |
+| `tinygltf` | glTF 2.0 model loader (header-only) |
 
 Manual (header-only, no submodule):
 - `nlohmann/json` — JSON parsing in `vendor/nlohmann/include/`

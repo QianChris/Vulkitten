@@ -43,5 +43,6 @@
 #include "Vulkitten/Renderer/Shader.h"
 #include "Vulkitten/Renderer/Texture.h"
 #include "Vulkitten/Renderer/CameraController.h"
+#include "Vulkitten/Renderer/Gltf/GltfLoader.h"
 
 #include "Vulkitten/ImGui/imguiLayer.h"

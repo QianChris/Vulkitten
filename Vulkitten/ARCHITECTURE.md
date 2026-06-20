@@ -262,6 +262,7 @@ Scene::OnUpdate(Timestep)
 | **0. Device** | `Renderer/Device` | GPU 设备抽象：Init/Shutdown。OpenGL 中 GL Context 即为 Device；Vulkan 中持有 VkDevice/VkPhysicalDevice | ✅ 抽象类 + OpenGLDevice 空壳占位 |
 | **GpuResourceManager** | `Renderer/GpuResourceManager` | 统一显存资源管理器：uint64_t 句柄 (index+generation)，CreateTexture/CreateBuffer 返回句柄，支持延时分配 (记录 desc，首次 Get 时分配 GPU 资源) | ✅ 骨架 (句柄分配/查找/延时创建占位) |
 | **ShaderManager** | `Renderer/ShaderManager` | Shader 加载 + #include 预处理：构造注入 FileSystem&，LoadShader(virtualPath) 解析路径→读取→递归展开 #include→返回 uint64_t 句柄 | ✅ 新增 (未替换旧 OpenGLShader 路径) |
+| **GltfLoader** | `Renderer/Gltf/GltfLoader` | glTF 2.0 模型加载器（基于 tinygltf）：构造注入 FileSystem&，Load(virtualPath) 解析 GLB/glTF→提取顶点/索引数据→返回 GltfMeshData 向量。支持位置/法线/UV | ✅ 新增 |
 
 ### 工厂模式（抽象 → 平台）
 
@@ -625,6 +626,7 @@ Engine::Get().GetFileSystem().RegisterPath("../../Sandbox", "sandbox");
 | **yaml-cpp** | 编译 | git submodule | YAML 序列化 |
 | **ImGuizmo** | 源文件包含 | git submodule | 3D Gizmo (Translate/Rotate/Scale) |
 | **imnodes** | 仅头文件 | git submodule | 节点编辑器 (未来使用) |
+| **tinygltf** | 仅头文件 | git submodule | glTF 2.0 模型加载 |
 | **nlohmann/json** | 仅头文件 | 手动 | JSON 解析 |
 | **stb_image** | 仅头文件 | 手动 | 图像加载 |
 | **glad** | 编译 | 手动 (Vulkitten/vendor/Glad/) | OpenGL 函数加载器 |
