@@ -3,6 +3,7 @@
 #include "ScriptableEntity.h"
 #include "Entity.h"
 #include "Vulkitten/Renderer/RenderContext.h"
+#include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
 
 namespace Vulkitten {
 
@@ -107,7 +108,7 @@ namespace Vulkitten {
 
         if (!shouldRender) { return; }
 
-        // RenderGraph path: populate graph with scene/camera for passes
+        // RenderGraph path: populate per-frame scene data for passes
         Camera* camera = m_EditorCamera;
 
         if (!camera)
@@ -133,10 +134,11 @@ namespace Vulkitten {
 
         if (camera)
         {
-            auto* graph = RenderContext::Get().GetRenderGraph();
-            graph->SetScene(this);
-            graph->SetSceneCamera(camera);
-            graph->SetViewProjection(camera->GetViewProjectionMatrix());
+            PerFrameSceneData perFrameData;
+            perFrameData.Camera = camera;
+            perFrameData.ViewProjection = camera->GetViewProjectionMatrix();
+            perFrameData.Scene = this;
+            RenderContext::Get().GetRenderGraph()->SetPerFrameData(perFrameData);
         }
     }
 

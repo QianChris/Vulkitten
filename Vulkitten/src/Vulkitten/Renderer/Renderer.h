@@ -44,7 +44,6 @@ public:
 
     // ---- Helpers ----
 
-    void SetViewProjection(const glm::mat4& vp);
     void OnWindowResize(uint32_t width, uint32_t height);
 
     inline static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
@@ -54,12 +53,6 @@ private:
     GpuResourceManager& m_Resources;
     ShaderManager&      m_Shaders;
     RenderGraph*        m_RenderGraph = nullptr;
-
-    struct SceneData
-    {
-        glm::mat4 ViewProjectionMatrix{1.0f};
-    };
-    SceneData m_SceneData;
 };
 
 } // namespace Vulkitten

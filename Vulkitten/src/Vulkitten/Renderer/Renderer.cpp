@@ -51,12 +51,6 @@ void Renderer::Execute()
         m_RenderGraph->Execute();
 }
 
-void Renderer::SetViewProjection(const glm::mat4& vp)
-{
-    if (m_RenderGraph)
-        m_RenderGraph->SetViewProjection(vp);
-}
-
 void Renderer::OnWindowResize(uint32_t width, uint32_t height)
 {
     VKT_PROFILE_FUNCTION();

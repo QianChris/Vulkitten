@@ -15,8 +15,9 @@ GpuParticlePass::GpuParticlePass()
                   const std::vector<RenderCommand>& /*commands*/,
                   void* /*backendContext*/) {
         auto* graph = RenderContext::Get().GetRenderGraph();
-        auto* scene = graph->GetScene();
-        auto* camera = graph->GetSceneCamera();
+        const auto& perFrame = graph->GetPerFrameData();
+        auto* scene = perFrame.Scene;
+        auto* camera = perFrame.Camera;
 
         if (!scene || !camera)
             return;

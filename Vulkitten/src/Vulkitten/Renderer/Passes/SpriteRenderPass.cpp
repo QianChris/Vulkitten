@@ -18,7 +18,8 @@ SpriteRenderPass::SpriteRenderPass()
             return;
 
         auto* graph = RenderContext::Get().GetRenderGraph();
-        auto* camera = graph->GetSceneCamera();
+        const auto& perFrame = graph->GetPerFrameData();
+        auto* camera = perFrame.Camera;
 
         if (!camera)
             return;
