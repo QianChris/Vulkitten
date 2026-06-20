@@ -11,7 +11,6 @@
 #include "Platform/OpenGL/OpenGLDevice.h"
 #include "Vulkitten/Renderer/GpuResourceManager.h"
 #include "Vulkitten/Renderer/ShaderManager.h"
-#include "Vulkitten/Renderer/RenderCommand.h"
 
 #include <glm/glm.hpp>
 

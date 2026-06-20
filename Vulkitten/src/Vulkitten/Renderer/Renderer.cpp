@@ -1,7 +1,6 @@
 #include "vktpch.h"
 #include "Renderer.h"
-#include "RenderCommand.h"
-#include "Renderer2D.h"
+#include "Platform/OpenGL/OpenGLRendererAPI.h"
 
 #include "Vulkitten/Renderer/Passes/PreparePass.h"
 #include "Vulkitten/Renderer/Passes/GpuParticlePass.h"
@@ -19,12 +18,18 @@ Renderer::Renderer(Device* device, GpuResourceManager& resources, ShaderManager&
 {
 }
 
+Renderer::~Renderer()
+{
+    delete m_RendererAPI;
+    m_RendererAPI = nullptr;
+}
+
 void Renderer::Init()
 {
     VKT_PROFILE_FUNCTION();
 
-    Legacy::RenderCommand::Init();
-    Renderer2D::Init();
+    m_RendererAPI = new OpenGLRendererAPI();
+    m_RendererAPI->Init();
 
     m_RenderGraph = new RenderGraph();
 
@@ -41,8 +46,6 @@ void Renderer::Shutdown()
 
     delete m_RenderGraph;
     m_RenderGraph = nullptr;
-
-    Renderer2D::Shutdown();
 }
 
 void Renderer::Execute()
@@ -55,7 +58,7 @@ void Renderer::OnWindowResize(uint32_t width, uint32_t height)
 {
     VKT_PROFILE_FUNCTION();
 
-    Legacy::RenderCommand::SetViewport(0, 0, width, height);
+    m_RendererAPI->SetViewport(0, 0, width, height);
 }
 
 } // namespace Vulkitten

@@ -24,7 +24,7 @@ class VKT_API Renderer
 {
 public:
     Renderer(Device* device, GpuResourceManager& resources, ShaderManager& shaders);
-    ~Renderer() = default;
+    ~Renderer();
 
     // ---- Lifecycle ----
 
@@ -41,6 +41,7 @@ public:
     GpuResourceManager&  GetResourceManager() { return m_Resources; }
     ShaderManager&       GetShaderManager()   { return m_Shaders; }
     RenderGraph*         GetRenderGraph()     { return m_RenderGraph; }
+    RendererAPI*         GetRendererAPI()     { return m_RendererAPI; }
 
     // ---- Helpers ----
 
@@ -53,6 +54,7 @@ private:
     GpuResourceManager& m_Resources;
     ShaderManager&      m_Shaders;
     RenderGraph*        m_RenderGraph = nullptr;
+    RendererAPI*        m_RendererAPI = nullptr;
 };
 
 } // namespace Vulkitten

@@ -76,19 +76,26 @@ public:
 
     void OnEvent(Vulkitten::Event& event) override
     {
-        // OnEvent pattern: modify Component data only.
-        // Scene::OnUpdate reads Component state each frame.
         Vulkitten::EventDispatcher dispatcher(event);
+
+        // Window resize: update camera aspect ratio to prevent stretching
+        dispatcher.Dispatch<Vulkitten::WindowResizeEvent>([this](Vulkitten::WindowResizeEvent& e)
+        {
+            float aspect = static_cast<float>(e.GetWidth()) / static_cast<float>(e.GetHeight());
+            m_Scene->SetCameraAspectRatio(aspect);
+            return false;
+        });
+
+        // OnEvent pattern: modify Component data only.
         dispatcher.Dispatch<Vulkitten::KeyPressedEvent>([this](Vulkitten::KeyPressedEvent& e)
         {
             if (e.GetKeyCode() == VKT_KEY_SPACE)
             {
-                // Modify component data — rendering reacts next frame
                 auto view = m_Scene->GetRegistry().view<Vulkitten::SpriteRendererComponent>();
                 for (auto entity : view)
                 {
                     auto& sprite = view.get<Vulkitten::SpriteRendererComponent>(entity);
-                    sprite.Color = { 1.0f, 0.0f, 0.0f, 1.0f }; // flash red
+                    sprite.Color = { 1.0f, 0.0f, 0.0f, 1.0f };
                 }
                 return true;
             }
