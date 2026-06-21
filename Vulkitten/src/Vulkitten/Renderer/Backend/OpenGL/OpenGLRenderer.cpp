@@ -84,8 +84,8 @@ void OpenGLRenderer::BeginFrame()
 {
     VKT_PROFILE_FUNCTION();
 
-    // [HACK: 过渡期手动创建 FrameContext — Task 15 迁移到 IDevice::beginFrame()]
-    m_FrameContext.FrameIndex = s_GlobalFrameIndex++;
+    // [HACK: 过渡期 — Task 15: call Renderer::BeginFrame() which delegates to IDevice::beginFrame()]
+    Renderer::BeginFrame();
 }
 
 void OpenGLRenderer::Execute()
@@ -98,7 +98,7 @@ void OpenGLRenderer::EndFrame()
 {
     VKT_PROFILE_FUNCTION();
 
-    // [HACK: 过渡期使用 Submit — Task 15 迁移到 IDevice::endFrame()]
+    // [HACK: 过渡期使用 Submit — 完全迁移后调用 Renderer::EndFrame() which calls IDevice::endFrame()]
     if (m_Device)
         m_Device->Submit(m_FrameContext);
 }
@@ -107,9 +107,9 @@ void OpenGLRenderer::OnWindowResize(uint32_t width, uint32_t height)
 {
     VKT_PROFILE_FUNCTION();
 
-    m_RendererAPI->SetViewport(0, 0, width, height);
+    if (m_RendererAPI)
+        m_RendererAPI->SetViewport(0, 0, width, height);
 
-    // Base class: resize all registered framebuffers
     Renderer::OnWindowResize(width, height);
 }
 

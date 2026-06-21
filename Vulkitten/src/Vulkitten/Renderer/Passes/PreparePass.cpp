@@ -15,6 +15,7 @@ PreparePass::PreparePass()
     SetExecute([this](const std::vector<RenderGraphResource>& /*resources*/,
                       const std::vector<RenderCommand>& commands,
                       void* /*backendContext*/) {
+        // [HACK: 过渡期仍使用 OpenGLRendererAPI — Task 14 迁移到 ICommandBuffer::BeginRenderPass]
         auto* api = static_cast<OpenGLRenderer&>(IRenderer::Get()).GetRendererAPI();
 
         // Bind the configured Framebuffer (nullptr = default backbuffer)

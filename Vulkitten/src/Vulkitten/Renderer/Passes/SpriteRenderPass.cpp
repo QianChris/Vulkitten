@@ -227,7 +227,7 @@ void SpriteRenderPass::Flush()
 
     m_QuadVA->Bind();
 
-    // Use RendererAPI directly instead of Legacy::RenderCommand
+    // [HACK: 过渡期仍使用 OpenGLRendererAPI — Task 14 完整迁移到 ICommandBuffer::DrawIndexed]
     auto* api = static_cast<OpenGLRenderer&>(IRenderer::Get()).GetRendererAPI();
     api->DrawIndexed(m_QuadVA, m_QuadCount * 6);
 

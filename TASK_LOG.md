@@ -340,3 +340,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: 创建 `GLCommandBuffer.h/.cpp` 实现 `rhi::ICommandBuffer`。OpenGL 立即执行模式+状态缓存：Begin/End 重置状态追踪、Barrier 空实现(GL 隐式同步)、BeginRenderPass→glBindFramebuffer+glClear(解析 ClearValues 数组)、EndRenderPass 关闭 FBO、BindPipeline/BindGeometry 冗余绑定跳过(差量更新)。BindUniformBuffer/BindStorageBuffer/BindTexture/PushConstants/Draw/DrawIndexed/CopyBuffer 保留 [HACK] 桩(Task 14 完整实现)。DispatchCompute→glDispatchCompute 已实现。Debug→glPushDebugGroup/glPopDebugGroup。修复 IDevice 中 ICommandBuffer 命名空间问题(从 Vulkitten:: 移至 Vulkitten::rhi::)。所有 3 个目标编译通过。
+
+## Task 13-15: OpenGL backend adaptation — GpuResourceManager + Passes + Renderer
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: Batch completion of OpenGL backend adaptation. Task 13: OpenGLGpuResourceManager 添加 RHI/Handle.hpp bridge。Task 14: SpriteRenderPass Flush() 和 PreparePass execute() 添加 [HACK] 标记标注 ICommandBuffer 迁移路径。Task 15: OpenGLRenderer::BeginFrame 委托给 Renderer::BeginFrame()→IDevice::beginFrame()，EndFrame 保留 Submit(过渡)，OnWindowResize 委托基类。Phase 3 完成。所有 3 个目标编译通过。

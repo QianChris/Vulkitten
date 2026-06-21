@@ -4,6 +4,8 @@
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Shader.h"
 
+#include "Vulkitten/RHI/Handle.hpp"
+
 #include <vector>
 #include <string>
 #include <unordered_map>
