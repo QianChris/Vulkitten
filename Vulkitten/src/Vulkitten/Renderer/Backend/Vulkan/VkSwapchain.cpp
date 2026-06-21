@@ -128,6 +128,9 @@ void VkSwapchain::CreateSwapchain(uint32_t w, uint32_t h)
         w = caps.currentExtent.width;
         h = caps.currentExtent.height;
     }
+    // Clamp to valid range
+    w = std::max(w, 1u);
+    h = std::max(h, 1u);
     m_CurrentWidth = w;
     m_CurrentHeight = h;
 
