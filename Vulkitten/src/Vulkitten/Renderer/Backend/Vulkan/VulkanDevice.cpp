@@ -3,6 +3,7 @@
 
 #include "VulkanInstance.h"
 #include "Vulkitten/Core/ClassFactory.h"
+#include "Vulkitten/Renderer/FrameContext.h"
 
 #ifdef VKT_HAS_VULKAN
 #include <vulkan/vulkan.h>
@@ -119,9 +120,100 @@ void VulkanDevice::Shutdown()
 #endif
 }
 
+// ---- Frame Lifecycle (stubs until Task 15) ----
+
+FrameContext VulkanDevice::beginFrame()
+{
+    // [HACK: 抽象层缺 Vulkan beginFrame — Task 15 实现]
+    return FrameContext{};
+}
+
+void VulkanDevice::endFrame(FrameContext /*ctx*/)
+{
+    // [HACK: 抽象层缺 Vulkan endFrame — Task 15 实现]
+}
+
+// ---- Command Buffer (stub until Task 16) ----
+
+ICommandBuffer* VulkanDevice::createCommandBuffer(FrameContext /*ctx*/)
+{
+    // [HACK: 抽象层缺 VkCommandBuffer — Task 16 创建]
+    return nullptr;
+}
+
+// ---- Resource Creation (stubs until Task 15) ----
+
+rhi::BufferHandle VulkanDevice::createBuffer(const rhi::BufferDesc& /*desc*/, const void* /*initialData*/)
+{
+    // [HACK: 抽象层缺 Vk Buffer 创建 — Task 15 实现]
+    return {};
+}
+
+rhi::TextureHandle VulkanDevice::createTexture(const rhi::TextureDesc& /*desc*/, const void* /*initialData*/)
+{
+    // [HACK: 抽象层缺 Vk Texture 创建 — Task 15 实现]
+    return {};
+}
+
+rhi::ShaderHandle VulkanDevice::createShader(rhi::ShaderStage /*stage*/, const ShaderBytecode& /*bytecode*/)
+{
+    // [HACK: 抽象层缺 Vk Shader 创建 — Task 15 实现]
+    return {};
+}
+
+rhi::PipelineHandle VulkanDevice::createPipeline(const rhi::PipelineDesc& /*desc*/)
+{
+    // [HACK: 抽象层缺 Vk Pipeline 创建 — Task 15 实现]
+    return {};
+}
+
+rhi::GeometryHandle VulkanDevice::createGeometry(const rhi::GeometryDesc& /*desc*/)
+{
+    // [HACK: 抽象层缺 Vk Geometry 创建 — Task 15 实现]
+    return {};
+}
+
+rhi::SamplerHandle VulkanDevice::createSampler(const rhi::SamplerDesc& /*desc*/)
+{
+    // [HACK: 抽象层缺 Vk Sampler 创建 — Task 15 实现]
+    return {};
+}
+
+rhi::RenderPassHandle VulkanDevice::createRenderPass(const rhi::RenderPassDesc& /*desc*/)
+{
+    // [HACK: 抽象层缺 Vk RenderPass 创建 — Task 15 实现]
+    return {};
+}
+
+rhi::FramebufferHandle VulkanDevice::createFramebuffer(const rhi::FramebufferDesc& /*desc*/)
+{
+    // [HACK: 抽象层缺 Vk Framebuffer 创建 — Task 15 实现]
+    return {};
+}
+
+// ---- Window ----
+
+void VulkanDevice::onResize(uint32_t /*width*/, uint32_t /*height*/)
+{
+    // [HACK: 抽象层缺 Vulkan swapchain resize — Task 15 实现]
+}
+
+// ---- Utilities ----
+
+void VulkanDevice::waitIdle()
+{
+#ifdef VKT_HAS_VULKAN
+    if (m_NativeDevice)
+        vkDeviceWaitIdle(static_cast<VkDevice>(m_NativeDevice));
+#endif
+}
+
+// ---- Legacy ----
+
 void VulkanDevice::Submit(FrameContext& /*frameContext*/)
 {
     // Stub: vkQueueSubmit + vkQueuePresentKHR
+    // [HACK: 抽象层缺完整 submit/present — Task 15 实现]
 }
 
 } // namespace Vulkitten

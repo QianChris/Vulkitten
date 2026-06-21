@@ -300,3 +300,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: 创建 `Vulkitten/src/Vulkitten/RHI/RHIPipelineDesc.hpp`，定义三个核心描述符结构体。**PipelineDesc**：包含 vertexShader/fragmentShader/computeShader 句柄、vertexLayout(VertexAttribute[] 含 location/Format/offset/bufferSlot/stride)、RasterState(CullMode/FrontFace/PolygonMode/depthClamp/scissor)、DepthStencilState(CompareOp + stencil)、BlendState[](BlendFactor/BlendOp/writeMask)、pushConstantsSize——顶点格式在 Pipeline 而非 Geometry。**GeometryDesc**：vertexBuffers[8]+indexBuffer+vertexCount/indexCount——不含任何顶点格式信息（格式由渲染时的 Pipeline 决定），支持最多 8 个 VBO 流。**SamplerDesc**：MagFilter/MinFilter/Mip/WrapU/WrapV/WrapW/MaxAnisotropy。所有枚举内嵌于结构体以保持命名空间整洁。Phase 1(RHI 基础类型)完成，AGENTS.md 已更新。所有 3 个目标编译通过。
+
+## Task 5: 重构 IDevice — 完整资源创建 + 帧生命周期接口
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 大幅扩展 `Renderer/Device.h` 中 IDevice 接口：新增 beginFrame()→FrameContext、endFrame(FrameContext)、createCommandBuffer(FrameContext)→ICommandBuffer*、8 个 create* 资源创建方法(createBuffer→BufferHandle/createTexture→TextureHandle/createShader→ShaderHandle/createPipeline→PipelineHandle/createGeometry→GeometryHandle/createSampler→SamplerHandle/createRenderPass→RenderPassHandle/createFramebuffer→FramebufferHandle)、onResize(w,h)、waitIdle()、getNativeDevice()。创建 `RHI/RHIResourceDescs.hpp` 包含 BufferDesc/TextureDesc/TextureType/TextureViewDesc/AttachmentDesc/SubpassDesc/SubpassDependency/RenderPassDesc/FramebufferDesc 等描述符结构体。ShaderBytecode 结构体(data ptr+size+entryPoint)同文件定义。OpenGLDevice 和 VulkanDevice 添加所有新方法的 [HACK] 桩实现。createCommandBuffer 暂返回裸指针(ICommandBuffer 在 Task 6 创建后改为 unique_ptr)。保留遗留 Submit(FrameContext&)。AGENTS.md 已更新。所有 3 个目标编译通过。
