@@ -325,3 +325,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: 创建 6 个最小资源查询接口：IBuffer(GetSize/Map/Unmap/Flush)、ITexture(GetType/GetFormat/GetExtent/GetMipLevels)、IShader(GetStage/GetEntryPoint)、IPipeline(IsCompute)、IGeometry(GetVertexCount/GetIndexCount)、ISampler(标记型空接口)。大部分 GPU 操作通过 ICommandBuffer+Handle 完成，这些接口仅用于属性查询和 CPU 映射。Phase 2 接口层完成，AGENTS.md 已更新。所有 3 个目标编译通过。
+
+## Task 10: 重构 IRenderer — BeginFrame/EndFrame 委托给 IDevice
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 重构 `Renderer/IRenderer.h` 和 `Renderer/Renderer.h/.cpp`：IRenderer 接口保持 Init/Shutdown/BeginFrame/Execute/EndFrame/OnWindowResize + 子系统访问器不变。Renderer 基类新增 BeginFrame/EndFrame 默认实现，分别委托给 IDevice::beginFrame()→FrameContext 和 IDevice::endFrame(ctx)。FrameContext 从 Scope<> 改为值成员。OnWindowResize 同时调用 IDevice::onResize() 和 RenderGraph::ResizeAllFramebuffers()。OpenGLRenderer 过渡期适配(HACK 标注)。Phase 2(抽象接口层)完成。所有 3 个目标编译通过。

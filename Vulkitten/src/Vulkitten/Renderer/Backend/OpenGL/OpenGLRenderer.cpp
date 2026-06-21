@@ -84,8 +84,8 @@ void OpenGLRenderer::BeginFrame()
 {
     VKT_PROFILE_FUNCTION();
 
-    m_FrameContext = CreateScope<FrameContext>();
-    m_FrameContext->FrameIndex = s_GlobalFrameIndex++;
+    // [HACK: 过渡期手动创建 FrameContext — Task 15 迁移到 IDevice::beginFrame()]
+    m_FrameContext.FrameIndex = s_GlobalFrameIndex++;
 }
 
 void OpenGLRenderer::Execute()
@@ -98,11 +98,9 @@ void OpenGLRenderer::EndFrame()
 {
     VKT_PROFILE_FUNCTION();
 
-    // Submit to device (SwapBuffers for OpenGL)
-    if (m_Device && m_FrameContext)
-        m_Device->Submit(*m_FrameContext);
-
-    m_FrameContext.reset();
+    // [HACK: 过渡期使用 Submit — Task 15 迁移到 IDevice::endFrame()]
+    if (m_Device)
+        m_Device->Submit(m_FrameContext);
 }
 
 void OpenGLRenderer::OnWindowResize(uint32_t width, uint32_t height)

@@ -18,8 +18,8 @@ class IWindow;
 // ============================================================
 struct RendererConfig
 {
-    FileSystem*   FileSys = nullptr;     // Engine file system (for shader loading)
-    IWindow*      Window = nullptr;       // Platform window (for surface creation)
+    FileSystem* FileSys = nullptr;      // Engine file system (for shader loading)
+    IWindow*    Window = nullptr;       // Platform window (for surface creation)
 };
 
 // ============================================================
@@ -30,6 +30,9 @@ struct RendererConfig
 //
 // Lifecycle:
 //   Init() → BeginFrame() → [per-frame: Execute] → EndFrame() → Shutdown()
+//
+// BeginFrame() delegates to IDevice::beginFrame() (swapchain acquire).
+// EndFrame()   delegates to IDevice::endFrame()   (submit + present).
 // ============================================================
 class VKT_API IRenderer
 {

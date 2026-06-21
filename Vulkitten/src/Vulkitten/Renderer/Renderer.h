@@ -13,8 +13,12 @@ namespace Vulkitten {
 // Renderer — platform-agnostic IRenderer base implementation.
 //
 // Holds common IRenderer state (IDevice, IGpuResourceManager,
-// RenderGraph, ShaderLibrary). Concrete backends (OpenGLRenderer,
-// VkRenderer) derive from this and implement Init()/Shutdown().
+// RenderGraph, ShaderLibrary, FrameContext). Concrete backends
+// (OpenGLRenderer, VkRenderer) derive from this and implement
+// Init()/Shutdown()/BeginFrame()/Execute()/EndFrame().
+//
+// BeginFrame() delegates to IDevice::beginFrame().
+// EndFrame()   delegates to IDevice::endFrame(ctx).
 // ============================================================
 class VKT_API Renderer : public IRenderer
 {
@@ -28,16 +32,20 @@ public:
     RenderGraph*          GetRenderGraph() override  { return m_RenderGraph; }
     ShaderLibrary&        GetShaderLibrary() override { return m_ShaderLibrary; }
 
+    // ---- Per-Frame (default: delegate to IDevice) ----
+    void BeginFrame() override;
+    void EndFrame() override;
+
     // ---- Window Events ----
     void OnWindowResize(uint32_t width, uint32_t height) override;
 
 protected:
-    const RendererConfig& m_Config;
-    Scope<IDevice>             m_Device;
+    const RendererConfig    m_Config;
+    Scope<IDevice>          m_Device;
     Scope<IGpuResourceManager> m_Resources;
-    RenderGraph*               m_RenderGraph = nullptr;
-    ShaderLibrary              m_ShaderLibrary;
-    Scope<FrameContext>        m_FrameContext;
+    RenderGraph*            m_RenderGraph = nullptr;
+    ShaderLibrary           m_ShaderLibrary;
+    FrameContext            m_FrameContext;
 };
 
 } // namespace Vulkitten
