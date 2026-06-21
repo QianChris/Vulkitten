@@ -25,6 +25,11 @@
 - **End**: 2026-06-21
 - **Summary**: 已验证引擎源码中零处 .shader/.vert/.frag GLSL 引用残留。所有 shader 路径已在 Task 4 中更新：SpriteRenderPass(TextureEntity)、Renderer::Init()(Particle + 4 compute shaders)、ExampleLayer2(FlatColor) 均使用无扩展名基础路径，由 OpenGLShader 自动拼接 .spv 后缀。GpuParticlePass 的 compute shader 路径保持不变（原已是 .comp 扩展名）。所有 3 个目标编译通过。
 
+## Task 6: compile_shader 脚本可配置化
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 重写 compile_shader.py 支持命令行参数：--target (opengl|vulkan, 默认 opengl)、--include-dirs (额外 include 路径)、--output-dir (输出目录)、--watch (增量监控模式)。glslangValidator 根据 target 选择 --target-env opengl 或 --target-env vulkan1.3。compile_shader.bat 改为转发参数到 .py（默认 --target opengl）。新增 compile_shader_vulkan.bat 快捷脚本（--target vulkan）。所有 3 个目标编译通过（无代码变更）。
+
 ## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
 - **Start**: 2026-06-20
 - **End**: 2026-06-20
