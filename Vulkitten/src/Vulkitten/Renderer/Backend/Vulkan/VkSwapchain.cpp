@@ -24,17 +24,31 @@ VkSwapchain::VkSwapchain(VulkanDevice& device, VulkanInstance& instance, IWindow
 VkSwapchain::~VkSwapchain()
 {
     Destroy();
+#ifdef VKT_HAS_VULKAN
+    // Surface is destroyed only at shutdown, not during resize
+    auto vkInstance = static_cast<VkInstance>(m_Instance.GetNativeInstance());
+    if (m_Surface && vkInstance)
+    {
+        vkDestroySurfaceKHR(vkInstance, static_cast<VkSurfaceKHR>(m_Surface), nullptr);
+        m_Surface = nullptr;
+    }
+#endif
 }
 
 void VkSwapchain::Create(uint32_t width, uint32_t height)
 {
 #ifdef VKT_HAS_VULKAN
     CreateSurface();
-    if (!m_Surface) return;
+    if (!m_Surface) { VKT_CORE_ERROR("VkSwapchain::Create — Surface creation failed"); return; }
     CreateSwapchain(width, height);
+    if (!m_Swapchain) { VKT_CORE_ERROR("VkSwapchain::Create — Swapchain creation failed"); return; }
     CreateImageViews();
+    if (m_ImageViews.empty()) { VKT_CORE_ERROR("VkSwapchain::Create — ImageView creation failed"); return; }
     CreateRenderPass();
+    if (!m_RenderPass) { VKT_CORE_ERROR("VkSwapchain::Create — RenderPass creation failed"); return; }
     CreateFramebuffers();
+    if (m_Framebuffers.empty()) { VKT_CORE_ERROR("VkSwapchain::Create — Framebuffer creation failed"); return; }
+    VKT_CORE_INFO("VkSwapchain::Create — Complete {0}x{1}, {2} images", width, height, m_Framebuffers.size());
 #endif
 }
 
@@ -44,6 +58,9 @@ void VkSwapchain::Destroy()
     auto vkDevice = static_cast<VkDevice>(m_Device.GetNativeDevice());
     if (vkDevice != VK_NULL_HANDLE)
     {
+        // Must wait for device idle before destroying swapchain resources
+        vkDeviceWaitIdle(vkDevice);
+
         for (auto fb : m_Framebuffers)
             if (fb) vkDestroyFramebuffer(vkDevice, static_cast<VkFramebuffer>(fb), nullptr);
         m_Framebuffers.clear();
@@ -60,13 +77,8 @@ void VkSwapchain::Destroy()
             vkDestroySwapchainKHR(vkDevice, static_cast<VkSwapchainKHR>(m_Swapchain), nullptr);
         m_Swapchain = nullptr;
     }
-
-    auto vkInstance = static_cast<VkInstance>(m_Instance.GetNativeInstance());
-    if (m_Surface && vkInstance)
-    {
-        vkDestroySurfaceKHR(vkInstance, static_cast<VkSurfaceKHR>(m_Surface), nullptr);
-        m_Surface = nullptr;
-    }
+    // Surface is NOT destroyed here — it's owned by the window
+    // and is only destroyed when the window is closed
 #endif
 }
 

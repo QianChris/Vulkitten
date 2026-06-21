@@ -129,9 +129,18 @@ void VkRenderer::BeginFrame()
 void VkRenderer::BeginCommandBuffer(uint32_t imageIndex)
 {
 #ifdef VKT_HAS_VULKAN
+    if (!m_CommandBuffer || !m_Swapchain) return;
+
     auto vkCmdBuf = static_cast<VkCommandBuffer>(m_CommandBuffer);
     auto vkRenderPass = static_cast<VkRenderPass>(m_Swapchain->GetRenderPass());
     auto vkFramebuffer = static_cast<VkFramebuffer>(m_Swapchain->GetFramebuffer(imageIndex));
+
+    if (!vkRenderPass || !vkFramebuffer)
+    {
+        VKT_CORE_WARN("VkRenderer: RenderPass or Framebuffer is null — swapchain may not be fully created");
+        return;
+    }
+
     uint32_t w = m_Swapchain->GetWidth();
     uint32_t h = m_Swapchain->GetHeight();
 
