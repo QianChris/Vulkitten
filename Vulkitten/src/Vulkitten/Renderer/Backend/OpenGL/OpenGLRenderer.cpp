@@ -3,14 +3,13 @@
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRendererAPI.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLDevice.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLGpuResourceManager.h"
+#include "Vulkitten/Core/IWindow.h"
+#include "Vulkitten/Core/ISurface.h"
 
 #include "Vulkitten/Renderer/Passes/PreparePass.h"
 #include "Vulkitten/Renderer/Passes/GpuParticlePass.h"
 #include "Vulkitten/Renderer/Passes/SpriteRenderPass.h"
 #include "Vulkitten/Renderer/Passes/EndPass.h"
-
-#include "Vulkitten/Renderer/GraphicsContext.h"
-#include "Vulkitten/Core/Application.h"
 
 #include "Vulkitten/Perf/Instrumentor.h"
 
@@ -38,7 +37,10 @@ void OpenGLRenderer::Init()
     s_Current = this;
 
     // Create OpenGL backend dependencies internally
-    m_Device = CreateScope<OpenGLDevice>();
+    void* nativeWindow = m_Config.Window
+        ? m_Config.Window->GetSurface()->GetNativeHandle()
+        : nullptr;
+    m_Device = CreateScope<OpenGLDevice>(nativeWindow);
     m_Resources = CreateScope<OpenGLGpuResourceManager>(*m_Config.FileSys);
 
     m_RendererAPI = new OpenGLRendererAPI();
@@ -67,11 +69,7 @@ void OpenGLRenderer::Init()
             "engine://computeshaders/ParticleRenderArg.comp"));
     m_ShaderLibrary.Load("engine://shaders/Particle");
 
-    // Set backend context for EndPass (SwapBuffers)
-    if (m_RenderGraph)
-        m_RenderGraph->SetBackendContext(Application::Get().GetWindow().GetGraphicsContext());
-
-    VKT_CORE_INFO("Renderer: OpenGL backend initialized");
+    VKT_CORE_INFO("OpenGLRenderer: OpenGL backend initialized");
 }
 
 void OpenGLRenderer::Shutdown()
@@ -100,15 +98,9 @@ void OpenGLRenderer::EndFrame()
 {
     VKT_PROFILE_FUNCTION();
 
-    void* backendContext = nullptr;
-    if (m_RenderGraph)
-        backendContext = m_RenderGraph->GetBackendContext();
-
-    if (backendContext)
-    {
-        auto* context = static_cast<GraphicsContext*>(backendContext);
-        context->SwapBuffers();
-    }
+    // Submit to device (SwapBuffers for OpenGL)
+    if (m_Device && m_FrameContext)
+        m_Device->Submit(*m_FrameContext);
 
     m_FrameContext.reset();
 }

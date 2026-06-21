@@ -15,20 +15,20 @@ namespace Vulkitten {
 // with the concrete implementation selected by the rendering
 // backend (OpenGL / Vulkan).
 // ============================================================
+struct FrameContext;
+
 class VKT_API IDevice
 {
 public:
     virtual ~IDevice() = default;
 
-    // Initialize the GPU device (physical device selection,
-    // logical device creation, queue family queries).
     virtual void Init() = 0;
-
-    // Shutdown and release GPU resources.
     virtual void Shutdown() = 0;
 
-    // Convenience accessor — retrieves the registered IDevice
-    // implementation via ClassFactory::GetInterface<IDevice>().
+    // Submit command buffers for the current frame and present.
+    // For OpenGL: SwapBuffers. For Vulkan: vkQueueSubmit + Present.
+    virtual void Submit(FrameContext& frameContext) = 0;
+
     static IDevice& Get();
 };
 

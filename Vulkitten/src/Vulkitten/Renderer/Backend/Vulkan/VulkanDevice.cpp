@@ -114,4 +114,9 @@ void VulkanDevice::Shutdown()
 #endif
 }
 
+void VulkanDevice::Submit(FrameContext& /*frameContext*/)
+{
+    // Stub: vkQueueSubmit + vkQueuePresentKHR
+}
+
 } // namespace Vulkitten

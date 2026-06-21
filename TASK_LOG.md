@@ -55,6 +55,16 @@
 - **End**: 2026-06-21
 - **Summary**: IGpuResourceManager 新增 CreateShaderFromSpv(name, virtualPath)→uint64_t 和 GetShader(handle)→Ref<Shader> 虚方法。OpenGLGpuResourceManager 实现：CreateShaderFromSpv 内部调用 Shader::Create 加载 .spv→存储到 m_ShaderObjects map→返回 handle；GetShader 返回 Ref<Shader>（共享所有权）。VkGpuResourceManager 添加桩实现。SpriteRenderPass 改为通过 IRenderer::Get().GetResourceManager().CreateShaderFromSpv(...) 创建 shader。Shader::Create 静态方法保留作为底层 .spv 加载器。所有 3 个目标编译通过。
 
+## Task 6: FrameContext 重构为 transient 实例 + IDevice::Submit
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: IDevice 新增 Submit(FrameContext&) 纯虚方法。OpenGLDevice 构造器接受 void* nativeWindow (GLFWwindow*)，Submit 调用 glfwSwapBuffers。VulkanDevice 添加 Submit 桩实现。OpenGLRenderer::Init 通过 m_Config.Window→GetSurface()→GetNativeHandle() 获取原生窗口传入 OpenGLDevice。EndFrame 改为调用 m_Device→Submit(*m_FrameContext)。移除了已删除的 GraphicsContext 引用和 Application.h 依赖。所有 3 个目标编译通过。
+
+## Task 7: E2E 验证 OpenGL 后端
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: Sandbox 保持 OpenGL 后端（SetBackend(OpenGL)）。验证完整渲染链路：IRenderer::BeginFrame→Layer::OnUpdate(ctx)→Execute→EndFrame→IDevice::Submit(SwapBuffers)。所有资源通过 IGpuResourceManager 的 CreateShaderFromSpv/GetShader 创建。所有 3 个目标编译通过。
+
 ## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

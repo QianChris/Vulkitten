@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vulkitten/Renderer/Device.h"
+#include "Vulkitten/Renderer/FrameContext.h"
 
 namespace Vulkitten {
 
@@ -15,8 +16,13 @@ namespace Vulkitten {
 class VKT_API OpenGLDevice : public IDevice
 {
 public:
-    virtual void Init() override;
-    virtual void Shutdown() override;
+    explicit OpenGLDevice(void* nativeWindow = nullptr);
+    void Init() override;
+    void Shutdown() override;
+    void Submit(FrameContext& frameContext) override;
+
+private:
+    void* m_NativeWindow = nullptr; // GLFWwindow*
 };
 
 } // namespace Vulkitten

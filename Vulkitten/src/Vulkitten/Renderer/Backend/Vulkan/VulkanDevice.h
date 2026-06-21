@@ -2,6 +2,7 @@
 
 #include "Vulkitten/Core/Core.h"
 #include "Vulkitten/Renderer/Device.h"
+#include "Vulkitten/Renderer/FrameContext.h"
 
 namespace Vulkitten {
 
@@ -22,6 +23,7 @@ public:
 
     void Init() override;
     void Shutdown() override;
+    void Submit(FrameContext& frameContext) override;
 
     // ---- Queue Family Access ----
     uint32_t GetGraphicsQueueFamily() const { return m_GraphicsQueueFamily; }
