@@ -20,7 +20,7 @@ SpriteRenderPass::SpriteRenderPass()
     name = "SpriteRenderPass";
 
     // ---- Create GPU resources ----
-    m_TextureShader = Shader::Create("engine://shaders/TextureEntity.shader");
+    m_TextureShader = Shader::Create("engine://shaders/TextureEntity");
     m_TextureShader->Bind();
     for (uint32_t i = 0; i < s_MaxTextureSlots; i++)
         m_TextureShader->SetUniformInt(("u_Textures[" + std::to_string(i) + "]").c_str(), i);

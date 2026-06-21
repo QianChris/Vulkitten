@@ -24,8 +24,9 @@ namespace Vulkitten {
 
         virtual const std::string& GetName() const = 0;
 
+        // Load shader from .spv files: filepath + ".vert.spv" / ".frag.spv"
         static Ref<Shader> Create(const std::string& filepath);
-        static Ref<Shader> Create(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc);
+        // Load compute shader from .spv file
         static Ref<Shader> CreateCompute(const std::string& name, const std::string& filepath);
     };
 

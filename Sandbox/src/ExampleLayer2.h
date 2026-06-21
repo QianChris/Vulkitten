@@ -9,7 +9,7 @@ public:
     ExampleLayer2() : Layer("Empty")
     {
         m_Scene = Vulkitten::Engine::Get().CreateEmptyScene();
-        Vulkitten::IRenderer::Get().GetShaderLibrary().Load("engine://shaders/FlatColor.shader");
+        Vulkitten::IRenderer::Get().GetShaderLibrary().Load("engine://shaders/FlatColor");
 
         using namespace Vulkitten;
         m_Texture = Texture2D::Create("sandbox://assets/textures/Checkerboard.png");

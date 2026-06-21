@@ -65,7 +65,7 @@ void Renderer::Init()
     m_ShaderLibrary.Add("ParticleRenderArg",
         Shader::CreateCompute("ParticleRenderArg",
             "engine://computeshaders/ParticleRenderArg.comp"));
-    m_ShaderLibrary.Load("engine://shaders/Particle.shader");
+    m_ShaderLibrary.Load("engine://shaders/Particle");
 
     // Set backend context for EndPass (SwapBuffers)
     if (m_RenderGraph)

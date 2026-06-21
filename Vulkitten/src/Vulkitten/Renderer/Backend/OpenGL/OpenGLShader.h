@@ -10,9 +10,13 @@ namespace Vulkitten {
     class VKT_API OpenGLShader : public Shader
     {
     public:
+        // Load from .spv files: filepath is shader name without extension.
+        // Reads filepath + ".vert.spv" and filepath + ".frag.spv"
         OpenGLShader(const std::string& filepath);
-        OpenGLShader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc);
+
+        // Load compute shader from .spv file
         OpenGLShader(const std::string& name, const std::string& filepath, bool isCompute);
+
         virtual ~OpenGLShader() override;
 
         virtual void Bind() const override;
@@ -26,14 +30,9 @@ namespace Vulkitten {
 
         virtual const std::string& GetName() const override { return m_Name; }
 
-        void UploadUniformMat4(const std::string& name, const glm::mat4& matrix);
-        void UploadUniformFloat(const std::string& name, float value);
-		void UploadUniformFloat4(const std::string& name, const glm::vec4& vector);
-		void UploadUniformFloat3(const std::string& name, const glm::vec3& vector);
-        void UploadUniformInt(const std::string& name, int value);
     private:
-        void Compile(const std::string& vertexSrc, const std::string& fragmentSrc);
-        void CompileCompute(const std::string& source);
+        void CompileFromSpv(const std::string& vertSpvPath, const std::string& fragSpvPath);
+        void CompileComputeFromSpv(const std::string& spvPath);
 
         std::string m_Name;
         uint32_t m_RendererID;

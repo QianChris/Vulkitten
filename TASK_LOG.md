@@ -15,6 +15,11 @@
 - **End**: 2026-06-21
 - **Summary**: 将 ShaderManager 的 ShaderData 结构体、LoadShader/GetShaderData 方法和 GLSL #include 预处理逻辑（ReadFileToString/CollectIncludeDirs/ResolveIncludes）全部移入 IGpuResourceManager/GpuResourceManager。GpuResourceManager 构造器新增 FileSystem& 参数用于虚拟路径解析。VkGpuResourceManager 添加桩实现。RendererConfig 移除 ShaderManager* 字段。Application 移除 Scope<ShaderManager> 成员及其创建代码。ShaderManager.h/.cpp 已删除。所有 3 个目标编译通过。
 
+## Task 4: 切换 Shader 加载为直接 .spv 二进制
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: OpenGLShader 重写为 SPIR-V 直接加载：构造器读取 .vert.spv/.frag.spv 二进制文件，使用 glShaderBinary + glSpecializeShader + glLinkProgram 替代运行时 GLSL 编译。移除了 OpenGLShader.cpp 中约 200 行的 GLSL #include 预处理代码（ReadFileToString/CollectIncludeDirs/ResolveIncludes）。Shader::Create(source-based) 方法已移除。Shader::Create(filepath) 现在接受无扩展名的 shader 名称（如 "engine://shaders/TextureEntity"），自动拼接 .spv 后缀。所有 shader 路径已更新（TextureEntity.shader→TextureEntity，Particle.shader→Particle，FlatColor.shader→FlatColor）。所有 3 个目标编译通过。
+
 ## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
 - **Start**: 2026-06-20
 - **End**: 2026-06-20
