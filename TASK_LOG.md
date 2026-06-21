@@ -35,6 +35,11 @@
 - **End**: 2026-06-21
 - **Summary**: Sandbox 切回 OpenGL 后端（SetBackend(RendererBackend::OpenGL)）。修复 SandboxApp.cpp 中过时的 "Select Vulkan" 注释。更新 GOAL.md 添加 "资源管线现代化" Phase 完成记录（Tasks 1-7）。验证 OpenGL 路径：3 Quad 渲染从 .spv 加载 shader，window resize 正常。Vulkan 后端编译通过（白屏已知，需后续填充 VkPipeline/VkRenderPass 实现）。所有 3 个目标编译通过。
 
+## Task 1: 删除 GraphicContext + RendererSubsystem
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 删除 GraphicContext.h/.cpp（已无外部调用者，SwapBuffers 已迁至 EndFrame）和 RendererSubsystem.h/.cpp（过渡单例，已被 IRenderer::Get() 取代）。Shader.h 移除 friend class RendererSubsystem。Buffer.cpp 移除 RendererSubsystem.h 误引用。所有 3 个目标编译通过。
+
 ## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

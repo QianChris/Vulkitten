@@ -32,7 +32,6 @@ namespace Vulkitten {
 
     class VKT_API ShaderLibrary
     {
-        friend class RendererSubsystem;
         friend class Renderer;
         friend class VkRenderer;
     public:
