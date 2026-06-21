@@ -39,9 +39,8 @@
 
 // Renderer
 #include "Vulkitten/Renderer/Renderer.h"
-#include "Vulkitten/Renderer/RendererSubsystem.h"
-#include "Vulkitten/Renderer/RenderContext.h"
 #include "Vulkitten/Renderer/IRenderer.h"
+#include "Vulkitten/Renderer/RenderContext.h"
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Buffer.h"
 #include "Vulkitten/Renderer/Framebuffer.h"

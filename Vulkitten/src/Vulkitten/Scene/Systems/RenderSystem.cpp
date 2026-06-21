@@ -2,6 +2,8 @@
 #include "RenderSystem.h"
 #include "Vulkitten/Scene/Scene.h"
 #include "Vulkitten/Scene/SceneContext.h"
+#include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
+#include "Vulkitten/Renderer/RenderGraph/RenderCommand.h"
 
 namespace Vulkitten {
 const std::string RenderSystem::s_Name = "RenderSystem";

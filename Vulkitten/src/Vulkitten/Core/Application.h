@@ -11,14 +11,9 @@
 
 namespace Vulkitten
 {
-    class RendererSubsystem;
-    class GraphicContext;
-    class OpenGLDevice;
-    class GpuResourceManager;
-    class ShaderManager;
-    class VulkanInstance;
-    class VkRenderer;
     class IRenderer;
+    class ShaderManager;
+    class GpuResourceManager;
 
     // Backend selection
     enum class RendererBackend { OpenGL, Vulkan };
@@ -44,23 +39,16 @@ namespace Vulkitten
 
         // Set backend before constructing app (called by client)
         static void SetBackend(RendererBackend backend) { s_Backend = backend; }
-        static RendererBackend GetBackend() { return s_Backend; }
 
     private:
         bool OnWindowClose(WindowCloseEvent& e);
         bool OnWindowResize(WindowResizeEvent& e);
 
-		Scope<RendererSubsystem> m_RendererSubsystem;
-        Scope<OpenGLDevice> m_Device;
-        Scope<GpuResourceManager> m_Resources;
+        // Backend-agnostic IRenderer (OpenGL or Vulkan)
+        Scope<IRenderer>   m_Renderer;
         Scope<ShaderManager> m_ShaderMgr;
 
-		// Vulkan backend (optional)
-		Scope<VulkanInstance> m_VulkanInstance;
-		Scope<VkRenderer> m_VkRenderer;
-
-		Scope<GraphicContext> m_GraphicContext;
-		Scope<Window> m_Window;
+        Scope<Window> m_Window;
         ImGuiLayer* m_ImGuiLayer;
         LayerStack m_LayerStack;
 
@@ -79,6 +67,5 @@ namespace Vulkitten
         static RendererBackend s_Backend;
     };
 
-    // to be defined in client
     Application* CreateApplication();
 }

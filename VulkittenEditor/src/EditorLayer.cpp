@@ -9,7 +9,7 @@
 #include "Vulkitten/Core/KeyCode.h"
 #include "Vulkitten/Core/MouseButtonCode.h"
 #include "Vulkitten/Core/Input.h"
-#include "Vulkitten/Renderer/RendererSubsystem.h"
+#include "Vulkitten/Renderer/IRenderer.h"
 #include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Scene/Entity.h"
 #include "Vulkitten/Scene/Components.h"
@@ -186,7 +186,7 @@ namespace Vulkitten {
 
         // Phase 4: 渲染场景到 Viewport Framebuffer (via RenderGraph)
         auto framebuffer = m_ViewportPanel->GetFramebuffer();
-        auto* graph = RendererSubsystem::Get().GetRenderGraph();
+        auto* graph = IRenderer::Get().GetRenderGraph();
         graph->SetFramebuffer("Viewport", framebuffer);
 
         // Clear entity ID attachment (editor-specific, not yet in RenderGraph)

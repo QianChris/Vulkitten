@@ -12,11 +12,8 @@
 
 namespace Vulkitten {
 
-VkRenderer::VkRenderer(const RendererConfig& config, VulkanInstance& instance,
-                       IWindow& window)
+VkRenderer::VkRenderer(const RendererConfig& config)
     : m_Config(config)
-    , m_VulkanInstance(instance)
-    , m_Window(window)
 {
 }
 
@@ -29,26 +26,32 @@ void VkRenderer::Init()
 {
     VKT_PROFILE_FUNCTION();
 
+    // Create Vulkan instance internally
+    m_Instance = CreateScope<VulkanInstance>();
+    m_Instance->Init(true);
+
     // Create Vulkan device
-    m_Device = CreateScope<VulkanDevice>(m_VulkanInstance);
+    m_Device = CreateScope<VulkanDevice>(*m_Instance);
     m_Device->Init();
 
     // Create GPU resource manager
     m_Resources = CreateScope<VkGpuResourceManager>(*m_Device);
 
-    // Create swapchain
-    m_Swapchain = CreateScope<VkSwapchain>(*m_Device, m_Window);
-    auto surfaceDesc = m_Window.GetSurfaceDesc();
-    m_Swapchain->Create(surfaceDesc.Width, surfaceDesc.Height);
-
-    // Set up RenderGraph (use config's graph or create own)
-    m_RenderGraph = m_Config.Graph;
-    if (!m_RenderGraph)
+    // Create swapchain (requires IWindow from config)
+    if (m_Config.Window)
     {
-        m_RenderGraph = new RenderGraph();
+        m_Swapchain = CreateScope<VkSwapchain>(*m_Device, *m_Config.Window);
+        auto surfaceDesc = m_Config.Window->GetSurfaceDesc();
+        m_Swapchain->Create(surfaceDesc.Width, surfaceDesc.Height);
     }
 
-    VKT_CORE_INFO("VkRenderer: Initialized");
+    // Set up RenderGraph
+    m_RenderGraph = new RenderGraph();
+
+    // Register as global IRenderer instance
+    s_Current = this;
+
+    VKT_CORE_INFO("VkRenderer: Vulkan backend initialized");
 }
 
 void VkRenderer::Shutdown()
@@ -62,6 +65,13 @@ void VkRenderer::Shutdown()
         m_Device->Shutdown();
     m_Device.reset();
 
+    if (m_Instance)
+        m_Instance->Shutdown();
+    m_Instance.reset();
+
+    delete m_RenderGraph;
+    m_RenderGraph = nullptr;
+
     m_FrameContext.reset();
 }
 
@@ -71,7 +81,6 @@ void VkRenderer::BeginFrame()
 
     m_FrameContext = CreateScope<FrameContext>();
 
-    // Acquire next swapchain image
     if (m_Swapchain)
     {
         m_Swapchain->AcquireNextImage(m_FrameContext->SwapchainIndex,
@@ -89,7 +98,6 @@ void VkRenderer::EndFrame()
 {
     VKT_PROFILE_FUNCTION();
 
-    // Present
     if (m_Swapchain && m_FrameContext)
     {
         m_Swapchain->Present(m_FrameContext->SwapchainIndex,
@@ -109,7 +117,6 @@ void VkRenderer::OnWindowResize(uint32_t width, uint32_t height)
         m_Swapchain->Create(width, height);
     }
 
-    // Resize all registered framebuffers
     if (m_RenderGraph)
         m_RenderGraph->ResizeAllFramebuffers(width, height);
 }
@@ -122,11 +129,6 @@ IDevice& VkRenderer::GetDevice()
 IGpuResourceManager& VkRenderer::GetResourceManager()
 {
     return *m_Resources;
-}
-
-RenderGraph* VkRenderer::GetRenderGraph()
-{
-    return m_RenderGraph;
 }
 
 } // namespace Vulkitten

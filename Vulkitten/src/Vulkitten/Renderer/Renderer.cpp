@@ -1,6 +1,9 @@
 #include "vktpch.h"
 #include "Renderer.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRendererAPI.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLDevice.h"
+#include "Vulkitten/Renderer/GpuResourceManager.h"
+#include "Vulkitten/Renderer/ShaderManager.h"
 
 #include "Vulkitten/Renderer/Passes/PreparePass.h"
 #include "Vulkitten/Renderer/Passes/GpuParticlePass.h"
@@ -16,10 +19,8 @@ namespace Vulkitten {
 
 static uint32_t s_GlobalFrameIndex = 0;
 
-Renderer::Renderer(IDevice* device, IGpuResourceManager& resources, ShaderManager& shaders)
-    : m_Device(device)
-    , m_Resources(resources)
-    , m_Shaders(shaders)
+Renderer::Renderer(const RendererConfig& config)
+    : m_Config(config)
 {
 }
 
@@ -33,16 +34,44 @@ void Renderer::Init()
 {
     VKT_PROFILE_FUNCTION();
 
+    // Create OpenGL backend dependencies internally
+    m_Device = CreateScope<OpenGLDevice>();
+    m_Resources = CreateScope<GpuResourceManager>();
+
     m_RendererAPI = new OpenGLRendererAPI();
     m_RendererAPI->Init();
 
     m_RenderGraph = new RenderGraph();
 
-    // Register default render passes (order matters)
-    m_RenderGraph->AddPass(CreateRef<PreparePass>());       // Clear
-    m_RenderGraph->AddPass(CreateRef<GpuParticlePass>());   // GPU particle update + render
-    m_RenderGraph->AddPass(CreateRef<SpriteRenderPass>());  // 2D quad batch
-    m_RenderGraph->AddPass(CreateRef<EndPass>());           // SwapBuffers (legacy, moving to EndFrame)
+    // Register default render passes
+    m_RenderGraph->AddPass(CreateRef<PreparePass>());
+    m_RenderGraph->AddPass(CreateRef<GpuParticlePass>());
+    m_RenderGraph->AddPass(CreateRef<SpriteRenderPass>());
+    m_RenderGraph->AddPass(CreateRef<EndPass>());
+
+    // Preload engine shaders
+    m_ShaderLibrary.Add("ParticleSimArg",
+        Shader::CreateCompute("ParticleSimArg",
+            "engine://computeshaders/ParticleSimArg.comp"));
+    m_ShaderLibrary.Add("ParticleSim",
+        Shader::CreateCompute("ParticleSim",
+            "engine://computeshaders/ParticleSim.comp"));
+    m_ShaderLibrary.Add("ParticleEmit",
+        Shader::CreateCompute("ParticleEmit",
+            "engine://computeshaders/ParticleEmit.comp"));
+    m_ShaderLibrary.Add("ParticleRenderArg",
+        Shader::CreateCompute("ParticleRenderArg",
+            "engine://computeshaders/ParticleRenderArg.comp"));
+    m_ShaderLibrary.Load("engine://shaders/Particle.shader");
+
+    // Set backend context for EndPass (SwapBuffers)
+    if (m_RenderGraph)
+        m_RenderGraph->SetBackendContext(Application::Get().GetWindow().GetGraphicsContext());
+
+    // Register as global IRenderer instance
+    s_Current = this;
+
+    VKT_CORE_INFO("Renderer: OpenGL backend initialized");
 }
 
 void Renderer::Shutdown()
@@ -71,9 +100,6 @@ void Renderer::EndFrame()
 {
     VKT_PROFILE_FUNCTION();
 
-    // Submit and present (SwapBuffers for OpenGL).
-    // For OpenGL, this is just a swap — GL is immediate-mode.
-    // For Vulkan, this would submit the command buffer + present.
     void* backendContext = nullptr;
     if (m_RenderGraph)
         backendContext = m_RenderGraph->GetBackendContext();
@@ -84,7 +110,6 @@ void Renderer::EndFrame()
         context->SwapBuffers();
     }
 
-    // Release frame context
     m_FrameContext.reset();
 }
 
@@ -94,11 +119,18 @@ void Renderer::OnWindowResize(uint32_t width, uint32_t height)
 
     m_RendererAPI->SetViewport(0, 0, width, height);
 
-    // Resize all registered framebuffers in the RenderGraph
-    // (e.g. editor Viewport, off-screen render targets).
-    // Passes automatically receive the updated FB via GetFramebuffer(key).
     if (m_RenderGraph)
         m_RenderGraph->ResizeAllFramebuffers(width, height);
+}
+
+IDevice& Renderer::GetDevice()
+{
+    return *m_Device;
+}
+
+IGpuResourceManager& Renderer::GetResourceManager()
+{
+    return *m_Resources;
 }
 
 } // namespace Vulkitten

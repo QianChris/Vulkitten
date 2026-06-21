@@ -5,15 +5,13 @@
 #include "Vulkitten/Core/Engine.h"
 #include "Vulkitten/Core/Input.h"
 #include "Vulkitten/Core/IWindow.h"
-#include "Vulkitten/Core/GraphicContext.h"
 
-#include "Vulkitten/Renderer/RendererSubsystem.h"
 #include "Vulkitten/Scene/SceneContext.h"
-#include "Vulkitten/Renderer/Device.h"
-#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLDevice.h"
-#include "Vulkitten/Renderer/Backend/Vulkan/VulkanInstance.h"
+
+#include "Vulkitten/Renderer/IRenderer.h"
+#include "Vulkitten/Renderer/IGpuResourceManager.h"
+#include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Renderer/Backend/Vulkan/VkRenderer.h"
-#include "Vulkitten/Renderer/GpuResourceManager.h"
 #include "Vulkitten/Renderer/ShaderManager.h"
 
 #include <glm/glm.hpp>
@@ -24,64 +22,41 @@
 namespace Vulkitten
 {
     Application* Application::s_Instance = nullptr;
-    RendererBackend Application::s_Backend = RendererBackend::OpenGL; // default
+    RendererBackend Application::s_Backend = RendererBackend::OpenGL;
 
     Application::Application()
     {
         VKT_PROFILE_FUNCTION();
 
-        // Init engine subsystems first
         Engine::Get().Init();
         Engine::Get().GetFileSystem().RegisterPath("../../Sandbox", "sandbox");
 
         VKT_ASSERT(!s_Instance, "Application already exists!");
         s_Instance = this;
 
-         //Create window first (RendererSubsystem::Init needs it for backend context)
         m_Window.reset(Window::Create());
         m_Window->SetEventCallback(VKT_BIND_EVENT_FN(Application::OnEvent));
 
+        // Create shader manager (shared, backend-agnostic)
+        m_ShaderMgr = CreateScope<ShaderManager>(Engine::Get().GetFileSystem());
+
+        // Build RendererConfig
+        RendererConfig config;
+        config.FileSys  = &Engine::Get().GetFileSystem();
+        config.Window   = dynamic_cast<IWindow*>(m_Window.get());
+        config.ShaderMgr = m_ShaderMgr.get();
+
+        // Create backend-specific IRenderer implementation
         if (s_Backend == RendererBackend::Vulkan)
         {
-            // ---- Vulkan Backend ----
-            m_VulkanInstance = CreateScope<VulkanInstance>();
-            m_VulkanInstance->Init(true);
-
-            // Create shader manager (backend-agnostic, used by RendererSubsystem)
-            m_ShaderMgr = CreateScope<ShaderManager>(Engine::Get().GetFileSystem());
-
-            // Get IWindow from the window
-            auto* iwindow = dynamic_cast<IWindow*>(m_Window.get());
-
-            RendererConfig config;
-            m_VkRenderer = CreateScope<VkRenderer>(config, *m_VulkanInstance, *iwindow);
-            m_VkRenderer->Init();
-
-            // Always create RendererSubsystem for shared services (ShaderLibrary,
-            // RenderUtils). VkRenderer provides the actual rendering via IRenderer,
-            // but layers still access ShaderLibrary through RendererSubsystem::Get().
-            m_RendererSubsystem = CreateScope<RendererSubsystem>(
-                &m_VkRenderer->GetDevice(), m_VkRenderer->GetResourceManager(), *m_ShaderMgr);
-            // NOTE: Do NOT call Init() — Renderer::Init() creates OpenGL-specific
-            // resources (RendererAPI, OpenGLRendererAPI). For Vulkan, the renderer
-            // inside RendererSubsystem is a no-op stub.
-
-            VKT_CORE_INFO("Application: Vulkan backend initialized");
+            m_Renderer = CreateScope<VkRenderer>(config);
         }
         else
         {
-            // ---- OpenGL Backend (default) ----
-            m_Device      = CreateScope<OpenGLDevice>();
-            m_Resources   = CreateScope<GpuResourceManager>();
-            m_ShaderMgr   = CreateScope<ShaderManager>(Engine::Get().GetFileSystem());
-
-            m_RendererSubsystem = CreateScope<RendererSubsystem>(
-                m_Device.get(), *m_Resources, *m_ShaderMgr);
-            m_RendererSubsystem->Init();
-
-            // GraphicContext wraps existing window + RendererSubsystem
-            m_GraphicContext = CreateScope<GraphicContext>(*m_Window, *m_RendererSubsystem);
+            m_Renderer = CreateScope<Renderer>(config);
         }
+
+        m_Renderer->Init();
 
         m_ImGuiLayer = new ImGuiLayer();
         PushOverlay(m_ImGuiLayer);
@@ -91,10 +66,8 @@ namespace Vulkitten
     {
         VKT_PROFILE_FUNCTION();
 
-        if (m_RendererSubsystem)
-            m_RendererSubsystem->Shutdown();
-        if (m_VkRenderer)
-            m_VkRenderer->Shutdown();
+        if (m_Renderer)
+            m_Renderer->Shutdown();
     }
 
     void Application::Run()
@@ -119,33 +92,16 @@ namespace Vulkitten
                 m_FrameTimeAccumulator = 0.0f;
             }
 
-            if (!m_Minimized) {
-                if (s_Backend == RendererBackend::Vulkan && m_VkRenderer)
-                {
-                    m_VkRenderer->BeginFrame();
-                    auto* graph = m_VkRenderer->GetRenderGraph();
-                    if (graph)
-                    {
-                        Vulkitten::SceneContext sceneCtx(*m_VkRenderer, *graph);
-                        for (Layer *layer : m_LayerStack) {
-                            VKT_PROFILE_SCOPE("Layer update");
-                            layer->OnUpdate(timestep, sceneCtx);
-                        }
-                    }
-                }
-                else if (m_RendererSubsystem)
-                {
-                    // ---- IRenderer Lifecycle: BeginFrame ----
-                    {
-                        VKT_PROFILE_SCOPE("IRenderer BeginFrame");
-                        m_RendererSubsystem->GetRenderer().BeginFrame();
-                    }
+            if (!m_Minimized && m_Renderer)
+            {
+                // ---- IRenderer Lifecycle: BeginFrame ----
+                m_Renderer->BeginFrame();
 
-                    // Create SceneContext for dependency injection into Layers/Scenes
-                    auto& renderer = m_RendererSubsystem->GetRenderer();
-                    auto* graph = m_RendererSubsystem->GetRenderGraph();
-                    Vulkitten::SceneContext sceneCtx(renderer, *graph);
-
+                // SceneContext for dependency injection
+                auto* graph = m_Renderer->GetRenderGraph();
+                if (graph)
+                {
+                    SceneContext sceneCtx(*m_Renderer, *graph);
                     for (Layer *layer : m_LayerStack) {
                         VKT_PROFILE_SCOPE("Layer update");
                         layer->OnUpdate(timestep, sceneCtx);
@@ -160,41 +116,18 @@ namespace Vulkitten
                 m_ImGuiLayer->End();
             }
 
-            // Execute RenderGraph (all passes)
-            if (s_Backend == RendererBackend::Vulkan && m_VkRenderer)
+            // Execute + EndFrame via IRenderer
+            if (m_Renderer)
             {
-                VKT_PROFILE_SCOPE("RenderGraph execute (Vulkan)");
-                m_VkRenderer->Execute();
-            }
-            else if (m_RendererSubsystem)
-            {
-                VKT_PROFILE_SCOPE("RenderGraph execute");
-                m_RendererSubsystem->Execute();
+                m_Renderer->Execute();
+                m_Renderer->EndFrame();
             }
 
-            // ---- IRenderer Lifecycle: EndFrame (Submit + Present) ----
-            if (s_Backend == RendererBackend::Vulkan && m_VkRenderer)
+            // GpuResourceManager GC
+            if (m_Renderer)
             {
-                VKT_PROFILE_SCOPE("IRenderer EndFrame (Vulkan)");
-                m_VkRenderer->EndFrame();
-            }
-            else if (m_RendererSubsystem)
-            {
-                VKT_PROFILE_SCOPE("IRenderer EndFrame");
-                m_RendererSubsystem->GetRenderer().EndFrame();
-            }
-
-            // GpuResourceManager GC: advance frame counter, then collect
-            // resources that haven't been referenced for 3+ frames.
-            if (s_Backend == RendererBackend::Vulkan && m_VkRenderer)
-            {
-                m_VkRenderer->GetResourceManager().TickFrame();
-                m_VkRenderer->GetResourceManager().Gc(3);
-            }
-            else if (m_Resources)
-            {
-                m_Resources->TickFrame();
-                m_Resources->Gc(3);
+                m_Renderer->GetResourceManager().TickFrame();
+                m_Renderer->GetResourceManager().Gc(3);
             }
 
             auto frameEndTime = std::chrono::high_resolution_clock::now();
@@ -225,8 +158,6 @@ namespace Vulkitten
             if (e.Handled)
                 break;
         }
-
-        //VKT_CORE_TRACE("{}", e.ToString());
     }
 
     void Application::PushLayer(Layer *layer)
@@ -260,10 +191,8 @@ namespace Vulkitten
         }
 
         m_Minimized = false;
-        if (m_RendererSubsystem)
-            m_RendererSubsystem->OnWindowResize(e.GetWidth(), e.GetHeight());
-        if (m_VkRenderer)
-            m_VkRenderer->OnWindowResize(e.GetWidth(), e.GetHeight());
+        if (m_Renderer)
+            m_Renderer->OnWindowResize(e.GetWidth(), e.GetHeight());
         return false;
     }
 }

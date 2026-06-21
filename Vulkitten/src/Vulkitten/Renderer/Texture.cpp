@@ -2,7 +2,7 @@
 #include "Texture.h"
 
 #include "Vulkitten/Renderer/Renderer.h"
-#include "Vulkitten/Renderer/RendererSubsystem.h"
+#include "Vulkitten/Renderer/IRenderer.h"
 #include "Vulkitten/Renderer/GpuResourceManager.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLTexture.h"
 
@@ -29,7 +29,7 @@ namespace Vulkitten {
             return nullptr;
 
         // Register with GpuResourceManager for lifecycle tracking.
-        auto& resources = RendererSubsystem::Get().GetRenderer().GetResourceManager();
+        auto& resources = IRenderer::Get().GetResourceManager();
         GpuTextureDesc desc;
         desc.Width = result->GetWidth();
         desc.Height = result->GetHeight();
@@ -59,7 +59,7 @@ namespace Vulkitten {
             return nullptr;
 
         // Register with GpuResourceManager for lifecycle tracking.
-        auto& resources = RendererSubsystem::Get().GetRenderer().GetResourceManager();
+        auto& resources = IRenderer::Get().GetResourceManager();
         GpuTextureDesc desc;
         desc.Width = result->GetWidth();
         desc.Height = result->GetHeight();

@@ -6,71 +6,61 @@
 
 namespace Vulkitten {
 
-// Forward declarations (interfaces defined in their own headers)
 class IDevice;
 class IGpuResourceManager;
 class RenderGraph;
+class ShaderLibrary;
+class FileSystem;
+class ShaderManager;
+class IWindow;
 
 // ============================================================
 // RendererConfig — configuration for creating an IRenderer.
-//
-// Packs the three required backend dependencies. The concrete
-// IRenderer implementation (OpenGL or Vulkan) is selected by
-// the backend that creates these components.
 // ============================================================
 struct RendererConfig
 {
-    IDevice*              Device = nullptr;
-    RenderGraph*          Graph = nullptr;
-    IGpuResourceManager*  ResourceManager = nullptr;
+    FileSystem*   FileSys = nullptr;     // Engine file system (for shader loading)
+    IWindow*      Window = nullptr;       // Platform window (for surface creation)
+    ShaderManager* ShaderMgr = nullptr;   // Shader loading + preprocessing
 };
 
 // ============================================================
 // IRenderer — the single backend renderer interface.
 //
-// The platform layer and scene layer interact with the renderer
-// exclusively through this interface. Concrete implementations
-// (e.g. OpenGL renderer, Vulkan renderer) are created by the
-// application layer based on RendererConfig backend selection.
+// The platform/scene layers interact with the renderer exclusively
+// through this interface. Application creates the concrete impl.
 //
 // Lifecycle:
 //   Init() → BeginFrame() → [per-frame: Execute] → EndFrame() → Shutdown()
 // ============================================================
-class IRenderer
+class VKT_API IRenderer
 {
 public:
     virtual ~IRenderer() = default;
 
     // ---- Lifecycle ----
-
     virtual void Init() = 0;
     virtual void Shutdown() = 0;
 
     // ---- Per-Frame ----
-
-    // Called at the start of each frame. Creates the FrameContext
-    // (acquires swapchain image for Vulkan, no-op for OpenGL).
     virtual void BeginFrame() = 0;
-
-    // Execute all registered render passes via the RenderGraph.
     virtual void Execute() = 0;
-
-    // Called at the end of each frame. Submits command buffers,
-    // synchronizes (fence/semaphore), and presents the swapchain.
     virtual void EndFrame() = 0;
 
     // ---- Window Events ----
-
-    // Handle window resize. Updates viewport, recreates
-    // swapchain-dependent resources, and resizes all registered
-    // framebuffers in the RenderGraph.
     virtual void OnWindowResize(uint32_t width, uint32_t height) = 0;
 
     // ---- Subsystem Access ----
-
     virtual IDevice&              GetDevice() = 0;
     virtual IGpuResourceManager&  GetResourceManager() = 0;
     virtual RenderGraph*          GetRenderGraph() = 0;
+    virtual ShaderLibrary&        GetShaderLibrary() = 0;
+
+    // ---- Global Accessor (set by Application after Init) ----
+    static IRenderer& Get() { return *s_Current; }
+
+protected:
+    static IRenderer* s_Current;
 };
 
 } // namespace Vulkitten

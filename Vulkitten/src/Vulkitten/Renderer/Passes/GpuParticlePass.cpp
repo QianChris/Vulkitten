@@ -1,7 +1,8 @@
 #include "vktpch.h"
 #include "GpuParticlePass.h"
 
-#include "Vulkitten/Renderer/RendererSubsystem.h"
+#include "Vulkitten/Renderer/IRenderer.h"
+#include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Scene/Scene.h"
 #include "Vulkitten/Scene/Components.h"
 
@@ -14,7 +15,7 @@ GpuParticlePass::GpuParticlePass()
     SetExecute([](const std::vector<RenderGraphResource>& /*resources*/,
                   const std::vector<RenderCommand>& /*commands*/,
                   void* /*backendContext*/) {
-        auto* graph = RendererSubsystem::Get().GetRenderGraph();
+        auto* graph = IRenderer::Get().GetRenderGraph();
         const auto& perFrame = graph->GetPerFrameData();
         auto* scene = perFrame.Scene;
         auto* camera = perFrame.Camera;

@@ -5,63 +5,61 @@
 #include "Vulkitten/Renderer/RendererAPI.h"
 #include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
 #include "Vulkitten/Renderer/FrameContext.h"
-#include "Vulkitten/Renderer/GpuResourceManager.h"
+#include "Vulkitten/Renderer/Shader.h"
 
 namespace Vulkitten {
 
 class IDevice;
+class OpenGLDevice;
+class GpuResourceManager;
 class ShaderManager;
 
 // ============================================================
-// Renderer — scene-level renderer instance.
+// Renderer — OpenGL implementation of IRenderer.
 //
-// Implements IRenderer, the sole backend interface exposed to
-// platform and scene layers. Owned by RendererSubsystem.
-//
-// Lifecycle:
-//   Init → BeginFrame → Execute → EndFrame → ... → Shutdown
+// Owns all OpenGL backend dependencies: OpenGLDevice,
+// GpuResourceManager, RenderGraph, and ShaderLibrary.
+// Created by Application via RendererConfig.
 // ============================================================
-
 class VKT_API Renderer : public IRenderer
 {
 public:
-    Renderer(IDevice* device, IGpuResourceManager& resources, ShaderManager& shaders);
+    explicit Renderer(const RendererConfig& config);
     ~Renderer();
 
     // ---- IRenderer Lifecycle ----
-
     void Init() override;
     void Shutdown() override;
 
     // ---- IRenderer Per-Frame ----
-
     void BeginFrame() override;
     void Execute() override;
     void EndFrame() override;
 
     // ---- IRenderer Subsystem Access ----
-
-    IDevice&              GetDevice() override          { return *m_Device; }
-    IGpuResourceManager&  GetResourceManager() override { return m_Resources; }
-    ShaderManager&        GetShaderManager()            { return m_Shaders; }
+    IDevice&              GetDevice() override;
+    IGpuResourceManager&  GetResourceManager() override;
     RenderGraph*          GetRenderGraph() override     { return m_RenderGraph; }
-    RendererAPI*          GetRendererAPI()              { return m_RendererAPI; }
+    ShaderLibrary&        GetShaderLibrary() override   { return m_ShaderLibrary; }
 
     // ---- IRenderer Window Events ----
-
     void OnWindowResize(uint32_t width, uint32_t height) override;
+
+    // ---- Internal Access ----
+    RendererAPI* GetRendererAPI() { return m_RendererAPI; }
+    GpuResourceManager& GetGpuResourceManager() { return *m_Resources; }
 
     inline static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 
 private:
-    IDevice*             m_Device;
-    IGpuResourceManager&  m_Resources;
-    ShaderManager&       m_Shaders;
-    RenderGraph*         m_RenderGraph = nullptr;
-    RendererAPI*         m_RendererAPI = nullptr;
+    const RendererConfig& m_Config;
 
-    // Per-frame context (created each BeginFrame, consumed by Execute/EndFrame)
-    Scope<FrameContext>   m_FrameContext;
+    Scope<OpenGLDevice>    m_Device;
+    Scope<GpuResourceManager> m_Resources;
+    RenderGraph*           m_RenderGraph = nullptr;
+    RendererAPI*           m_RendererAPI = nullptr;
+    ShaderLibrary          m_ShaderLibrary;
+    Scope<FrameContext>    m_FrameContext;
 };
 
 } // namespace Vulkitten

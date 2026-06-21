@@ -1,6 +1,6 @@
 #include "vktpch.h"
 #include "GraphicContext.h"
-#include "Vulkitten/Renderer/RendererSubsystem.h"
+#include "Vulkitten/Renderer/IRenderer.h"
 
 namespace Vulkitten {
 

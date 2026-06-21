@@ -2,7 +2,7 @@
 #include "ClassFactory.h"
 
 #include "Vulkitten/Core/Application.h"
-#include "Vulkitten/Renderer/RendererSubsystem.h"
+#include "Vulkitten/Renderer/IRenderer.h"
 
 #include <random>
 
@@ -36,7 +36,7 @@ Window& ClassFactory::GetWindow()
 
 RenderGraph* ClassFactory::GetRenderGraph()
 {
-    return RendererSubsystem::Get().GetRenderGraph();
+    return IRenderer::Get().GetRenderGraph();
 }
 
 } // namespace Vulkitten

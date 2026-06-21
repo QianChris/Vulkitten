@@ -27,7 +27,7 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
         if (!result)
             return nullptr;
 
-        auto& resources = RendererSubsystem::Get().GetRenderer().GetResourceManager();
+        auto& resources = IRenderer::Get().GetResourceManager();
         GpuBufferDesc desc;
         desc.Size = size;
         uint64_t handle = resources.CreateBuffer(desc, "VertexBuffer");
@@ -54,7 +54,7 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
         if (!result)
             return nullptr;
 
-        auto& resources = RendererSubsystem::Get().GetRenderer().GetResourceManager();
+        auto& resources = IRenderer::Get().GetResourceManager();
         GpuBufferDesc desc;
         desc.Size = size;
         uint64_t handle = resources.CreateBuffer(desc, "VertexBuffer");
@@ -81,7 +81,7 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
         if (!result)
             return nullptr;
 
-        auto& resources = RendererSubsystem::Get().GetRenderer().GetResourceManager();
+        auto& resources = IRenderer::Get().GetResourceManager();
         GpuBufferDesc desc;
         desc.Size = count * sizeof(uint32_t);
         uint64_t handle = resources.CreateBuffer(desc, "IndexBuffer");
