@@ -26,6 +26,6 @@ public:
 
 Vulkitten::Application* Vulkitten::CreateApplication() {
     // Select OpenGL backend (Vulkan is WIP — white screen)
-    Vulkitten::Application::SetBackend(Vulkitten::RendererBackend::Vulkan);
+    Vulkitten::Application::SetBackend(Vulkitten::RendererBackend::OpenGL);
     return new Sandbox();
 }
