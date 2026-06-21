@@ -290,3 +290,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: 创建 `Vulkitten/src/Vulkitten/RHI/Core/Format.hpp`，定义 `rhi::Format` 枚举覆盖 26 种跨 API 格式：8-bit UNORM(R8/RG8/RGBA8/BGRA8/SRGB)、16-bit Float/UNORM(R16F/RG16F/RGBA16F/R16U)、32-bit Float(R32F/RG32F/RGB32F/RGBA32F)、32-bit Int(R32U/R32S/RG32U/RGBA32U)、深度/模板(D16U/D32F/D24S8/D32S8)、BC 压缩(BC1/BC3/BC5/BC7)。提供 FormatByteSize/FormatComponentCount/IsDepthFormat/IsStencilFormat/IsCompressedFormat 工具函数。零 API 依赖（仅 `<cstdint>`）。将逐步替代 Buffer.h 中仅顶点属性的 ShaderDataType。AGENTS.md RHI 条目已更新。所有 3 个目标编译通过。
+
+## Task 3: RHI/Handle.hpp — 统一强类型资源句柄系统
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 `Vulkitten/src/Vulkitten/RHI/Handle.hpp`，定义 `rhi::Handle<Tag>` 模板类，结合 RHI Design 的 Tag 强类型编译期安全（BufferTag/TextureTag/ShaderTag/PipelineTag/GeometryTag/SamplerTag/RenderPassTag/FramebufferTag）和现有引擎的 generation 计数器防 use-after-free（ABA 保护）。Id=0 表示 Null Handle。提供 Hash 结构体用于 unordered_map。类型别名：BufferHandle/TextureHandle/ShaderHandle/PipelineHandle/GeometryHandle/SamplerHandle/RenderPassHandle/FramebufferHandle。将逐步替代 Renderer/Resources/ResourceHandle.h。所有 3 个目标编译通过。
