@@ -25,7 +25,7 @@ class ShaderManager;
 class VKT_API Renderer : public IRenderer
 {
 public:
-    Renderer(IDevice* device, GpuResourceManager& resources, ShaderManager& shaders);
+    Renderer(IDevice* device, IGpuResourceManager& resources, ShaderManager& shaders);
     ~Renderer();
 
     // ---- IRenderer Lifecycle ----
@@ -55,7 +55,7 @@ public:
 
 private:
     IDevice*             m_Device;
-    GpuResourceManager&  m_Resources;
+    IGpuResourceManager&  m_Resources;
     ShaderManager&       m_Shaders;
     RenderGraph*         m_RenderGraph = nullptr;
     RendererAPI*         m_RendererAPI = nullptr;

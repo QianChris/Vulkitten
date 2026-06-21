@@ -10,7 +10,7 @@ namespace Vulkitten {
 
 RendererSubsystem* RendererSubsystem::s_Instance = nullptr;
 
-RendererSubsystem::RendererSubsystem(IDevice* device, GpuResourceManager& resources, ShaderManager& shaders)
+RendererSubsystem::RendererSubsystem(IDevice* device, IGpuResourceManager& resources, ShaderManager& shaders)
     : m_Renderer(device, resources, shaders)
 {
     s_Instance = this;

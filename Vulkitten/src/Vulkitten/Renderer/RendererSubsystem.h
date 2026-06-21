@@ -22,7 +22,7 @@ namespace Vulkitten {
 class VKT_API RendererSubsystem
 {
 public:
-    RendererSubsystem(IDevice* device, GpuResourceManager& resources, ShaderManager& shaders);
+    RendererSubsystem(IDevice* device, IGpuResourceManager& resources, ShaderManager& shaders);
     ~RendererSubsystem() = default;
 
     // ---- Lifecycle ----

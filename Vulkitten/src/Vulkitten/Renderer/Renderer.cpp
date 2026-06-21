@@ -16,7 +16,7 @@ namespace Vulkitten {
 
 static uint32_t s_GlobalFrameIndex = 0;
 
-Renderer::Renderer(IDevice* device, GpuResourceManager& resources, ShaderManager& shaders)
+Renderer::Renderer(IDevice* device, IGpuResourceManager& resources, ShaderManager& shaders)
     : m_Device(device)
     , m_Resources(resources)
     , m_Shaders(shaders)

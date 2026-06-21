@@ -47,6 +47,9 @@ namespace Vulkitten
             m_VulkanInstance = CreateScope<VulkanInstance>();
             m_VulkanInstance->Init(true);
 
+            // Create shader manager (backend-agnostic, used by RendererSubsystem)
+            m_ShaderMgr = CreateScope<ShaderManager>(Engine::Get().GetFileSystem());
+
             // Get IWindow from the window
             auto* iwindow = dynamic_cast<IWindow*>(m_Window.get());
 
@@ -54,8 +57,15 @@ namespace Vulkitten
             m_VkRenderer = CreateScope<VkRenderer>(config, *m_VulkanInstance, *iwindow);
             m_VkRenderer->Init();
 
-            // Use Vulkan renderer as the backend
-            // GraphicContext is not used for Vulkan
+            // Always create RendererSubsystem for shared services (ShaderLibrary,
+            // RenderUtils). VkRenderer provides the actual rendering via IRenderer,
+            // but layers still access ShaderLibrary through RendererSubsystem::Get().
+            m_RendererSubsystem = CreateScope<RendererSubsystem>(
+                &m_VkRenderer->GetDevice(), m_VkRenderer->GetResourceManager(), *m_ShaderMgr);
+            // NOTE: Do NOT call Init() — Renderer::Init() creates OpenGL-specific
+            // resources (RendererAPI, OpenGLRendererAPI). For Vulkan, the renderer
+            // inside RendererSubsystem is a no-op stub.
+
             VKT_CORE_INFO("Application: Vulkan backend initialized");
         }
         else
