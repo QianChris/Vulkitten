@@ -320,3 +320,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: 简化 `Renderer/FrameContext.h`：从 8 字段(含显式 CommandPool/CommandBuffer/InFlightFence/ImageAvailableSemaphore/RenderFinishedSemaphore/ResourcePool void*)缩减为 3 字段——FrameIndex(ring buffer 索引)+SwapchainIndex+Void* Internal(后端私有数据)。移除 PerFrameResourcePool 辅助结构体。FrameContext 现在由 IDevice::beginFrame() 产出、IDevice::endFrame() 消费、createCommandBuffer() 使用。VkFrameContext 继承关系保留，其 m_CommandPools[3] 独立管理。AGENTS.md FrameContext 条目已更新。所有 3 个目标编译通过。
+
+## Task 9: RHI 资源查询接口 IBuffer/ITexture/IShader/IPipeline/IGeometry/ISampler
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 6 个最小资源查询接口：IBuffer(GetSize/Map/Unmap/Flush)、ITexture(GetType/GetFormat/GetExtent/GetMipLevels)、IShader(GetStage/GetEntryPoint)、IPipeline(IsCompute)、IGeometry(GetVertexCount/GetIndexCount)、ISampler(标记型空接口)。大部分 GPU 操作通过 ICommandBuffer+Handle 完成，这些接口仅用于属性查询和 CPU 映射。Phase 2 接口层完成，AGENTS.md 已更新。所有 3 个目标编译通过。
