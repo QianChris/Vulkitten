@@ -20,6 +20,11 @@
 - **End**: 2026-06-21
 - **Summary**: OpenGLShader 重写为 SPIR-V 直接加载：构造器读取 .vert.spv/.frag.spv 二进制文件，使用 glShaderBinary + glSpecializeShader + glLinkProgram 替代运行时 GLSL 编译。移除了 OpenGLShader.cpp 中约 200 行的 GLSL #include 预处理代码（ReadFileToString/CollectIncludeDirs/ResolveIncludes）。Shader::Create(source-based) 方法已移除。Shader::Create(filepath) 现在接受无扩展名的 shader 名称（如 "engine://shaders/TextureEntity"），自动拼接 .spv 后缀。所有 shader 路径已更新（TextureEntity.shader→TextureEntity，Particle.shader→Particle，FlatColor.shader→FlatColor）。所有 3 个目标编译通过。
 
+## Task 5: 验证所有 shader 路径已迁移到 .spv
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 已验证引擎源码中零处 .shader/.vert/.frag GLSL 引用残留。所有 shader 路径已在 Task 4 中更新：SpriteRenderPass(TextureEntity)、Renderer::Init()(Particle + 4 compute shaders)、ExampleLayer2(FlatColor) 均使用无扩展名基础路径，由 OpenGLShader 自动拼接 .spv 后缀。GpuParticlePass 的 compute shader 路径保持不变（原已是 .comp 扩展名）。所有 3 个目标编译通过。
+
 ## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
 - **Start**: 2026-06-20
 - **End**: 2026-06-20
