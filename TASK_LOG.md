@@ -30,6 +30,11 @@
 - **End**: 2026-06-21
 - **Summary**: 重写 compile_shader.py 支持命令行参数：--target (opengl|vulkan, 默认 opengl)、--include-dirs (额外 include 路径)、--output-dir (输出目录)、--watch (增量监控模式)。glslangValidator 根据 target 选择 --target-env opengl 或 --target-env vulkan1.3。compile_shader.bat 改为转发参数到 .py（默认 --target opengl）。新增 compile_shader_vulkan.bat 快捷脚本（--target vulkan）。所有 3 个目标编译通过（无代码变更）。
 
+## Task 7: E2E 验证 OpenGL 后端 + 清理
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: Sandbox 切回 OpenGL 后端（SetBackend(RendererBackend::OpenGL)）。修复 SandboxApp.cpp 中过时的 "Select Vulkan" 注释。更新 GOAL.md 添加 "资源管线现代化" Phase 完成记录（Tasks 1-7）。验证 OpenGL 路径：3 Quad 渲染从 .spv 加载 shader，window resize 正常。Vulkan 后端编译通过（白屏已知，需后续填充 VkPipeline/VkRenderPass 实现）。所有 3 个目标编译通过。
+
 ## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
 - **Start**: 2026-06-20
 - **End**: 2026-06-20
