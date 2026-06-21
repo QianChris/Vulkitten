@@ -315,3 +315,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: 创建 `Vulkitten/src/Vulkitten/RHI/ICommandBuffer.hpp`，定义纯虚命令录制接口。20+ 方法覆盖完整 GPU 命令集：Begin/End 生命周期、Barrier(全局+纹理)、BeginRenderPass(ClearValues 数组)/EndRenderPass、BindPipeline/BindGeometry、slot 描述符绑定(BindUniformBuffer/BindStorageBuffer/BindTexture/BindStorageTexture)、PushConstants(Data+Size+Offset)、Draw/DrawIndexed/DispatchCompute、CopyBuffer/CopyBufferToTexture/CopyTextureToBuffer、BeginDebugLabel/EndDebugLabel/InsertDebugMarker。C++17 兼容(Data ptr+Size 替代 std::span)。绑定 slot 必须是 PipelineDesc TextureSlots/BufferSlots 声明的子集。AGENTS.md 新增 ICommandBuffer 条目。所有 3 个目标编译通过。
+
+## Task 8: 重构 FrameContext 为 IDevice 托管的 transient 实例
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 简化 `Renderer/FrameContext.h`：从 8 字段(含显式 CommandPool/CommandBuffer/InFlightFence/ImageAvailableSemaphore/RenderFinishedSemaphore/ResourcePool void*)缩减为 3 字段——FrameIndex(ring buffer 索引)+SwapchainIndex+Void* Internal(后端私有数据)。移除 PerFrameResourcePool 辅助结构体。FrameContext 现在由 IDevice::beginFrame() 产出、IDevice::endFrame() 消费、createCommandBuffer() 使用。VkFrameContext 继承关系保留，其 m_CommandPools[3] 独立管理。AGENTS.md FrameContext 条目已更新。所有 3 个目标编译通过。

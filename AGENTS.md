@@ -86,7 +86,7 @@ No test framework configured. Verify changes via successful builds and manual ex
   - `ShaderManager` — shader loading + #include preprocessing. Constructor injects `FileSystem&`.
   - `GltfLoader` — glTF 2.0 loader wrapping tinygltf.
   - `RendererAPI` — abstract base for low-level draw commands (Init, Clear, DrawIndexed). Being superseded by IRenderer + per-pass RenderContext.
-  - `FrameContext` — per-frame state (FrameIndex, SwapchainIndex, CommandPool, Fence, Semaphore). Created by IRenderer::BeginFrame(). OpenGL no-ops for Vulkan concepts.
+  - `FrameContext` — transient per-frame struct: FrameIndex + SwapchainIndex + void* Internal (backend-private). Owned by IDevice::beginFrame()/endFrame(). Backend sync objects (Fence/Semaphore/CommandPool) live inside Internal or backend-private fields, invisible to upper layers.
   - `RenderContext` (per-pass) — translates RenderCommands to API drawcalls. Holds FrameContext& + IRenderer&. Uses PipelineHandle/GeometryHandle for state caching.
   - `RendererSubsystem` — rendering subsystem singleton (was RenderContext). Owns Renderer (the IRenderer impl), RenderGraph, RenderUtils, ShaderLibrary.
   - `Renderer` — scene-level IRenderer implementation (owns RenderGraph instance, registers Passes).
