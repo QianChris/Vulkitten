@@ -130,10 +130,62 @@ struct BlendState
 };
 
 // ============================================================
+// TextureSlot — declares a texture binding slot in the pipeline
+//
+// Tells the backend "this pipeline expects a texture at slot N,
+// for use as Sampled or Storage, visible to these shader stages".
+// Backends use this to pre-build descriptor layouts (Vulkan:
+// VkDescriptorSetLayout; OpenGL: uniform location → texture
+// unit mapping table).
+// ============================================================
+
+struct TextureSlot
+{
+    enum class Type : uint32_t
+    {
+        Sampled,   // Sampled image (fragment shader texture)
+        Storage,   // Storage image (compute UAV / ImageStore)
+    };
+
+    uint32_t    Slot = 0;
+    Type        SlotType = Type::Sampled;
+    ShaderStage Stages = ShaderStage::Fragment;  // Which stages access this texture
+};
+
+// ============================================================
+// BufferSlot — declares a buffer binding slot in the pipeline
+//
+// Tells the backend "this pipeline expects a buffer at slot N,
+// used as Uniform, Storage, or PushConstant, with a given size
+// hint, visible to these shader stages".
+// ============================================================
+
+struct BufferSlot
+{
+    enum class Type : uint32_t
+    {
+        Uniform,       // Uniform buffer (UBO)
+        Storage,       // Storage buffer (SSBO)
+        PushConstant,  // Push constant block
+    };
+
+    uint32_t    Slot = 0;
+    Type        SlotType = Type::Uniform;
+    ShaderStage Stages = ShaderStage::Vertex | ShaderStage::Fragment;
+    uint32_t    Size = 0;   // Size in bytes (0 = unknown / runtime-determined)
+};
+
+// ============================================================
 // PipelineDesc — complete graphics pipeline description
 //
 // For compute pipelines, set ComputeShader and leave VS/FS null.
 // Vertex format is here (vertexLayout), NOT in GeometryDesc.
+//
+// TextureSlots and BufferSlots declare the binding interface of
+// this pipeline. Backends read these at createPipeline() time to
+// pre-build descriptor layouts. The slots used at bind time
+// (ICommandBuffer::bindTexture/bindUniformBuffer etc.) must be
+// a subset of what is declared here.
 // ============================================================
 
 struct PipelineDesc
@@ -152,6 +204,12 @@ struct PipelineDesc
     uint32_t          SubpassIndex = 0;
 
     uint32_t          PushConstantsSize = 0;  // Bytes of push constant data
+
+    // ---- Slot Declarations ----
+    // Backends use these at pipeline creation to build descriptor
+    // layouts. Bind-time slots must be a subset of what's declared.
+    std::vector<TextureSlot> TextureSlots;
+    std::vector<BufferSlot>  BufferSlots;
 };
 
 // ============================================================

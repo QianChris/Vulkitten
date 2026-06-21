@@ -305,3 +305,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: 大幅扩展 `Renderer/Device.h` 中 IDevice 接口：新增 beginFrame()→FrameContext、endFrame(FrameContext)、createCommandBuffer(FrameContext)→ICommandBuffer*、8 个 create* 资源创建方法(createBuffer→BufferHandle/createTexture→TextureHandle/createShader→ShaderHandle/createPipeline→PipelineHandle/createGeometry→GeometryHandle/createSampler→SamplerHandle/createRenderPass→RenderPassHandle/createFramebuffer→FramebufferHandle)、onResize(w,h)、waitIdle()、getNativeDevice()。创建 `RHI/RHIResourceDescs.hpp` 包含 BufferDesc/TextureDesc/TextureType/TextureViewDesc/AttachmentDesc/SubpassDesc/SubpassDependency/RenderPassDesc/FramebufferDesc 等描述符结构体。ShaderBytecode 结构体(data ptr+size+entryPoint)同文件定义。OpenGLDevice 和 VulkanDevice 添加所有新方法的 [HACK] 桩实现。createCommandBuffer 暂返回裸指针(ICommandBuffer 在 Task 6 创建后改为 unique_ptr)。保留遗留 Submit(FrameContext&)。AGENTS.md 已更新。所有 3 个目标编译通过。
+
+## Task 6: RHIPipelineDesc 添加 TextureSlot 和 BufferSlot 槽位声明
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 更新 `RHI/RHIPipelineDesc.hpp`，新增 `TextureSlot` 结构体(slot/SlotType::Sampled|Storage/Stages)和 `BufferSlot` 结构体(slot/SlotType::Uniform|Storage|PushConstant/Stages/Size)。PipelineDesc 新增 `std::vector<TextureSlot> TextureSlots` 和 `std::vector<BufferSlot> BufferSlots` 成员。后端在 createPipeline() 时读取这些槽位声明预构建 descriptor layout（Vulkan: VkDescriptorSetLayout，GL: uniform location↔texture unit 映射表）。消除原 SpriteRenderPass 重构任务中的 [HACK: 抽象层缺TextureSlot管理]。AGENTS.md RHI 条目已更新。所有 3 个目标编译通过。

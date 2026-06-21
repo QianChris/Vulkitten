@@ -96,7 +96,7 @@ No test framework configured. Verify changes via successful builds and manual ex
   - `RHI/Core/Types.hpp` — Extent2D/3D, Viewport, ClearValue, ShaderStage, BufferUsage/TextureUsage/MemoryProperty, PipelineStage/AccessFlags/ImageLayout, FilterMode/WrapMode, LoadOp/StoreOp
   - `RHI/Core/Format.hpp` — `Format` enum (R8_UNORM..BC7_RGBA_UNORM, D16_UNORM..D32_FLOAT_S8_UINT) with `FormatByteSize`/`FormatComponentCount`/`IsDepthFormat`/`IsStencilFormat`
   - `RHI/Handle.hpp` — `Handle<Tag>` (uint32_t id + generation) with 8 Tag types for compile-time type safety
-  - `RHI/RHIPipelineDesc.hpp` — `PipelineDesc` (VertexAttribute[] with Format + RasterState + DepthStencilState + BlendState[]), `GeometryDesc` (NO vertex format — format lives in Pipeline), `SamplerDesc`
+  - `RHI/RHIPipelineDesc.hpp` — `PipelineDesc` (VertexAttribute[] + RasterState + DepthStencilState + BlendState[] + `TextureSlots`[slot/Type/Stages] + `BufferSlots`[slot/Type/Stages/Size]), `TextureSlot`/`BufferSlot` structs declare binding interface at pipeline creation time, `GeometryDesc` (NO vertex format), `SamplerDesc`
   All RHI types are pure C++17 — no Vulkan or OpenGL types in RHI headers. Phase 2 (Tasks 5-9) will build the abstract interfaces.
 - **Entry Point**: Implement `Vulkitten::CreateApplication()` returning `Application*`
 

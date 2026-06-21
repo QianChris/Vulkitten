@@ -806,6 +806,24 @@ struct PipelineDesc {
 
     // 推送常量大小（Vulkan: push constant range；GL: 模拟 UBO 或 uniform）
     uint32_t pushConstantsSize = 0;
+    
+    // 纹理绑定声明：slot → 预期用途（采样 / 存储）
+    // 后端据此预分配 descriptor layout / uniform location
+    struct TextureSlot {
+        uint32_t slot = 0;
+        enum class Type { Sampled, Storage } type = Type::Sampled;
+        ShaderStage stages = ShaderStage::Fragment;  // 哪些阶段可见
+    };
+    std::vector<TextureSlot> textureSlots;
+
+    // 推送常量 / uniform buffer 的 slot 声明（可选，用于预校验）
+    struct BufferSlot {
+        uint32_t slot = 0;
+        enum class Type { Uniform, Storage, PushConstant } type = Type::Uniform;
+        ShaderStage stages = ShaderStage::Vertex | ShaderStage::Fragment;
+        uint32_t size = 0;  // push constant / uniform block 大小
+    };
+    std::vector<BufferSlot> bufferSlots;
 };
 
 // 管线接口（通常仅用于创建）
