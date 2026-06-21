@@ -74,7 +74,7 @@ void VulkanDevice::Init()
         }
     }
 
-    // Create logical device
+    // Create logical device with swapchain extension
     float queuePriority = 1.0f;
     VkDeviceQueueCreateInfo queueCreateInfo{};
     queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -82,20 +82,25 @@ void VulkanDevice::Init()
     queueCreateInfo.queueCount = 1;
     queueCreateInfo.pQueuePriorities = &queuePriority;
 
+    const char* deviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+
     VkDeviceCreateInfo deviceCreateInfo{};
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     deviceCreateInfo.queueCreateInfoCount = 1;
     deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
+    deviceCreateInfo.enabledExtensionCount = 1;
+    deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions;
 
     VkDevice vkDevice;
-    if (vkCreateDevice(selectedDevice, &deviceCreateInfo, nullptr, &vkDevice) == VK_SUCCESS)
+    VkResult result = vkCreateDevice(selectedDevice, &deviceCreateInfo, nullptr, &vkDevice);
+    if (result == VK_SUCCESS)
     {
         m_NativeDevice = vkDevice;
-        VKT_CORE_INFO("VulkanDevice: Logical device created");
+        VKT_CORE_INFO("VulkanDevice: Logical device created with swapchain support");
     }
     else
     {
-        VKT_CORE_WARN("VulkanDevice: Failed to create logical device");
+        VKT_CORE_WARN("VulkanDevice: vkCreateDevice failed with result {0}", static_cast<int>(result));
     }
 #else
     VKT_CORE_INFO("VulkanDevice: Vulkan SDK not available — device is a stub");

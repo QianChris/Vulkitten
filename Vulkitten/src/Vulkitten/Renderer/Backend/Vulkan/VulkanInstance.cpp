@@ -3,8 +3,11 @@
 
 #ifdef VKT_HAS_VULKAN
 #include <vulkan/vulkan.h>
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 #endif
 
+#include <vector>
 #include "Vulkitten/Perf/Instrumentor.h"
 
 namespace Vulkitten {
@@ -43,13 +46,17 @@ void VulkanInstance::Init(bool enableValidationLayers)
         createInfo.ppEnabledLayerNames = &validationLayer;
     }
 
-    // Required extensions
-    const char* debugExt = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+    // Required extensions (always include surface support)
+    std::vector<const char*> extensions;
+    extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+    extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#endif
     if (enableValidationLayers)
-    {
-        createInfo.enabledExtensionCount = 1;
-        createInfo.ppEnabledExtensionNames = &debugExt;
-    }
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+    createInfo.ppEnabledExtensionNames = extensions.data();
 
     VkInstance instance;
     VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);

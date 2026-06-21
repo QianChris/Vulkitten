@@ -252,6 +252,12 @@ bool VkSwapchain::AcquireNextImage(uint32_t& imageIndex, uint64_t /*semaphore*/)
 #ifdef VKT_HAS_VULKAN
     auto vkDevice = static_cast<VkDevice>(m_Device.GetNativeDevice());
     auto vkSwapchain = static_cast<VkSwapchainKHR>(m_Swapchain);
+    if (!vkDevice || !vkSwapchain)
+    {
+        VKT_CORE_WARN("VkSwapchain::AcquireNextImage — device or swapchain is null");
+        imageIndex = 0;
+        return false;
+    }
     uint32_t idx;
     if (vkAcquireNextImageKHR(vkDevice, vkSwapchain, UINT64_MAX, VK_NULL_HANDLE, VK_NULL_HANDLE, &idx) == VK_SUCCESS)
     {
