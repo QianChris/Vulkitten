@@ -26,6 +26,6 @@ public:
 
 Vulkitten::Application* Vulkitten::CreateApplication() {
     // Select Vulkan backend
-    Vulkitten::Application::SetBackend(Vulkitten::RendererBackend::Vulkan);
+    Vulkitten::Application::SetBackend(Vulkitten::RendererBackend::OpenGL);
     return new Sandbox();
 }

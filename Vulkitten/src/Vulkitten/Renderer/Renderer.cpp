@@ -34,6 +34,10 @@ void Renderer::Init()
 {
     VKT_PROFILE_FUNCTION();
 
+    // Register as global IRenderer instance FIRST — Pass constructors
+    // and resource creation call IRenderer::Get() internally.
+    s_Current = this;
+
     // Create OpenGL backend dependencies internally
     m_Device = CreateScope<OpenGLDevice>();
     m_Resources = CreateScope<GpuResourceManager>();
@@ -67,9 +71,6 @@ void Renderer::Init()
     // Set backend context for EndPass (SwapBuffers)
     if (m_RenderGraph)
         m_RenderGraph->SetBackendContext(Application::Get().GetWindow().GetGraphicsContext());
-
-    // Register as global IRenderer instance
-    s_Current = this;
 
     VKT_CORE_INFO("Renderer: OpenGL backend initialized");
 }

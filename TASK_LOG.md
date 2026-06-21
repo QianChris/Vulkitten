@@ -1,5 +1,10 @@
 # TASK_LOG.md — Vulkitten Engine Task Execution Log
 
+## Task 1: 修复 IRenderer::Get() 空指针崩溃
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 将 `s_Current = this;` 从 Renderer::Init() 和 VkRenderer::Init() 的末尾移到最开头（任何 Pass 注册或资源创建之前）。之前 SpriteRenderPass 构造函数中的 VertexBuffer::Create()→IRenderer::Get().GetResourceManager() 因 s_Current 尚未赋值而崩溃。现在 IRenderer::Get() 在 Init 期间立即可用。所有 3 个目标编译通过。
+
 ## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

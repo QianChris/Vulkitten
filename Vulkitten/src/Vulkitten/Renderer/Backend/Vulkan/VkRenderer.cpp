@@ -26,6 +26,9 @@ void VkRenderer::Init()
 {
     VKT_PROFILE_FUNCTION();
 
+    // Register as global IRenderer instance FIRST
+    s_Current = this;
+
     // Create Vulkan instance internally
     m_Instance = CreateScope<VulkanInstance>();
     m_Instance->Init(true);
@@ -47,9 +50,6 @@ void VkRenderer::Init()
 
     // Set up RenderGraph
     m_RenderGraph = new RenderGraph();
-
-    // Register as global IRenderer instance
-    s_Current = this;
 
     VKT_CORE_INFO("VkRenderer: Vulkan backend initialized");
 }
