@@ -1,7 +1,7 @@
 #include "vktpch.h"
 #include "Texture.h"
 
-#include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRenderer.h"
 #include "Vulkitten/Renderer/IRenderer.h"
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLTexture.h"
@@ -15,7 +15,7 @@ namespace Vulkitten {
         VKT_PROFILE_FUNCTION();
 
         Ref<Texture2D> result;
-        switch (Renderer::GetAPI())
+        switch (OpenGLRenderer::GetAPI())
         {
             case RendererAPI::API::None:
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
@@ -45,7 +45,7 @@ namespace Vulkitten {
         VKT_PROFILE_FUNCTION();
 
         Ref<Texture2D> result;
-        switch (Renderer::GetAPI())
+        switch (OpenGLRenderer::GetAPI())
         {
             case RendererAPI::API::None:
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");

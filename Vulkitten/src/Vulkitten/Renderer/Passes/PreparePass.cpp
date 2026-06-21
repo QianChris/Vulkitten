@@ -2,7 +2,7 @@
 #include "PreparePass.h"
 
 #include "Vulkitten/Renderer/IRenderer.h"
-#include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRenderer.h"
 #include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
 #include "Vulkitten/Renderer/Framebuffer.h"
 
@@ -15,7 +15,7 @@ PreparePass::PreparePass()
     SetExecute([this](const std::vector<RenderGraphResource>& /*resources*/,
                       const std::vector<RenderCommand>& commands,
                       void* /*backendContext*/) {
-        auto* api = static_cast<Renderer&>(IRenderer::Get()).GetRendererAPI();
+        auto* api = static_cast<OpenGLRenderer&>(IRenderer::Get()).GetRendererAPI();
 
         // Bind the configured Framebuffer (nullptr = default backbuffer)
         auto* graph = GetGraph();

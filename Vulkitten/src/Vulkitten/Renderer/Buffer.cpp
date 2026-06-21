@@ -1,6 +1,6 @@
 #include "Buffer.h"
 
-#include "Renderer.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRenderer.h"
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLBuffer.h"
 
@@ -13,7 +13,7 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
         VKT_PROFILE_FUNCTION();
 
         Ref<VertexBuffer> result;
-        switch (Renderer::GetAPI())
+        switch (OpenGLRenderer::GetAPI())
         {
             case RendererAPI::API::None:
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
@@ -40,7 +40,7 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
         VKT_PROFILE_FUNCTION();
 
         Ref<VertexBuffer> result;
-        switch (Renderer::GetAPI())
+        switch (OpenGLRenderer::GetAPI())
         {
             case RendererAPI::API::None:
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
@@ -67,7 +67,7 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
         VKT_PROFILE_FUNCTION();
 
         Ref<IndexBuffer> result;
-        switch (Renderer::GetAPI())
+        switch (OpenGLRenderer::GetAPI())
         {
             case RendererAPI::API::None:
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");

@@ -10,7 +10,7 @@
 
 #include "Vulkitten/Renderer/IRenderer.h"
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
-#include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRenderer.h"
 #include "Vulkitten/Renderer/Backend/Vulkan/VkRenderer.h"
 
 #include <glm/glm.hpp>
@@ -48,7 +48,7 @@ namespace Vulkitten
         }
         else
         {
-            m_Renderer = CreateScope<Renderer>(config);
+            m_Renderer = CreateScope<OpenGLRenderer>(config);
         }
 
         m_Renderer->Init();

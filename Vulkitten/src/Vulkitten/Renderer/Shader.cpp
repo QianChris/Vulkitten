@@ -1,7 +1,6 @@
 #include "vktpch.h"
 #include "Shader.h"
 
-#include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Renderer/RendererAPI.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLShader.h"
 
@@ -13,7 +12,7 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        switch (Renderer::GetAPI())
+        switch (RendererAPI::GetAPI())
         {
             case RendererAPI::API::None:
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
@@ -30,7 +29,7 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        switch (Renderer::GetAPI())
+        switch (RendererAPI::GetAPI())
         {
             case RendererAPI::API::None:
                 VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");

@@ -45,6 +45,11 @@
 - **End**: 2026-06-21
 - **Summary**: GpuResourceManager 重命名为 OpenGLGpuResourceManager 并移至 Backend/OpenGL/。GpuTextureDesc/GpuBufferDesc/GpuResourceSlot 结构体移至 IGpuResourceManager.h（平台无关层）。Renderer.cpp 改为 CreateScope<OpenGLGpuResourceManager>。VkGpuResourceManager.h 移除对旧 GpuResourceManager.h 的依赖。Buffer.cpp/Texture.cpp 改为引用 IGpuResourceManager.h。旧文件已删除。所有 3 个目标编译通过。
 
+## Task 3: Renderer 重命名为 OpenGLRenderer 并移至 Backend/OpenGL/
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: Old Renderer renamed to OpenGLRenderer, moved to Backend/OpenGL/. Created thin platform-agnostic Renderer base class in Renderer/ (holds IDevice/IGpuResourceManager/RenderGraph/ShaderLibrary). OpenGLRenderer inherits Renderer and adds OpenGL-specific Init/BeginFrame/EndFrame + GetRendererAPI. Application now creates CreateScope<OpenGLRenderer>. All factory files (Buffer/Texture/VertexArray/Framebuffer/Shader) updated to use OpenGLRenderer::GetAPI or RendererAPI::GetAPI. Pass files updated to static_cast<OpenGLRenderer&>. Vulkitten.h umbrella fixed. All 3 targets compile.
+
 ## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

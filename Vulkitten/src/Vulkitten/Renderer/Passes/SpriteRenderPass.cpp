@@ -2,7 +2,7 @@
 #include "SpriteRenderPass.h"
 
 #include "Vulkitten/Renderer/IRenderer.h"
-#include "Vulkitten/Renderer/Renderer.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRenderer.h"
 #include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
 #include "Vulkitten/Renderer/Camera.h"
 #include "Vulkitten/Renderer/Framebuffer.h"
@@ -225,7 +225,7 @@ void SpriteRenderPass::Flush()
     m_QuadVA->Bind();
 
     // Use RendererAPI directly instead of Legacy::RenderCommand
-    auto* api = static_cast<Renderer&>(IRenderer::Get()).GetRendererAPI();
+    auto* api = static_cast<OpenGLRenderer&>(IRenderer::Get()).GetRendererAPI();
     api->DrawIndexed(m_QuadVA, m_QuadCount * 6);
 
     m_QuadCount = 0;
