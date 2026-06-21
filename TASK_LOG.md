@@ -285,3 +285,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: 创建 `Vulkitten/src/Vulkitten/RHI/Core/Types.hpp`，在 `Vulkitten::rhi` 命名空间下集中定义所有渲染基础类型。包含 Extent2D/3D、Offset2D/3D、Rect2D、Viewport、ClearColor/ClearDepthStencil/ClearValue(union)、ShaderStage(bitflag)、IndexType、BufferUsage(bitflag)、TextureUsage(bitflag)、MemoryProperty(bitflag)、FilterMode、MipMode、WrapMode、PipelineStage(bitflag)、AccessFlags(bitflag)、ImageLayout、LoadOp、StoreOp。所有 bitflag 枚举均提供 operator| 和 HasUsage/HasStage 查询辅助函数。零 API 依赖（仅 `<cstdint>` 和 `<array>`）。AGENTS.md 新增 RHI 子系统条目。所有 3 个目标编译通过。
+
+## Task 2: RHI/Core/Format.hpp — 跨 API 像素/顶点/深度格式系统
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 `Vulkitten/src/Vulkitten/RHI/Core/Format.hpp`，定义 `rhi::Format` 枚举覆盖 26 种跨 API 格式：8-bit UNORM(R8/RG8/RGBA8/BGRA8/SRGB)、16-bit Float/UNORM(R16F/RG16F/RGBA16F/R16U)、32-bit Float(R32F/RG32F/RGB32F/RGBA32F)、32-bit Int(R32U/R32S/RG32U/RGBA32U)、深度/模板(D16U/D32F/D24S8/D32S8)、BC 压缩(BC1/BC3/BC5/BC7)。提供 FormatByteSize/FormatComponentCount/IsDepthFormat/IsStencilFormat/IsCompressedFormat 工具函数。零 API 依赖（仅 `<cstdint>`）。将逐步替代 Buffer.h 中仅顶点属性的 ShaderDataType。AGENTS.md RHI 条目已更新。所有 3 个目标编译通过。
