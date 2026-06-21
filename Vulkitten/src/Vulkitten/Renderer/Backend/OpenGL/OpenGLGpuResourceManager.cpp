@@ -81,6 +81,25 @@ uint64_t OpenGLGpuResourceManager::CreateShader(const std::string& name, const s
     return MakeHandle(index, slot.generation);
 }
 
+uint64_t OpenGLGpuResourceManager::CreateShaderFromSpv(const std::string& name, const std::string& virtualPath)
+{
+    Ref<Shader> shader = Shader::Create(virtualPath);
+    if (!shader) return 0;
+
+    uint32_t index = AllocateSlot();
+    auto& slot = m_Slots[index];
+    slot.debugName = name;
+    uint64_t handle = MakeHandle(index, slot.generation);
+    m_ShaderObjects[handle] = shader;
+    return handle;
+}
+
+Ref<Shader> OpenGLGpuResourceManager::GetShader(uint64_t handle)
+{
+    auto it = m_ShaderObjects.find(handle);
+    return (it != m_ShaderObjects.end()) ? it->second : nullptr;
+}
+
 uint64_t OpenGLGpuResourceManager::CreatePipeline(const void*)
 {
     uint32_t index = AllocateSlot();

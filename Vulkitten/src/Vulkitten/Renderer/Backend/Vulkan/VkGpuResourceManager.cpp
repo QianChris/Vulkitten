@@ -159,6 +159,9 @@ size_t VkGpuResourceManager::GetResourceCount() const
     return m_Slots.size() - m_FreeIndices.size();
 }
 
+uint64_t VkGpuResourceManager::CreateShaderFromSpv(const std::string&, const std::string&) { return 0; }
+Ref<Shader> VkGpuResourceManager::GetShader(uint64_t) { return nullptr; }
+
 uint64_t VkGpuResourceManager::LoadShader(const std::string& /*virtualPath*/)
 {
     // Stub: Vulkan loads .spv directly, no GLSL preprocessing needed

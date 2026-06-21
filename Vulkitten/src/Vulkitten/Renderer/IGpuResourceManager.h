@@ -9,6 +9,8 @@
 
 namespace Vulkitten {
 
+class Shader;
+
 // ============================================================
 // Resource Descriptors (platform-agnostic)
 // ============================================================
@@ -82,6 +84,12 @@ public:
     // Create a shader resource from source/preprocessed data.
     // Returns a handle to the compiled shader module.
     virtual uint64_t CreateShader(const std::string& name, const std::string& source) = 0;
+
+    // Create a shader from .spv files: loads name.vert.spv + name.frag.spv
+    virtual uint64_t CreateShaderFromSpv(const std::string& name, const std::string& virtualPath) = 0;
+
+    // Get a usable Shader reference by handle (shared ownership)
+    virtual Ref<Shader> GetShader(uint64_t handle) = 0;
 
     // Create a graphics pipeline (VkPipeline / GL program).
     // The pipeline encapsulates shader stages, vertex layout,

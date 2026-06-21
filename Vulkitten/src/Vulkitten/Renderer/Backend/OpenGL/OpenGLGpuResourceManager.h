@@ -2,6 +2,7 @@
 
 #include "Vulkitten/Core/Core.h"
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
+#include "Vulkitten/Renderer/Shader.h"
 
 #include <vector>
 #include <string>
@@ -30,6 +31,8 @@ public:
     uint64_t CreateTexture(const GpuTextureDesc& desc, const std::string& debugName = "") override;
     uint64_t CreateBuffer(const GpuBufferDesc& desc, const std::string& debugName = "") override;
     uint64_t CreateShader(const std::string& name, const std::string& source) override;
+    uint64_t CreateShaderFromSpv(const std::string& name, const std::string& virtualPath) override;
+    Ref<Shader> GetShader(uint64_t handle) override;
     uint64_t CreatePipeline(const void* pipelineDesc) override;
     uint64_t CreateGeometry(const void* geometryDesc) override;
 
@@ -86,6 +89,7 @@ private:
 
     // Shader storage
     std::unordered_map<uint64_t, ShaderData> m_Shaders;
+    std::unordered_map<uint64_t, Ref<Shader>> m_ShaderObjects;
     uint32_t          m_NextShaderIndex = 0;
     std::vector<uint32_t> m_FreeShaderIndices;
 };

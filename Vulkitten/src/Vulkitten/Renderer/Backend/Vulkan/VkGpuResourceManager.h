@@ -26,6 +26,8 @@ public:
     uint64_t CreateShader(const std::string& name, const std::string& source) override;
     uint64_t CreatePipeline(const void* pipelineDesc) override;
     uint64_t CreateGeometry(const void* geometryDesc) override;
+    uint64_t CreateShaderFromSpv(const std::string& name, const std::string& virtualPath) override;
+    Ref<Shader> GetShader(uint64_t handle) override;
 
     uint64_t LoadShader(const std::string& virtualPath) override;
     const ShaderData* GetShaderData(uint64_t handle) const override;

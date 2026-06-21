@@ -2,6 +2,7 @@
 #include "SpriteRenderPass.h"
 
 #include "Vulkitten/Renderer/IRenderer.h"
+#include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRenderer.h"
 #include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
 #include "Vulkitten/Renderer/Camera.h"
@@ -19,8 +20,10 @@ SpriteRenderPass::SpriteRenderPass()
 {
     name = "SpriteRenderPass";
 
-    // ---- Create GPU resources ----
-    m_TextureShader = Shader::Create("engine://shaders/TextureEntity");
+    // ---- Create GPU resources via IGpuResourceManager ----
+    auto& resMgr = IRenderer::Get().GetResourceManager();
+    uint64_t shaderHandle = resMgr.CreateShaderFromSpv("TextureEntity", "engine://shaders/TextureEntity");
+    m_TextureShader = resMgr.GetShader(shaderHandle);
     m_TextureShader->Bind();
     for (uint32_t i = 0; i < s_MaxTextureSlots; i++)
         m_TextureShader->SetUniformInt(("u_Textures[" + std::to_string(i) + "]").c_str(), i);

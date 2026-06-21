@@ -50,6 +50,11 @@
 - **End**: 2026-06-21
 - **Summary**: Old Renderer renamed to OpenGLRenderer, moved to Backend/OpenGL/. Created thin platform-agnostic Renderer base class in Renderer/ (holds IDevice/IGpuResourceManager/RenderGraph/ShaderLibrary). OpenGLRenderer inherits Renderer and adds OpenGL-specific Init/BeginFrame/EndFrame + GetRendererAPI. Application now creates CreateScope<OpenGLRenderer>. All factory files (Buffer/Texture/VertexArray/Framebuffer/Shader) updated to use OpenGLRenderer::GetAPI or RendererAPI::GetAPI. Pass files updated to static_cast<OpenGLRenderer&>. Vulkitten.h umbrella fixed. All 3 targets compile.
 
+## Task 5: Shader 创建统一走 IGpuResourceManager
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: IGpuResourceManager 新增 CreateShaderFromSpv(name, virtualPath)→uint64_t 和 GetShader(handle)→Ref<Shader> 虚方法。OpenGLGpuResourceManager 实现：CreateShaderFromSpv 内部调用 Shader::Create 加载 .spv→存储到 m_ShaderObjects map→返回 handle；GetShader 返回 Ref<Shader>（共享所有权）。VkGpuResourceManager 添加桩实现。SpriteRenderPass 改为通过 IRenderer::Get().GetResourceManager().CreateShaderFromSpv(...) 创建 shader。Shader::Create 静态方法保留作为底层 .spv 加载器。所有 3 个目标编译通过。
+
 ## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
 - **Start**: 2026-06-20
 - **End**: 2026-06-20
