@@ -2,13 +2,18 @@
 
 #include "Vulkitten/Renderer/Device.h"
 
+#include <vector>
+#include <unordered_map>
+
 namespace Vulkitten {
 
 // ============================================================
 // OpenGLDevice — OpenGL implementation of IDevice.
 //
-// For OpenGL, the GL context IS the device — this is a thin
-// wrapper. Resource creation methods are stubbed until Task 10.
+// For OpenGL, the GL context IS the device. Resource creation
+// maps directly to GL calls (glGenBuffers, glGenTextures, etc.).
+// Handle allocation uses an internal slot-based pool with
+// generation counters for ABA protection.
 // ============================================================
 class VKT_API OpenGLDevice : public IDevice
 {
@@ -23,10 +28,10 @@ public:
     FrameContext beginFrame() override;
     void endFrame(FrameContext ctx) override;
 
-    // ---- IDevice Command Buffer ----
+    // ---- IDevice Command Buffer (stub until Task 12) ----
     ICommandBuffer* createCommandBuffer(FrameContext ctx) override;
 
-    // ---- IDevice Resource Creation (stubs until Task 10) ----
+    // ---- IDevice Resource Creation ----
     rhi::BufferHandle   createBuffer(const rhi::BufferDesc& desc, const void* initialData = nullptr) override;
     rhi::TextureHandle  createTexture(const rhi::TextureDesc& desc, const void* initialData = nullptr) override;
     rhi::ShaderHandle   createShader(rhi::ShaderStage stage, const ShaderBytecode& bytecode) override;
@@ -47,7 +52,24 @@ public:
     void Submit(FrameContext& frameContext) override;
 
 private:
-    void* m_NativeWindow = nullptr; // GLFWwindow*
+    // ---- Internal Handle Pool ----
+    struct GpuSlot
+    {
+        uint64_t GpuHandle = 0;     // GLuint / GL program handle
+        uint32_t Generation = 1;    // ABA protection
+        bool     Alive = false;
+    };
+
+    template<typename Tag>
+    rhi::Handle<Tag> AllocHandle();
+    GpuSlot* GetSlot(uint32_t id);
+    uint32_t FindFreeSlot();
+
+    void*              m_NativeWindow = nullptr;
+    uint32_t           m_FrameIndex = 0;
+
+    std::vector<GpuSlot> m_Slots;            // Handle pool
+    std::vector<uint32_t> m_FreeIndices;     // Recycled slot indices
 };
 
 } // namespace Vulkitten

@@ -330,3 +330,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: 重构 `Renderer/IRenderer.h` 和 `Renderer/Renderer.h/.cpp`：IRenderer 接口保持 Init/Shutdown/BeginFrame/Execute/EndFrame/OnWindowResize + 子系统访问器不变。Renderer 基类新增 BeginFrame/EndFrame 默认实现，分别委托给 IDevice::beginFrame()→FrameContext 和 IDevice::endFrame(ctx)。FrameContext 从 Scope<> 改为值成员。OnWindowResize 同时调用 IDevice::onResize() 和 RenderGraph::ResizeAllFramebuffers()。OpenGLRenderer 过渡期适配(HACK 标注)。Phase 2(抽象接口层)完成。所有 3 个目标编译通过。
+
+## Task 11: 重构 OpenGLDevice — 实现完整 IDevice 资源创建
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 重写 `OpenGLDevice.h/.cpp` 实现 IDevice 全部方法。新增内部 slot-based Handle 分配池(AllocHandle/GetSlot/FindFreeSlot+Generation ABA 保护)。实现 beginFrame→FrameContext 含 ring buffer 帧索引、endFrame→glfwSwapBuffers。createBuffer→glGenBuffers+glBufferData(根据 desc.Usage 选 target)、createTexture→glGenTextures+glTexImage2D(ToGLFormat/ToGLBaseFormat 转换)、createSampler→glGenSamplers 完整 filter/wrap/aniso 设置、createPipeline→glCreateProgram(占位,slot 映射表延后)、createFramebuffer→glGenFramebuffers 支持多 color+DS attachment。onResize→glViewport、waitIdle→glFinish。createShader/createGeometry/createRenderPass/createCommandBuffer 保持 [HACK] 桩。ToGLFormat/ToGLBaseFormat 静态转换函数映射 rhi::Format→GLenum。所有 3 个目标编译通过。
