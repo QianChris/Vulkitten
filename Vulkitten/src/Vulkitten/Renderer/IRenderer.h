@@ -11,7 +11,6 @@ class IGpuResourceManager;
 class RenderGraph;
 class ShaderLibrary;
 class FileSystem;
-class ShaderManager;
 class IWindow;
 
 // ============================================================
@@ -21,7 +20,6 @@ struct RendererConfig
 {
     FileSystem*   FileSys = nullptr;     // Engine file system (for shader loading)
     IWindow*      Window = nullptr;       // Platform window (for surface creation)
-    ShaderManager* ShaderMgr = nullptr;   // Shader loading + preprocessing
 };
 
 // ============================================================

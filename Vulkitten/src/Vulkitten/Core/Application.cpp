@@ -12,7 +12,6 @@
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Renderer/Backend/Vulkan/VkRenderer.h"
-#include "Vulkitten/Renderer/ShaderManager.h"
 
 #include <glm/glm.hpp>
 
@@ -37,14 +36,10 @@ namespace Vulkitten
         m_Window.reset(Window::Create());
         m_Window->SetEventCallback(VKT_BIND_EVENT_FN(Application::OnEvent));
 
-        // Create shader manager (shared, backend-agnostic)
-        m_ShaderMgr = CreateScope<ShaderManager>(Engine::Get().GetFileSystem());
-
-        // Build RendererConfig
+        // Build RendererConfig (shader loading is now handled by IGpuResourceManager)
         RendererConfig config;
         config.FileSys  = &Engine::Get().GetFileSystem();
         config.Window   = dynamic_cast<IWindow*>(m_Window.get());
-        config.ShaderMgr = m_ShaderMgr.get();
 
         // Create backend-specific IRenderer implementation
         if (s_Backend == RendererBackend::Vulkan)

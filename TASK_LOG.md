@@ -10,6 +10,11 @@
 - **End**: 2026-06-21
 - **Summary**: Renderer.h 中 `Scope<OpenGLDevice>` 改为 `Scope<IDevice>`，`Scope<GpuResourceManager>` 改为 `Scope<IGpuResourceManager>`。移除 `GetGpuResourceManager()`、`class OpenGLDevice` 和 `class GpuResourceManager` 前向声明。头文件现在只暴露 IRenderer 接口类型（IDevice/IGpuResourceManager），平台具体实现仅在 .cpp 中通过 CreateScope 创建。所有 3 个目标编译通过。
 
+## Task 3: ShaderManager 并入 IGpuResourceManager
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 将 ShaderManager 的 ShaderData 结构体、LoadShader/GetShaderData 方法和 GLSL #include 预处理逻辑（ReadFileToString/CollectIncludeDirs/ResolveIncludes）全部移入 IGpuResourceManager/GpuResourceManager。GpuResourceManager 构造器新增 FileSystem& 参数用于虚拟路径解析。VkGpuResourceManager 添加桩实现。RendererConfig 移除 ShaderManager* 字段。Application 移除 Scope<ShaderManager> 成员及其创建代码。ShaderManager.h/.cpp 已删除。所有 3 个目标编译通过。
+
 ## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <string>
 #include <memory>
+#include <filesystem>
 
 namespace Vulkitten {
 
@@ -12,6 +13,17 @@ namespace Vulkitten {
 struct GpuTextureDesc;
 struct GpuBufferDesc;
 struct GpuResourceSlot;
+
+// ============================================================
+// ShaderData — preprocessed shader source and metadata
+// ============================================================
+struct ShaderData
+{
+    std::string VirtualPath;
+    std::string ResolvedPath;
+    std::string PreprocessedSource;
+    bool        IsLoaded = false;
+};
 
 // ============================================================
 // IGpuResourceManager — centralized GPU resource management.
@@ -52,6 +64,15 @@ public:
     // Create a geometry resource (vertex + index buffers).
     // Returns a handle to the complete drawable geometry.
     virtual uint64_t CreateGeometry(const void* geometryDesc) = 0;
+
+    // ---- Shader Loading (formerly ShaderManager) ----
+
+    // Load a shader from a virtual path, preprocess #include directives,
+    // and return a handle for later retrieval.
+    virtual uint64_t LoadShader(const std::string& virtualPath) = 0;
+
+    // Retrieve preprocessed shader data by handle.
+    virtual const ShaderData* GetShaderData(uint64_t handle) const = 0;
 
     // ---- Resource Lookup ----
 

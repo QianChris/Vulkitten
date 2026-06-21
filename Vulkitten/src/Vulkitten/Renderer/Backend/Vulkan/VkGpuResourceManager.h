@@ -28,6 +28,9 @@ public:
     uint64_t CreatePipeline(const void* pipelineDesc) override;
     uint64_t CreateGeometry(const void* geometryDesc) override;
 
+    uint64_t LoadShader(const std::string& virtualPath) override;
+    const ShaderData* GetShaderData(uint64_t handle) const override;
+
     GpuResourceSlot* GetTexture(uint64_t handle) override;
     GpuResourceSlot* GetBuffer(uint64_t handle) override;
     GpuResourceSlot* GetSlot(uint32_t index) override;

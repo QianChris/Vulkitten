@@ -12,8 +12,6 @@
 namespace Vulkitten
 {
     class IRenderer;
-    class ShaderManager;
-    class GpuResourceManager;
 
     // Backend selection
     enum class RendererBackend { OpenGL, Vulkan };
@@ -46,7 +44,6 @@ namespace Vulkitten
         
         // Backend-agnostic IRenderer (OpenGL or Vulkan)
         Scope<IRenderer>   m_Renderer;
-        Scope<ShaderManager> m_ShaderMgr;
 
         Scope<Window> m_Window;
         ImGuiLayer* m_ImGuiLayer;

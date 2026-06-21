@@ -159,4 +159,15 @@ size_t VkGpuResourceManager::GetResourceCount() const
     return m_Slots.size() - m_FreeIndices.size();
 }
 
+uint64_t VkGpuResourceManager::LoadShader(const std::string& /*virtualPath*/)
+{
+    // Stub: Vulkan loads .spv directly, no GLSL preprocessing needed
+    return 0;
+}
+
+const ShaderData* VkGpuResourceManager::GetShaderData(uint64_t /*handle*/) const
+{
+    return nullptr;
+}
+
 } // namespace Vulkitten

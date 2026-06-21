@@ -1,7 +1,19 @@
 #include "vktpch.h"
 #include "GpuResourceManager.h"
 
+#include "Vulkitten/Core/FileSystem.h"
+#include "Vulkitten/Core/Engine.h"
+#include "Vulkitten/Perf/Instrumentor.h"
+
+#include <fstream>
+#include <sstream>
+
 namespace Vulkitten {
+
+GpuResourceManager::GpuResourceManager(FileSystem& fileSystem)
+    : m_FileSystem(fileSystem)
+{
+}
 
 // ============================================================
 // Slot Allocation (free-list with generation bump)
@@ -277,6 +289,172 @@ void GpuResourceManager::Gc(uint32_t maxFramesInFlight)
 
     if (!toDestroy.empty())
         VKT_CORE_INFO("GpuResourceManager::Gc — cleaned up {0} resources", toDestroy.size());
+}
+
+// ============================================================
+// Shader Loading (formerly ShaderManager)
+// ============================================================
+
+uint64_t GpuResourceManager::AllocateShaderHandle()
+{
+    uint32_t index;
+    if (!m_FreeShaderIndices.empty())
+    {
+        index = m_FreeShaderIndices.back();
+        m_FreeShaderIndices.pop_back();
+    }
+    else
+    {
+        index = m_NextShaderIndex++;
+    }
+    return (uint64_t(index));
+}
+
+uint64_t GpuResourceManager::LoadShader(const std::string& virtualPath)
+{
+    VKT_PROFILE_RENDER_FUNCTION();
+
+    std::string resolvedPath = m_FileSystem.Resolve(virtualPath);
+
+    std::string source = ReadFileToString(resolvedPath);
+    if (source.empty())
+    {
+        VKT_CORE_ERROR("GpuResourceManager::LoadShader — failed to read: {0}", virtualPath);
+        return UINT64_MAX;
+    }
+
+    std::filesystem::path baseDir = std::filesystem::path(resolvedPath).parent_path();
+    std::vector<std::filesystem::path> includeDirs;
+    CollectIncludeDirs(includeDirs, baseDir);
+
+    std::unordered_set<std::string> guardSet;
+    std::string preprocessed = ResolveIncludes(source, includeDirs, guardSet);
+
+    uint64_t handle = AllocateShaderHandle();
+
+    ShaderData data;
+    data.VirtualPath        = virtualPath;
+    data.ResolvedPath       = resolvedPath;
+    data.PreprocessedSource = preprocessed;
+    data.IsLoaded           = true;
+
+    m_Shaders[handle] = std::move(data);
+
+    VKT_CORE_INFO("GpuResourceManager::LoadShader — loaded '{0}'", virtualPath);
+    return handle;
+}
+
+const ShaderData* GpuResourceManager::GetShaderData(uint64_t handle) const
+{
+    auto it = m_Shaders.find(handle);
+    return (it != m_Shaders.end()) ? &it->second : nullptr;
+}
+
+// ============================================================
+// Preprocessing Helpers (extracted from OpenGLShader)
+// ============================================================
+
+std::string GpuResourceManager::ReadFileToString(const std::filesystem::path& path)
+{
+    std::ifstream in(path, std::ios::in | std::ios::binary);
+    if (!in.is_open())
+        return {};
+    std::stringstream ss;
+    ss << in.rdbuf();
+    return ss.str();
+}
+
+void GpuResourceManager::CollectIncludeDirs(
+    std::vector<std::filesystem::path>& outDirs,
+    const std::filesystem::path& baseDir)
+{
+    outDirs.push_back(baseDir);
+    auto dir = baseDir;
+    for (int i = 0; i < 10; ++i)
+    {
+        auto candidate = dir / "Vulkitten";
+        if (std::filesystem::exists(candidate / "src"))
+        {
+            outDirs.push_back(candidate / "src");
+            return;
+        }
+        auto parent = dir.parent_path();
+        if (parent == dir) break;
+        dir = parent;
+    }
+}
+
+std::string GpuResourceManager::ResolveIncludes(
+    const std::string& source,
+    const std::vector<std::filesystem::path>& includeDirs,
+    std::unordered_set<std::string>& guardSet)
+{
+    std::string result;
+    std::istringstream stream(source);
+    std::string line;
+
+    while (std::getline(stream, line))
+    {
+        std::string trimmed = line;
+        {
+            auto pos = trimmed.find_first_not_of(" \t\r");
+            if (pos != std::string::npos)
+                trimmed = trimmed.substr(pos);
+            else
+                trimmed.clear();
+        }
+
+        if (trimmed.rfind("#extension", 0) == 0 &&
+            trimmed.find("GL_GOOGLE_include_directive") != std::string::npos)
+        {
+            result += "// " + line + "\n";
+            continue;
+        }
+
+        if (trimmed.rfind("#include", 0) == 0)
+        {
+            auto q1 = trimmed.find('"');
+            auto q2 = trimmed.find('"', q1 + 1);
+            if (q1 != std::string::npos && q2 != std::string::npos)
+            {
+                std::string incPath = trimmed.substr(q1 + 1, q2 - q1 - 1);
+                bool found = false;
+                for (const auto& d : includeDirs)
+                {
+                    auto full = d / incPath;
+                    auto normal = std::filesystem::weakly_canonical(full);
+                    if (std::filesystem::exists(normal))
+                    {
+                        std::string key = normal.string();
+                        if (guardSet.count(key))
+                        {
+                            result += "// already included: " + incPath + "\n";
+                        }
+                        else
+                        {
+                            guardSet.insert(key);
+                            std::string incSrc = ReadFileToString(normal);
+                            if (!incSrc.empty())
+                                result += ResolveIncludes(incSrc, includeDirs, guardSet);
+                        }
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    result += line + "\n";
+            }
+            else
+            {
+                result += line + "\n";
+            }
+        }
+        else
+        {
+            result += line + "\n";
+        }
+    }
+    return result;
 }
 
 } // namespace Vulkitten

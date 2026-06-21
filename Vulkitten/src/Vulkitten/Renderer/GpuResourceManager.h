@@ -61,10 +61,12 @@ struct GpuResourceSlot
 // replace them.
 // ============================================================
 
+class FileSystem;
+
 class VKT_API GpuResourceManager : public IGpuResourceManager
 {
 public:
-    GpuResourceManager() = default;
+    explicit GpuResourceManager(FileSystem& fileSystem);
     ~GpuResourceManager() = default;
 
     // ---- Resource Creation (returns handle, defers GPU allocation) ----
@@ -119,12 +121,32 @@ public:
     // maxFramesInFlight frames and have no external references.
     void Gc(uint32_t maxFramesInFlight) override;
 
+    // ---- Shader Loading (formerly ShaderManager) ----
+
+    uint64_t LoadShader(const std::string& virtualPath) override;
+    const ShaderData* GetShaderData(uint64_t handle) const override;
+
     // ---- Queries ----
 
     size_t GetResourceCount() const override { return m_Slots.size() - m_FreeIndices.size(); }
     size_t GetSlotCount()    const { return m_Slots.size(); }
 
 private:
+    // Shader loading helpers (from ShaderManager)
+    uint64_t AllocateShaderHandle();
+    static std::string ReadFileToString(const std::filesystem::path& path);
+    static void        CollectIncludeDirs(std::vector<std::filesystem::path>& outDirs,
+                                          const std::filesystem::path& baseDir);
+    static std::string ResolveIncludes(const std::string& source,
+                                       const std::vector<std::filesystem::path>& includeDirs,
+                                       std::unordered_set<std::string>& guardSet);
+
+    FileSystem& m_FileSystem;
+
+    // Shader storage
+    std::unordered_map<uint64_t, ShaderData> m_Shaders;
+    uint32_t          m_NextShaderIndex = 0;
+    std::vector<uint32_t> m_FreeShaderIndices;
     uint32_t AllocateSlot();
     bool     ValidateHandle(uint32_t index, uint16_t generation) const;
 
