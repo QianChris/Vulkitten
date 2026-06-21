@@ -7,6 +7,7 @@
 
 #include "Vulkitten/Renderer/FrameContext.h"
 #include "Vulkitten/RHI/ICommandBuffer.hpp"
+#include "Vulkitten/Renderer/Backend/OpenGL/GLCommandBuffer.h"
 #include "Vulkitten/Perf/Instrumentor.h"
 
 #include <cstring>
@@ -90,10 +91,9 @@ void OpenGLDevice::endFrame(FrameContext /*ctx*/)
 // Command Buffer (stub until Task 12)
 // ============================================================
 
-ICommandBuffer* OpenGLDevice::createCommandBuffer(FrameContext /*ctx*/)
+rhi::ICommandBuffer* OpenGLDevice::createCommandBuffer(FrameContext /*ctx*/)
 {
-    // [HACK: GLCommandBuffer 在 Task 12 创建]
-    return nullptr;
+    return new GLCommandBuffer(*this);
 }
 
 // ============================================================

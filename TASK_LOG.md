@@ -335,3 +335,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: 重写 `OpenGLDevice.h/.cpp` 实现 IDevice 全部方法。新增内部 slot-based Handle 分配池(AllocHandle/GetSlot/FindFreeSlot+Generation ABA 保护)。实现 beginFrame→FrameContext 含 ring buffer 帧索引、endFrame→glfwSwapBuffers。createBuffer→glGenBuffers+glBufferData(根据 desc.Usage 选 target)、createTexture→glGenTextures+glTexImage2D(ToGLFormat/ToGLBaseFormat 转换)、createSampler→glGenSamplers 完整 filter/wrap/aniso 设置、createPipeline→glCreateProgram(占位,slot 映射表延后)、createFramebuffer→glGenFramebuffers 支持多 color+DS attachment。onResize→glViewport、waitIdle→glFinish。createShader/createGeometry/createRenderPass/createCommandBuffer 保持 [HACK] 桩。ToGLFormat/ToGLBaseFormat 静态转换函数映射 rhi::Format→GLenum。所有 3 个目标编译通过。
+
+## Task 12: GLCommandBuffer — OpenGL ICommandBuffer 实现
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 `GLCommandBuffer.h/.cpp` 实现 `rhi::ICommandBuffer`。OpenGL 立即执行模式+状态缓存：Begin/End 重置状态追踪、Barrier 空实现(GL 隐式同步)、BeginRenderPass→glBindFramebuffer+glClear(解析 ClearValues 数组)、EndRenderPass 关闭 FBO、BindPipeline/BindGeometry 冗余绑定跳过(差量更新)。BindUniformBuffer/BindStorageBuffer/BindTexture/PushConstants/Draw/DrawIndexed/CopyBuffer 保留 [HACK] 桩(Task 14 完整实现)。DispatchCompute→glDispatchCompute 已实现。Debug→glPushDebugGroup/glPopDebugGroup。修复 IDevice 中 ICommandBuffer 命名空间问题(从 Vulkitten:: 移至 Vulkitten::rhi::)。所有 3 个目标编译通过。

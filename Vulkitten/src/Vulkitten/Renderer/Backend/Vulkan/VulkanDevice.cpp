@@ -135,7 +135,7 @@ void VulkanDevice::endFrame(FrameContext /*ctx*/)
 
 // ---- Command Buffer (stub until Task 16) ----
 
-ICommandBuffer* VulkanDevice::createCommandBuffer(FrameContext /*ctx*/)
+rhi::ICommandBuffer* VulkanDevice::createCommandBuffer(FrameContext /*ctx*/)
 {
     // [HACK: 抽象层缺 VkCommandBuffer — Task 16 创建]
     return nullptr;

@@ -30,7 +30,7 @@ public:
     void endFrame(FrameContext ctx) override;
 
     // ---- IDevice Command Buffer (stub until Task 16) ----
-    ICommandBuffer* createCommandBuffer(FrameContext ctx) override;
+    rhi::ICommandBuffer* createCommandBuffer(FrameContext ctx) override;
 
     // ---- IDevice Resource Creation (stubs until Task 15) ----
     rhi::BufferHandle   createBuffer(const rhi::BufferDesc& desc, const void* initialData = nullptr) override;

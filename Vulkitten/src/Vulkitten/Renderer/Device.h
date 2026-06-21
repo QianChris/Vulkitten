@@ -13,7 +13,7 @@ namespace Vulkitten {
 
 // Forward declarations
 struct FrameContext;
-class ICommandBuffer;
+namespace rhi { class ICommandBuffer; }
 
 // ============================================================
 // ShaderBytecode — shader binary data + entry point
@@ -56,8 +56,7 @@ public:
     // ---- Command Buffer ----
     // Allocate an ICommandBuffer from the FrameContext's command pool.
     // The returned buffer is valid for the duration of this frame.
-    // [HACK: raw pointer until ICommandBuffer is defined (Task 6)]
-    virtual ICommandBuffer* createCommandBuffer(FrameContext ctx) = 0;
+    virtual rhi::ICommandBuffer* createCommandBuffer(FrameContext ctx) = 0;
 
     // ---- Resource Creation (all return rhi::Handle<>) ----
     virtual rhi::BufferHandle   createBuffer(const rhi::BufferDesc& desc, const void* initialData = nullptr) = 0;
