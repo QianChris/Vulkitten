@@ -310,3 +310,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: 更新 `RHI/RHIPipelineDesc.hpp`，新增 `TextureSlot` 结构体(slot/SlotType::Sampled|Storage/Stages)和 `BufferSlot` 结构体(slot/SlotType::Uniform|Storage|PushConstant/Stages/Size)。PipelineDesc 新增 `std::vector<TextureSlot> TextureSlots` 和 `std::vector<BufferSlot> BufferSlots` 成员。后端在 createPipeline() 时读取这些槽位声明预构建 descriptor layout（Vulkan: VkDescriptorSetLayout，GL: uniform location↔texture unit 映射表）。消除原 SpriteRenderPass 重构任务中的 [HACK: 抽象层缺TextureSlot管理]。AGENTS.md RHI 条目已更新。所有 3 个目标编译通过。
+
+## Task 7: RHI/ICommandBuffer.hpp — 命令录制抽象接口
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 `Vulkitten/src/Vulkitten/RHI/ICommandBuffer.hpp`，定义纯虚命令录制接口。20+ 方法覆盖完整 GPU 命令集：Begin/End 生命周期、Barrier(全局+纹理)、BeginRenderPass(ClearValues 数组)/EndRenderPass、BindPipeline/BindGeometry、slot 描述符绑定(BindUniformBuffer/BindStorageBuffer/BindTexture/BindStorageTexture)、PushConstants(Data+Size+Offset)、Draw/DrawIndexed/DispatchCompute、CopyBuffer/CopyBufferToTexture/CopyTextureToBuffer、BeginDebugLabel/EndDebugLabel/InsertDebugMarker。C++17 兼容(Data ptr+Size 替代 std::span)。绑定 slot 必须是 PipelineDesc TextureSlots/BufferSlots 声明的子集。AGENTS.md 新增 ICommandBuffer 条目。所有 3 个目标编译通过。
