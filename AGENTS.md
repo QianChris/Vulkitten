@@ -92,7 +92,7 @@ No test framework configured. Verify changes via successful builds and manual ex
   - `RenderGraph` — command-based pass system with `Execute()` iterating passes and dispatching commands.
   - `RenderSystem` — ECS System that creates `RenderCommand`s from components. Receives RenderGraph via SceneContext injection.
 - **Vulkan Backend** (`Renderer/Backend/Vulkan/`): Skeleton implementation with all IRenderer/IDevice/IGpuResourceManager interfaces satisfied. `VulkanInstance` wraps VkInstance + validation; `VulkanDevice` handles physical/logical device creation; `VkSwapchain` manages surface + swapchain; `VkFrameContext`/`VkRenderContext` per-frame/per-pass state; `VkGpuResourceManager` handle-based resource management; `VkShader`/`VkPipeline` pipeline creation stubs; `VkRenderer` top-level IRenderer impl. Select backend via `Application::SetBackend(RendererBackend::Vulkan)` before construction.
-- **GPU Particles**: Direct OpenGL compute shaders (glDispatchCompute, SSBOs, indirect draw) — bypasses all abstractions
+- **RHI (Rendering Hardware Interface)** (`RHI/`): New abstraction layer under `Vulkitten::rhi` namespace providing backend-agnostic rendering primitives. `RHI/Core/Types.hpp` centralizes all rendering types (Extent2D/3D, Viewport, ClearValue, ShaderStage, BufferUsage, TextureUsage, MemoryProperty, PipelineStage, AccessFlags, ImageLayout, LoadOp/StoreOp, FilterMode/WrapMode, etc.) with zero API dependencies. Additional RHI headers (Format, Handle, PipelineDesc) will be added incrementally as Tasks 2-4. All types are pure C++17 structs/enums — no Vulkan or OpenGL types appear in RHI headers.
 - **Entry Point**: Implement `Vulkitten::CreateApplication()` returning `Application*`
 
 ---

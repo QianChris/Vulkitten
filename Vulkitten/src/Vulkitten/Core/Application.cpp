@@ -33,7 +33,9 @@ namespace Vulkitten
         VKT_ASSERT(!s_Instance, "Application already exists!");
         s_Instance = this;
 
-        m_Window.reset(Window::Create());
+        WindowProps windowProps;
+        windowProps.VulkanMode = (s_Backend == RendererBackend::Vulkan);
+        m_Window.reset(Window::Create(windowProps));
         m_Window->SetEventCallback(VKT_BIND_EVENT_FN(Application::OnEvent));
 
         // Build RendererConfig (shader loading is now handled by IGpuResourceManager)

@@ -278,3 +278,10 @@
 - **Start**: 2026-06-19
 - **End**: 2026-06-19
 - **Summary**: Task 12: Application constructor now calls Engine::Get().Init() first, creates Window before RenderContext (needed for backend context), then creates GraphicContext wrapping RenderContext. Task 13: Sandbox ExampleLayer2 adapted — m_Scene changed from Ref<Scene> to Scope<Scene>, created via Engine::Get().CreateEmptyScene(). Sandbox2D.h and ExampleLayer.h remain excluded from build. Task 14: Added OnEvent example in ExampleLayer2 — pressing Space triggers KeyPressedEvent dispatch, modifies all SpriteRendererComponent::Color to red. Demonstrates the OnEvent→Component pattern where events only modify component data, and Scene::OnUpdate reads the updated components next frame. All 3 targets compile.
+
+---
+
+## Task 1: RHI/Core/Types.hpp — 集中化渲染基础类型 (新架构 Phase 1)
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 `Vulkitten/src/Vulkitten/RHI/Core/Types.hpp`，在 `Vulkitten::rhi` 命名空间下集中定义所有渲染基础类型。包含 Extent2D/3D、Offset2D/3D、Rect2D、Viewport、ClearColor/ClearDepthStencil/ClearValue(union)、ShaderStage(bitflag)、IndexType、BufferUsage(bitflag)、TextureUsage(bitflag)、MemoryProperty(bitflag)、FilterMode、MipMode、WrapMode、PipelineStage(bitflag)、AccessFlags(bitflag)、ImageLayout、LoadOp、StoreOp。所有 bitflag 枚举均提供 operator| 和 HasUsage/HasStage 查询辅助函数。零 API 依赖（仅 `<cstdint>` 和 `<array>`）。AGENTS.md 新增 RHI 子系统条目。所有 3 个目标编译通过。
