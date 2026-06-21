@@ -3,7 +3,7 @@
 
 #include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Renderer/IRenderer.h"
-#include "Vulkitten/Renderer/GpuResourceManager.h"
+#include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLTexture.h"
 
 #include "Vulkitten/Perf/Instrumentor.h"

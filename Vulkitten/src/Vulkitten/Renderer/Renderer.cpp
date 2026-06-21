@@ -2,7 +2,7 @@
 #include "Renderer.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRendererAPI.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLDevice.h"
-#include "Vulkitten/Renderer/GpuResourceManager.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLGpuResourceManager.h"
 
 #include "Vulkitten/Renderer/Passes/PreparePass.h"
 #include "Vulkitten/Renderer/Passes/GpuParticlePass.h"
@@ -39,7 +39,7 @@ void Renderer::Init()
 
     // Create OpenGL backend dependencies internally
     m_Device = CreateScope<OpenGLDevice>();
-    m_Resources = CreateScope<GpuResourceManager>(*m_Config.FileSys);
+    m_Resources = CreateScope<OpenGLGpuResourceManager>(*m_Config.FileSys);
 
     m_RendererAPI = new OpenGLRendererAPI();
     m_RendererAPI->Init();

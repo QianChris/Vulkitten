@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
-#include "Vulkitten/Renderer/GpuResourceManager.h"
 
 namespace Vulkitten {
 

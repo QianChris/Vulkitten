@@ -40,6 +40,11 @@
 - **End**: 2026-06-21
 - **Summary**: 删除 GraphicContext.h/.cpp（已无外部调用者，SwapBuffers 已迁至 EndFrame）和 RendererSubsystem.h/.cpp（过渡单例，已被 IRenderer::Get() 取代）。Shader.h 移除 friend class RendererSubsystem。Buffer.cpp 移除 RendererSubsystem.h 误引用。所有 3 个目标编译通过。
 
+## Task 2: GpuResourceManager 移至 Backend/OpenGL/OpenGLGpuResourceManager
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: GpuResourceManager 重命名为 OpenGLGpuResourceManager 并移至 Backend/OpenGL/。GpuTextureDesc/GpuBufferDesc/GpuResourceSlot 结构体移至 IGpuResourceManager.h（平台无关层）。Renderer.cpp 改为 CreateScope<OpenGLGpuResourceManager>。VkGpuResourceManager.h 移除对旧 GpuResourceManager.h 的依赖。Buffer.cpp/Texture.cpp 改为引用 IGpuResourceManager.h。旧文件已删除。所有 3 个目标编译通过。
+
 ## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
 - **Start**: 2026-06-20
 - **End**: 2026-06-20

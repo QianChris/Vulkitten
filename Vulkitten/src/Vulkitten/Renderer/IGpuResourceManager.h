@@ -9,10 +9,37 @@
 
 namespace Vulkitten {
 
-// Forward declarations of descriptor types
-struct GpuTextureDesc;
-struct GpuBufferDesc;
-struct GpuResourceSlot;
+// ============================================================
+// Resource Descriptors (platform-agnostic)
+// ============================================================
+
+struct GpuTextureDesc
+{
+    uint32_t Width = 0;
+    uint32_t Height = 0;
+};
+
+struct GpuBufferDesc
+{
+    size_t Size = 0;
+};
+
+// ============================================================
+// Internal Resource Slot
+// ============================================================
+
+struct GpuResourceSlot
+{
+    enum class Type { None, Texture, Buffer } type = Type::None;
+    uint16_t generation = 0;
+    bool alive = false;
+    bool deferred = true;
+    uint64_t gpuHandle = 0;
+    uint32_t lastUsedFrame = 0;
+    GpuTextureDesc textureDesc;
+    GpuBufferDesc  bufferDesc;
+    std::string debugName;
+};
 
 // ============================================================
 // ShaderData — preprocessed shader source and metadata
