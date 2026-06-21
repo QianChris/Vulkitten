@@ -295,3 +295,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: 创建 `Vulkitten/src/Vulkitten/RHI/Handle.hpp`，定义 `rhi::Handle<Tag>` 模板类，结合 RHI Design 的 Tag 强类型编译期安全（BufferTag/TextureTag/ShaderTag/PipelineTag/GeometryTag/SamplerTag/RenderPassTag/FramebufferTag）和现有引擎的 generation 计数器防 use-after-free（ABA 保护）。Id=0 表示 Null Handle。提供 Hash 结构体用于 unordered_map。类型别名：BufferHandle/TextureHandle/ShaderHandle/PipelineHandle/GeometryHandle/SamplerHandle/RenderPassHandle/FramebufferHandle。将逐步替代 Renderer/Resources/ResourceHandle.h。所有 3 个目标编译通过。
+
+## Task 4: RHI/RHIPipelineDesc.hpp — 管线/几何/采样器描述符
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: 创建 `Vulkitten/src/Vulkitten/RHI/RHIPipelineDesc.hpp`，定义三个核心描述符结构体。**PipelineDesc**：包含 vertexShader/fragmentShader/computeShader 句柄、vertexLayout(VertexAttribute[] 含 location/Format/offset/bufferSlot/stride)、RasterState(CullMode/FrontFace/PolygonMode/depthClamp/scissor)、DepthStencilState(CompareOp + stencil)、BlendState[](BlendFactor/BlendOp/writeMask)、pushConstantsSize——顶点格式在 Pipeline 而非 Geometry。**GeometryDesc**：vertexBuffers[8]+indexBuffer+vertexCount/indexCount——不含任何顶点格式信息（格式由渲染时的 Pipeline 决定），支持最多 8 个 VBO 流。**SamplerDesc**：MagFilter/MinFilter/Mip/WrapU/WrapV/WrapW/MaxAnisotropy。所有枚举内嵌于结构体以保持命名空间整洁。Phase 1(RHI 基础类型)完成，AGENTS.md 已更新。所有 3 个目标编译通过。
