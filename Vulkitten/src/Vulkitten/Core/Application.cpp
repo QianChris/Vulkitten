@@ -186,6 +186,12 @@ namespace Vulkitten
 
             // GpuResourceManager GC: advance frame counter, then collect
             // resources that haven't been referenced for 3+ frames.
+            if (s_Backend == RendererBackend::Vulkan && m_VkRenderer)
+            {
+                m_VkRenderer->GetResourceManager().TickFrame();
+                m_VkRenderer->GetResourceManager().Gc(3);
+            }
+            else if (m_Resources)
             {
                 m_Resources->TickFrame();
                 m_Resources->Gc(3);
