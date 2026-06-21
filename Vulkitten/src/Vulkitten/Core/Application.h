@@ -43,7 +43,7 @@ namespace Vulkitten
     private:
         bool OnWindowClose(WindowCloseEvent& e);
         bool OnWindowResize(WindowResizeEvent& e);
-
+        
         // Backend-agnostic IRenderer (OpenGL or Vulkan)
         Scope<IRenderer>   m_Renderer;
         Scope<ShaderManager> m_ShaderMgr;

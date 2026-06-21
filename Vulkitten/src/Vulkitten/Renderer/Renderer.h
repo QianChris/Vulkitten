@@ -10,16 +10,14 @@
 namespace Vulkitten {
 
 class IDevice;
-class OpenGLDevice;
-class GpuResourceManager;
-class ShaderManager;
+class IGpuResourceManager;
 
 // ============================================================
 // Renderer — OpenGL implementation of IRenderer.
 //
-// Owns all OpenGL backend dependencies: OpenGLDevice,
-// GpuResourceManager, RenderGraph, and ShaderLibrary.
-// Created by Application via RendererConfig.
+// All platform-specific types (OpenGLDevice, GpuResourceManager)
+// are hidden in the .cpp file. The header only exposes IRenderer
+// interface types (IDevice, IGpuResourceManager).
 // ============================================================
 class VKT_API Renderer : public IRenderer
 {
@@ -45,21 +43,20 @@ public:
     // ---- IRenderer Window Events ----
     void OnWindowResize(uint32_t width, uint32_t height) override;
 
-    // ---- Internal Access ----
+    // ---- Internal (used by Passes via static_cast<Renderer&>) ----
     RendererAPI* GetRendererAPI() { return m_RendererAPI; }
-    GpuResourceManager& GetGpuResourceManager() { return *m_Resources; }
 
     inline static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 
 private:
     const RendererConfig& m_Config;
 
-    Scope<OpenGLDevice>    m_Device;
-    Scope<GpuResourceManager> m_Resources;
-    RenderGraph*           m_RenderGraph = nullptr;
-    RendererAPI*           m_RendererAPI = nullptr;
-    ShaderLibrary          m_ShaderLibrary;
-    Scope<FrameContext>    m_FrameContext;
+    Scope<IDevice>             m_Device;
+    Scope<IGpuResourceManager> m_Resources;
+    RenderGraph*               m_RenderGraph = nullptr;
+    RendererAPI*               m_RendererAPI = nullptr;
+    ShaderLibrary              m_ShaderLibrary;
+    Scope<FrameContext>        m_FrameContext;
 };
 
 } // namespace Vulkitten
