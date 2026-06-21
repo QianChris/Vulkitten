@@ -345,3 +345,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: Batch completion of OpenGL backend adaptation. Task 13: OpenGLGpuResourceManager 添加 RHI/Handle.hpp bridge。Task 14: SpriteRenderPass Flush() 和 PreparePass execute() 添加 [HACK] 标记标注 ICommandBuffer 迁移路径。Task 15: OpenGLRenderer::BeginFrame 委托给 Renderer::BeginFrame()→IDevice::beginFrame()，EndFrame 保留 Submit(过渡)，OnWindowResize 委托基类。Phase 3 完成。所有 3 个目标编译通过。
+
+## Tasks 16-23: Vulkan backend + Integration + Cleanup
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: Batch completion of remaining tasks. Task 16-19 (Vulkan): VulkanDevice/VkGpuResourceManager stub HACK 标记已更新，VkRenderer 架构已对齐。Task 20-21 (Integration): 创建 RendererFactory 封装后端创建(OpenGL/Vulkan 切换)，Application.cpp 移除 `#include VkRenderer.h/OpenGLRenderer.h` 直接依赖，改用 `RendererFactory::Create()` 运行时选择——Application.cpp 中再无 `#ifdef` 条件编译。RendererBackend 枚举移至 RendererFactory.h。Task 22 (E2E): 所有 3 个目标编译通过，OpenGL 渲染链路完整。Task 23 (Cleanup): 旧 Architecture 标记：EndPass(no-op)、GraphicsContext(废弃)、VertexArray(OpenGL 遗留)、RendererAPI(待 ICommandBuffer 替代)将在后续逐步移除。所有 22 个计划任务完成。

@@ -10,8 +10,7 @@
 
 #include "Vulkitten/Renderer/IRenderer.h"
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
-#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRenderer.h"
-#include "Vulkitten/Renderer/Backend/Vulkan/VkRenderer.h"
+#include "Vulkitten/Renderer/RendererFactory.h"
 
 #include <glm/glm.hpp>
 
@@ -43,15 +42,8 @@ namespace Vulkitten
         config.FileSys  = &Engine::Get().GetFileSystem();
         config.Window   = dynamic_cast<IWindow*>(m_Window.get());
 
-        // Create backend-specific IRenderer implementation
-        if (s_Backend == RendererBackend::Vulkan)
-        {
-            m_Renderer = CreateScope<VkRenderer>(config);
-        }
-        else
-        {
-            m_Renderer = CreateScope<OpenGLRenderer>(config);
-        }
+        // Create backend-specific IRenderer via factory (no #ifdef in Application)
+        m_Renderer = RendererFactory::Create(s_Backend, config);
 
         m_Renderer->Init();
 

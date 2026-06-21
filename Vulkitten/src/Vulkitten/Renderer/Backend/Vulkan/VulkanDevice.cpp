@@ -120,7 +120,7 @@ void VulkanDevice::Shutdown()
 #endif
 }
 
-// ---- Frame Lifecycle (stubs until Task 15) ----
+// ---- Frame Lifecycle ----
 
 FrameContext VulkanDevice::beginFrame()
 {

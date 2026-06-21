@@ -7,14 +7,13 @@
 
 #include "Vulkitten/ImGui/ImGuiLayer.h"
 
+#include "Vulkitten/Renderer/RendererFactory.h"
+
 #include <chrono>
 
 namespace Vulkitten
 {
     class IRenderer;
-
-    // Backend selection
-    enum class RendererBackend { OpenGL, Vulkan };
 
     class VKT_API Application
     {
