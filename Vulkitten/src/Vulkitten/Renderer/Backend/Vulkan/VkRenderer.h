@@ -46,6 +46,10 @@ public:
     RenderGraph*         GetRenderGraph() override     { return m_RenderGraph; }
     ShaderLibrary&       GetShaderLibrary() override   { return m_ShaderLibrary; }
 
+    // Vulkan command recording
+    void BeginCommandBuffer(uint32_t imageIndex);
+    void EndCommandBuffer();
+
 private:
     const RendererConfig& m_Config;
 
@@ -55,6 +59,9 @@ private:
     Scope<VkGpuResourceManager>   m_Resources;
     Scope<FrameContext>           m_FrameContext;
     ShaderLibrary                 m_ShaderLibrary;
+
+    void* m_CommandPool = nullptr;       // VkCommandPool
+    void* m_CommandBuffer = nullptr;     // VkCommandBuffer (per-frame)
 
     RenderGraph* m_RenderGraph = nullptr;
 };

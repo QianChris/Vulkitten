@@ -65,6 +65,11 @@
 - **End**: 2026-06-21
 - **Summary**: Sandbox 保持 OpenGL 后端（SetBackend(OpenGL)）。验证完整渲染链路：IRenderer::BeginFrame→Layer::OnUpdate(ctx)→Execute→EndFrame→IDevice::Submit(SwapBuffers)。所有资源通过 IGpuResourceManager 的 CreateShaderFromSpv/GetShader 创建。所有 3 个目标编译通过。
 
+## Task 8: Vulkan 最小清屏渲染
+- **Start**: 2026-06-21
+- **End**: 2026-06-21
+- **Summary**: VkSwapchain 重写为真实 Vulkan 实现：CreateSurface 通过 glfwCreateWindowSurface 创建 VkSurfaceKHR；CreateSwapchain 选择 surface format+present mode+image count→vkCreateSwapchainKHR；CreateImageViews 为每个 swapchain image 创建 VkImageView；CreateRenderPass 创建带 color clear attachment 的 VkRenderPass；CreateFramebuffers 为每帧创建 VkFramebuffer。VkRenderer 添加 VkCommandPool+VkCommandBuffer 创建（Init），BeginFrame 中 AcquireNextImage+BindCommandBuffer+Clear+EndCommandBuffer 完整录制清屏命令（暗灰蓝色 0.1,0.1,0.15）。EndFrame 委托 IDevice::Submit。所有 3 个目标编译通过。Sandbox 设置 Vulkan 后端即可运行看到清屏效果。
+
 ## Task 1: 平台层抽象接口 IWindow/ISurface/SurfaceDesc
 - **Start**: 2026-06-20
 - **End**: 2026-06-20
