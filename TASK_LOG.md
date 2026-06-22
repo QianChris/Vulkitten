@@ -375,3 +375,8 @@
 - **Start**: 2026-06-22
 - **End**: 2026-06-22
 - **Summary**: Task 10: OpenGLRenderer 移除 m_RendererAPI(OpenGLRendererAPI)成员、GetRendererAPI()访问器、RendererAPI.h 依赖。OnWindowResize 委托给 Renderer 基类(IDevice::onResize+glViewport)。Task 11-12: SpriteRenderPass::Flush 改为获取 ICommandBuffer→DrawIndexed，PreparePass 改为 ICommandBuffer::BeginRenderPass(clearValues 数组)。修复 ClearValue union 默认构造。Task 13: 删除 EndPass 注册和 include。Buffer/Texture/Framebuffer/Shader/VertexArray 工厂方法移除 GetAPI() switch 直接创建 OpenGL 实现。所有 3 个目标编译通过。
+
+## Task 14 (新): VulkanDevice createBuffer + createTexture 实现
+- **Start**: 2026-06-22
+- **End**: 2026-06-22
+- **Summary**: VulkanDevice 新增内部 GpuSlot 池(GpuHandle+GpuHandle2 存储 VkBuffer+VkDeviceMemory 或 VkImage+VkImageView)。createBuffer: BufferUsage→VkBufferUsageFlags→vkCreateBuffer+vkAllocateMemory(HOST_VISIBLE|HOST_COHERENT)+vkBindBufferMemory+initialData vkMapMemory 上传→BufferHandle。createTexture: TextureUsage→VkImageUsageFlags→vkCreateImage(DEVICE_LOCAL)+vkAllocateMemory+vkBindImageMemory+vkCreateImageView→TextureHandle。FindMemoryType 辅助函数。AllocHandle/GetSlot/FindFreeSlot 模板实现。slot 0 预留为 null。所有 3 个目标编译通过(含 VKT_HAS_VULKAN)。

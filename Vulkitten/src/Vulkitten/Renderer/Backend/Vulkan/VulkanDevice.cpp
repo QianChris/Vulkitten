@@ -16,6 +16,7 @@ namespace Vulkitten {
 VulkanDevice::VulkanDevice(VulkanInstance& instance)
     : m_Instance(instance)
 {
+    m_Slots.emplace_back(); // Reserve slot 0 as null
 }
 
 VulkanDevice::~VulkanDevice()
@@ -143,16 +144,149 @@ rhi::ICommandBuffer* VulkanDevice::createCommandBuffer(FrameContext /*ctx*/)
 
 // ---- Resource Creation (stubs until Task 15) ----
 
-rhi::BufferHandle VulkanDevice::createBuffer(const rhi::BufferDesc& /*desc*/, const void* /*initialData*/)
+rhi::BufferHandle VulkanDevice::createBuffer(const rhi::BufferDesc& desc, const void* initialData)
 {
-    // [HACK: 抽象层缺 Vk Buffer 创建 — Task 15 实现]
+#ifdef VKT_HAS_VULKAN
+    auto vkDevice = static_cast<VkDevice>(m_NativeDevice);
+    if (!vkDevice) return {};
+
+    VkBufferUsageFlags usage = 0;
+    if (rhi::HasUsage(desc.Usage, rhi::BufferUsage::Vertex))   usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    if (rhi::HasUsage(desc.Usage, rhi::BufferUsage::Index))    usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    if (rhi::HasUsage(desc.Usage, rhi::BufferUsage::Uniform))  usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    if (rhi::HasUsage(desc.Usage, rhi::BufferUsage::Storage))  usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    if (rhi::HasUsage(desc.Usage, rhi::BufferUsage::TransferSrc)) usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    if (rhi::HasUsage(desc.Usage, rhi::BufferUsage::TransferDst)) usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = desc.Size;
+    bufferInfo.usage = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VkBuffer vkBuf;
+    if (vkCreateBuffer(vkDevice, &bufferInfo, nullptr, &vkBuf) != VK_SUCCESS)
+        return {};
+
+    VkMemoryRequirements memReqs;
+    vkGetBufferMemoryRequirements(vkDevice, vkBuf, &memReqs);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memReqs.size;
+    allocInfo.memoryTypeIndex = FindMemoryType(memReqs.memoryTypeBits,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    VkDeviceMemory memory;
+    if (vkAllocateMemory(vkDevice, &allocInfo, nullptr, &memory) != VK_SUCCESS)
+    {
+        vkDestroyBuffer(vkDevice, vkBuf, nullptr);
+        return {};
+    }
+    vkBindBufferMemory(vkDevice, vkBuf, memory, 0);
+
+    // Upload initial data if provided
+    if (initialData)
+    {
+        void* mapped;
+        vkMapMemory(vkDevice, memory, 0, desc.Size, 0, &mapped);
+        memcpy(mapped, initialData, static_cast<size_t>(desc.Size));
+        vkUnmapMemory(vkDevice, memory);
+    }
+
+    auto handle = AllocHandle<rhi::BufferTag>();
+    GpuSlot* slot = GetSlot(handle.GetId());
+    if (slot)
+    {
+        slot->GpuHandle = reinterpret_cast<uint64_t>(vkBuf);
+        slot->GpuHandle2 = reinterpret_cast<uint64_t>(memory);
+    }
+    return handle;
+#else
+    (void)desc; (void)initialData;
     return {};
+#endif
 }
 
-rhi::TextureHandle VulkanDevice::createTexture(const rhi::TextureDesc& /*desc*/, const void* /*initialData*/)
+rhi::TextureHandle VulkanDevice::createTexture(const rhi::TextureDesc& desc, const void* initialData)
 {
-    // [HACK: 抽象层缺 Vk Texture 创建 — Task 15 实现]
+#ifdef VKT_HAS_VULKAN
+    auto vkDevice = static_cast<VkDevice>(m_NativeDevice);
+    if (!vkDevice) return {};
+
+    VkFormat vkFmt = VK_FORMAT_R8G8B8A8_UNORM; // TODO: full format mapping
+    VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    if (rhi::HasUsage(desc.Usage, rhi::TextureUsage::Sampled))
+        usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (rhi::HasUsage(desc.Usage, rhi::TextureUsage::ColorAttachment))
+        usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    if (rhi::HasUsage(desc.Usage, rhi::TextureUsage::DepthStencilAttachment))
+        usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+    VkImageCreateInfo imageInfo{};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.format = vkFmt;
+    imageInfo.extent = {desc.Extent.Width, desc.Extent.Height, 1};
+    imageInfo.mipLevels = desc.MipLevels;
+    imageInfo.arrayLayers = desc.ArrayLayers;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageInfo.usage = usage;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VkImage vkImage;
+    if (vkCreateImage(vkDevice, &imageInfo, nullptr, &vkImage) != VK_SUCCESS)
+        return {};
+
+    VkMemoryRequirements memReqs;
+    vkGetImageMemoryRequirements(vkDevice, vkImage, &memReqs);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memReqs.size;
+    allocInfo.memoryTypeIndex = FindMemoryType(memReqs.memoryTypeBits,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    VkDeviceMemory memory;
+    if (vkAllocateMemory(vkDevice, &allocInfo, nullptr, &memory) != VK_SUCCESS)
+    {
+        vkDestroyImage(vkDevice, vkImage, nullptr);
+        return {};
+    }
+    vkBindImageMemory(vkDevice, vkImage, memory, 0);
+
+    // Create image view
+    VkImageViewCreateInfo viewInfo{};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = vkImage;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = vkFmt;
+    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.levelCount = desc.MipLevels;
+    viewInfo.subresourceRange.layerCount = desc.ArrayLayers;
+
+    VkImageView vkView;
+    if (vkCreateImageView(vkDevice, &viewInfo, nullptr, &vkView) != VK_SUCCESS)
+    {
+        vkDestroyImage(vkDevice, vkImage, nullptr);
+        vkFreeMemory(vkDevice, memory, nullptr);
+        return {};
+    }
+
+    auto handle = AllocHandle<rhi::TextureTag>();
+    GpuSlot* slot = GetSlot(handle.GetId());
+    if (slot)
+    {
+        slot->GpuHandle = reinterpret_cast<uint64_t>(vkImage);
+        slot->GpuHandle2 = reinterpret_cast<uint64_t>(vkView);
+    }
+    (void)initialData;
+    return handle;
+#else
+    (void)desc; (void)initialData;
     return {};
+#endif
 }
 
 rhi::ShaderHandle VulkanDevice::createShader(rhi::ShaderStage /*stage*/, const ShaderBytecode& /*bytecode*/)
@@ -216,4 +350,52 @@ void VulkanDevice::Submit(FrameContext& /*frameContext*/)
     // [HACK: 抽象层缺完整 submit/present — Task 15 实现]
 }
 
+// ---- Handle Pool ----
+
+template<typename Tag>
+rhi::Handle<Tag> VulkanDevice::AllocHandle()
+{
+    uint32_t id = FindFreeSlot();
+    GpuSlot& slot = m_Slots[id];
+    slot.Alive = true;
+    return rhi::Handle<Tag>(id, slot.Generation);
+}
+
+VulkanDevice::GpuSlot* VulkanDevice::GetSlot(uint32_t id)
+{
+    if (id >= m_Slots.size()) return nullptr;
+    return &m_Slots[id];
+}
+
+uint32_t VulkanDevice::FindFreeSlot()
+{
+    if (!m_FreeIndices.empty())
+    {
+        uint32_t id = m_FreeIndices.back();
+        m_FreeIndices.pop_back();
+        m_Slots[id].Generation++;
+        m_Slots[id].GpuHandle = 0;
+        m_Slots[id].GpuHandle2 = 0;
+        return id;
+    }
+    m_Slots.emplace_back();
+    return static_cast<uint32_t>(m_Slots.size() - 1);
+}
+
+uint32_t VulkanDevice::FindMemoryType(uint32_t typeFilter, uint32_t properties)
+{
+#ifdef VKT_HAS_VULKAN
+    VkPhysicalDeviceMemoryProperties memProps;
+    vkGetPhysicalDeviceMemoryProperties(static_cast<VkPhysicalDevice>(m_PhysicalDevice), &memProps);
+    for (uint32_t i = 0; i < memProps.memoryTypeCount; i++)
+    {
+        if ((typeFilter & (1 << i)) &&
+            (memProps.memoryTypes[i].propertyFlags & properties) == properties)
+            return i;
+    }
+#endif
+    return 0;
+}
+
 } // namespace Vulkitten
+

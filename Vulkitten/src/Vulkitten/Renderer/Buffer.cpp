@@ -1,5 +1,6 @@
 #include "Buffer.h"
 
+#include "Vulkitten/Renderer/IRenderer.h"
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLBuffer.h"
 
