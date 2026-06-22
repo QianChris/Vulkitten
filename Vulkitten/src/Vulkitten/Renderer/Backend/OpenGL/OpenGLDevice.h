@@ -61,7 +61,16 @@ public:
 
     GpuSlot* GetSlot(uint32_t id);
 
+    // ---- Metadata for GLCommandBuffer (populated at create time) ----
+    const rhi::GeometryDesc* GetGeometryDesc(uint32_t id) const;
+    const std::vector<rhi::VertexAttribute>* GetPipelineVertexLayout(uint32_t id) const;
+
 private:
+    void StoreGeometryDesc(uint32_t id, const rhi::GeometryDesc& desc);
+    void StorePipelineVertexLayout(uint32_t id, const std::vector<rhi::VertexAttribute>& layout);
+
+    std::unordered_map<uint32_t, rhi::GeometryDesc> m_GeometryDescs;
+    std::unordered_map<uint32_t, std::vector<rhi::VertexAttribute>> m_PipelineVertexLayouts;
     template<typename Tag>
     rhi::Handle<Tag> AllocHandle();
     uint32_t FindFreeSlot();

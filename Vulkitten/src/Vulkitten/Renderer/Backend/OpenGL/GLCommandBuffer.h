@@ -4,6 +4,7 @@
 #include "Vulkitten/RHI/Handle.hpp"
 
 #include <cstdint>
+#include <unordered_map>
 
 namespace Vulkitten {
 
@@ -81,6 +82,9 @@ private:
     uint32_t m_CurrentGeometryId = 0;
     uint32_t m_CurrentFbo = 0;
     bool     m_InRenderPass = false;
+
+    // VAO cache: key = (pipelineId << 32) | geometryId, value = unsigned int VAO
+    std::unordered_map<uint64_t, uint32_t> m_VaoCache;
 };
 
 } // namespace Vulkitten

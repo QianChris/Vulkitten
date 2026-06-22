@@ -112,12 +112,95 @@ void GLCommandBuffer::BindGeometry(rhi::GeometryHandle geometry)
 {
     if (!geometry.IsValid())
         return;
+
     uint32_t gid = geometry.GetId();
-    if (gid == m_CurrentGeometryId)
-        return;
+    if (gid == m_CurrentGeometryId && m_CurrentPipelineId != 0)
+        return;  // Same geo + pipeline = VAO already bound
     m_CurrentGeometryId = gid;
 
-    // [HACK: lazy VAO creation from Pipeline vertexLayout + Geometry buffers — Task 14]
+    if (m_CurrentPipelineId == 0)
+        return;  // Can't create VAO without pipeline vertex layout
+
+    // VAO cache lookup
+    uint64_t vaoKey = (static_cast<uint64_t>(m_CurrentPipelineId) << 32) | gid;
+    auto vaoIt = m_VaoCache.find(vaoKey);
+    if (vaoIt != m_VaoCache.end())
+    {
+        glBindVertexArray(static_cast<GLuint>(vaoIt->second));
+        return;
+    }
+
+    // Lazy VAO creation
+    const auto* layout = m_Device.GetPipelineVertexLayout(m_CurrentPipelineId);
+    const auto* geoDesc = m_Device.GetGeometryDesc(gid);
+    if (!layout || !geoDesc)
+        return;
+
+    GLuint vao = 0;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    // Bind index buffer if present
+    if (geoDesc->IndexBuffer.IsValid())
+    {
+        auto* ibSlot = m_Device.GetSlot(geoDesc->IndexBuffer.GetId());
+        if (ibSlot && ibSlot->GpuHandle)
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(ibSlot->GpuHandle));
+    }
+
+    // Bind vertex buffers and set attributes
+    for (const auto& attr : *layout)
+    {
+        if (attr.BufferSlot >= geoDesc->VertexBufferCount)
+            continue;
+
+        auto& vbHandle = geoDesc->VertexBuffers[attr.BufferSlot];
+        if (!vbHandle.IsValid())
+            continue;
+
+        auto* vbSlot = m_Device.GetSlot(vbHandle.GetId());
+        if (!vbSlot || !vbSlot->GpuHandle)
+            continue;
+
+        GLuint glVb = static_cast<GLuint>(vbSlot->GpuHandle);
+        glBindBuffer(GL_ARRAY_BUFFER, glVb);
+
+        // Map rhi::Format to GL type/count
+        GLint  compCount = 0;
+        GLenum glType   = GL_FLOAT;
+        bool   normalized = false;
+        switch (attr.Format)
+        {
+            case rhi::Format::R32_FLOAT:       compCount = 1; glType = GL_FLOAT; break;
+            case rhi::Format::RG32_FLOAT:      compCount = 2; glType = GL_FLOAT; break;
+            case rhi::Format::RGB32_FLOAT:     compCount = 3; glType = GL_FLOAT; break;
+            case rhi::Format::RGBA32_FLOAT:    compCount = 4; glType = GL_FLOAT; break;
+            case rhi::Format::R32_UINT:        compCount = 1; glType = GL_UNSIGNED_INT; break;
+            case rhi::Format::R32_SINT:        compCount = 1; glType = GL_INT; break;
+            case rhi::Format::RG32_UINT:       compCount = 2; glType = GL_UNSIGNED_INT; break;
+            case rhi::Format::RGBA32_UINT:     compCount = 4; glType = GL_UNSIGNED_INT; break;
+            case rhi::Format::RGBA8_UNORM:     compCount = 4; glType = GL_UNSIGNED_BYTE; normalized = true; break;
+            default: compCount = static_cast<GLint>(rhi::FormatComponentCount(attr.Format)); break;
+        }
+
+        glEnableVertexAttribArray(attr.Location);
+        if (glType == GL_FLOAT && !normalized)
+            glVertexAttribPointer(attr.Location, compCount, glType, GL_FALSE,
+                                  static_cast<GLsizei>(attr.Stride),
+                                  reinterpret_cast<const void*>(static_cast<uintptr_t>(attr.Offset)));
+        else
+            glVertexAttribPointer(attr.Location, compCount, glType, normalized ? GL_TRUE : GL_FALSE,
+                                  static_cast<GLsizei>(attr.Stride),
+                                  reinterpret_cast<const void*>(static_cast<uintptr_t>(attr.Offset)));
+    }
+
+    glBindVertexArray(0); // Unbind to avoid accidental modification
+
+    // Cache the VAO (GLuint fits in uint32_t on all platforms)
+    m_VaoCache[vaoKey] = static_cast<uint32_t>(vao);
+
+    // Bind the newly created VAO
+    glBindVertexArray(vao);
 }
 
 // ---- Descriptors ----

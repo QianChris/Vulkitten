@@ -213,14 +213,28 @@ rhi::PipelineHandle OpenGLDevice::createPipeline(const rhi::PipelineDesc& desc)
     if (!program)
         return {};
 
-    // [HACK: 完整 pipeline 构建 — Task 12/14 与 GLCommandBuffer 配合实现。
-    //  此时读取 desc.TextureSlots/BufferSlots 构建 uniform location 映射表。
-    //  当前仅创建 GL program 占位。]
+    // Attach shaders if handles are valid
+    if (desc.VertexShader.IsValid())
+    {
+        auto* vsSlot = GetSlot(desc.VertexShader.GetId());
+        if (vsSlot && vsSlot->GpuHandle)
+            glAttachShader(program, static_cast<GLuint>(vsSlot->GpuHandle));
+    }
+    if (desc.FragmentShader.IsValid())
+    {
+        auto* fsSlot = GetSlot(desc.FragmentShader.GetId());
+        if (fsSlot && fsSlot->GpuHandle)
+            glAttachShader(program, static_cast<GLuint>(fsSlot->GpuHandle));
+    }
+    glLinkProgram(program);
 
     auto handle = AllocHandle<rhi::PipelineTag>();
     GpuSlot* slot = GetSlot(handle.GetId());
     if (slot)
         slot->GpuHandle = static_cast<uint64_t>(program);
+
+    // Store vertex layout for lazy VAO creation
+    StorePipelineVertexLayout(handle.GetId(), desc.VertexLayout);
 
     return handle;
 }
@@ -231,9 +245,8 @@ rhi::PipelineHandle OpenGLDevice::createPipeline(const rhi::PipelineDesc& desc)
 
 rhi::GeometryHandle OpenGLDevice::createGeometry(const rhi::GeometryDesc& desc)
 {
-    // [HACK: Geometry 创建 VBO/IBO — 惰性 VAO 由 GLCommandBuffer::bindGeometry 管理]
     auto handle = AllocHandle<rhi::GeometryTag>();
-    // Store the buffer handles and counts in GpuSlot metadata (future expansion)
+    StoreGeometryDesc(handle.GetId(), desc);
     return handle;
 }
 
@@ -361,4 +374,29 @@ void OpenGLDevice::Submit(FrameContext& /*frameContext*/)
         glfwSwapBuffers(static_cast<GLFWwindow*>(m_NativeWindow));
 }
 
+// ---- Metadata accessors ----
+
+void OpenGLDevice::StoreGeometryDesc(uint32_t id, const rhi::GeometryDesc& desc)
+{
+    m_GeometryDescs[id] = desc;
+}
+
+void OpenGLDevice::StorePipelineVertexLayout(uint32_t id, const std::vector<rhi::VertexAttribute>& layout)
+{
+    m_PipelineVertexLayouts[id] = layout;
+}
+
+const rhi::GeometryDesc* OpenGLDevice::GetGeometryDesc(uint32_t id) const
+{
+    auto it = m_GeometryDescs.find(id);
+    return it != m_GeometryDescs.end() ? &it->second : nullptr;
+}
+
+const std::vector<rhi::VertexAttribute>* OpenGLDevice::GetPipelineVertexLayout(uint32_t id) const
+{
+    auto it = m_PipelineVertexLayouts.find(id);
+    return it != m_PipelineVertexLayouts.end() ? &it->second : nullptr;
+}
+
 } // namespace Vulkitten
+

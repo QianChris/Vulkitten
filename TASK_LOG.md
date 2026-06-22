@@ -355,3 +355,8 @@
 - **Start**: 2026-06-22
 - **End**: 2026-06-22
 - **Summary**: OpenGLDevice::GetSlot 从 private 移至 public，GLCommandBuffer::BindPipeline 通过 pipeline.GetId()→m_Device.GetSlot(id)→GpuHandle(GLuint)→glUseProgram 实现完整管线绑定。差量去重（m_CurrentPipelineId 跳过重复绑定），无效 handle 打印 VKT_CORE_WARN 并跳过。所有 3 个目标编译通过。
+
+## Task 2 (新): GLCommandBuffer::BindGeometry + 惰性 VAO 创建
+- **Start**: 2026-06-22
+- **End**: 2026-06-22
+- **Summary**: OpenGLDevice 新增 m_GeometryDescs/m_PipelineVertexLayouts 元数据映射，createPipeline 存储 VertexLayout+链接 shader program，createGeometry 存储 GeometryDesc。GLCommandBuffer::BindGeometry 实现惰性 VAO：首次绑定(pipeline,geometry)对时创建 VAO——glGenVertexArrays→glBindBuffer(VBO/IBO)→glVertexAttribPointer(Format→GL type+count 映射表)→glEnableVertexAttribArray→缓存 VAO 到 m_VaoCache[key=(pipeId<<32)|geoId]。后续绑定直接从缓存 glBindVertexArray。支持 R32F/RG32F/RGB32F/RGBA32F/R32U/R32S/RGBA8_UNORM 等格式转换。所有 3 个目标编译通过。
