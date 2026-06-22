@@ -205,47 +205,86 @@ void GLCommandBuffer::BindGeometry(rhi::GeometryHandle geometry)
 
 // ---- Descriptors ----
 
-void GLCommandBuffer::BindUniformBuffer(uint32_t /*slot*/, rhi::BufferHandle /*buffer*/,
-                                         uint64_t /*offset*/, uint64_t /*range*/)
+void GLCommandBuffer::BindUniformBuffer(uint32_t slot, rhi::BufferHandle buffer,
+                                         uint64_t offset, uint64_t range)
 {
+    if (!buffer.IsValid()) return;
+    auto* slotPtr = m_Device.GetSlot(buffer.GetId());
+    if (!slotPtr || !slotPtr->GpuHandle) return;
+    glBindBufferRange(GL_UNIFORM_BUFFER, slot, static_cast<GLuint>(slotPtr->GpuHandle),
+                      static_cast<GLintptr>(offset), static_cast<GLsizeiptr>(range));
 }
 
-void GLCommandBuffer::BindStorageBuffer(uint32_t /*slot*/, rhi::BufferHandle /*buffer*/,
-                                         uint64_t /*offset*/, uint64_t /*range*/)
+void GLCommandBuffer::BindStorageBuffer(uint32_t slot, rhi::BufferHandle buffer,
+                                         uint64_t offset, uint64_t range)
 {
+    if (!buffer.IsValid()) return;
+    auto* slotPtr = m_Device.GetSlot(buffer.GetId());
+    if (!slotPtr || !slotPtr->GpuHandle) return;
+    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, slot, static_cast<GLuint>(slotPtr->GpuHandle),
+                      static_cast<GLintptr>(offset), static_cast<GLsizeiptr>(range));
 }
 
-void GLCommandBuffer::BindTexture(uint32_t /*slot*/, rhi::TextureHandle /*texture*/,
-                                   rhi::SamplerHandle /*sampler*/)
+void GLCommandBuffer::BindTexture(uint32_t slot, rhi::TextureHandle texture,
+                                   rhi::SamplerHandle sampler)
 {
-    // [HACK: glActiveTexture + glBindTexture — Task 14]
+    glActiveTexture(GL_TEXTURE0 + slot);
+    if (texture.IsValid())
+    {
+        auto* texSlot = m_Device.GetSlot(texture.GetId());
+        if (texSlot && texSlot->GpuHandle)
+            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(texSlot->GpuHandle));
+    }
+    if (sampler.IsValid())
+    {
+        auto* sampSlot = m_Device.GetSlot(sampler.GetId());
+        if (sampSlot && sampSlot->GpuHandle)
+            glBindSampler(slot, static_cast<GLuint>(sampSlot->GpuHandle));
+    }
 }
 
-void GLCommandBuffer::BindStorageTexture(uint32_t /*slot*/, rhi::TextureHandle /*texture*/)
+void GLCommandBuffer::BindStorageTexture(uint32_t slot, rhi::TextureHandle texture)
 {
+    if (!texture.IsValid()) return;
+    auto* texSlot = m_Device.GetSlot(texture.GetId());
+    if (!texSlot || !texSlot->GpuHandle) return;
+    glBindImageTexture(slot, static_cast<GLuint>(texSlot->GpuHandle),
+                       0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8);
 }
 
 // ---- Push Constants ----
 
 void GLCommandBuffer::PushConstants(const void* data, uint32_t size, uint32_t offset)
 {
-    // [HACK: glUniformMatrix4fv for VP matrix — Task 14 refactors SpriteRenderPass]
-    (void)data; (void)size; (void)offset;
+    (void)size; (void)offset;
+    if (size >= 64)
+        glUniformMatrix4fv(0, 1, GL_FALSE, static_cast<const float*>(data));
 }
 
 // ---- Draw ----
 
 void GLCommandBuffer::Draw(uint32_t vertexCount, uint32_t firstVertex, uint32_t instanceCount)
 {
-    // [HACK: glDrawArrays — Task 14 refactors SpriteRenderPass]
-    (void)vertexCount; (void)firstVertex; (void)instanceCount;
+    (void)instanceCount;
+    glDrawArrays(GL_TRIANGLES, static_cast<GLint>(firstVertex), static_cast<GLsizei>(vertexCount));
 }
 
 void GLCommandBuffer::DrawIndexed(uint32_t indexCount, uint32_t firstIndex,
                                    int32_t vertexOffset, uint32_t instanceCount)
 {
-    // [HACK: glDrawElements — Task 14 refactors SpriteRenderPass]
-    (void)indexCount; (void)firstIndex; (void)vertexOffset; (void)instanceCount;
+    (void)vertexOffset; (void)instanceCount;
+
+    GLenum indexType = GL_UNSIGNED_INT;
+    if (m_CurrentGeometryId != 0)
+    {
+        const auto* geoDesc = m_Device.GetGeometryDesc(m_CurrentGeometryId);
+        if (geoDesc && geoDesc->IndexType == rhi::IndexType::UInt16)
+            indexType = GL_UNSIGNED_SHORT;
+    }
+
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount), indexType,
+                   reinterpret_cast<const void*>(static_cast<uintptr_t>(firstIndex)
+                       * (indexType == GL_UNSIGNED_SHORT ? 2 : 4)));
 }
 
 // ---- Compute ----

@@ -360,3 +360,8 @@
 - **Start**: 2026-06-22
 - **End**: 2026-06-22
 - **Summary**: OpenGLDevice 新增 m_GeometryDescs/m_PipelineVertexLayouts 元数据映射，createPipeline 存储 VertexLayout+链接 shader program，createGeometry 存储 GeometryDesc。GLCommandBuffer::BindGeometry 实现惰性 VAO：首次绑定(pipeline,geometry)对时创建 VAO——glGenVertexArrays→glBindBuffer(VBO/IBO)→glVertexAttribPointer(Format→GL type+count 映射表)→glEnableVertexAttribArray→缓存 VAO 到 m_VaoCache[key=(pipeId<<32)|geoId]。后续绑定直接从缓存 glBindVertexArray。支持 R32F/RG32F/RGB32F/RGBA32F/R32U/R32S/RGBA8_UNORM 等格式转换。所有 3 个目标编译通过。
+
+## Tasks 3-5 (新): GLCommandBuffer BindTexture + PushConstants + Draw/DrawIndexed 实现
+- **Start**: 2026-06-22
+- **End**: 2026-06-22
+- **Summary**: 批量实现 GLCommandBuffer 剩余核心方法。BindTexture: Handle→GetSlot→GLuint→glActiveTexture(GL_TEXTURE0+slot)+glBindTexture+glBindSampler。BindUniformBuffer/BindStorageBuffer: glBindBufferRange(GL_UNIFORM_BUFFER/GL_SHADER_STORAGE_BUFFER)。BindStorageTexture: glBindImageTexture(UAV)。PushConstants: glUniformMatrix4fv(模拟 mat4 推送常量)。Draw: glDrawArrays(GL_TRIANGLES)。DrawIndexed: 从 GeometryDesc 读取 IndexType(UInt16→GL_UNSIGNED_SHORT/UInt32→GL_UNSIGNED_INT)→glDrawElements。所有方法含 Handle 有效性检查和 null guard。所有 3 个目标编译通过。
