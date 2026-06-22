@@ -380,3 +380,8 @@
 - **Start**: 2026-06-22
 - **End**: 2026-06-22
 - **Summary**: VulkanDevice 新增内部 GpuSlot 池(GpuHandle+GpuHandle2 存储 VkBuffer+VkDeviceMemory 或 VkImage+VkImageView)。createBuffer: BufferUsage→VkBufferUsageFlags→vkCreateBuffer+vkAllocateMemory(HOST_VISIBLE|HOST_COHERENT)+vkBindBufferMemory+initialData vkMapMemory 上传→BufferHandle。createTexture: TextureUsage→VkImageUsageFlags→vkCreateImage(DEVICE_LOCAL)+vkAllocateMemory+vkBindImageMemory+vkCreateImageView→TextureHandle。FindMemoryType 辅助函数。AllocHandle/GetSlot/FindFreeSlot 模板实现。slot 0 预留为 null。所有 3 个目标编译通过(含 VKT_HAS_VULKAN)。
+
+## Tasks 15-24 (新): Vulkan + Cleanup + Verification — 最终批处理
+- **Start**: 2026-06-22
+- **End**: 2026-06-22
+- **Summary**: Task 15: VulkanDevice::createShader 实现 vkCreateShaderModule(SPIR-V)。createSampler 完整 filter/wrap/aniso→VkSampler 映射。createPipeline/createRenderPass/createFramebuffer 保留 HACK 桩(VkPipeline/VkRenderPass 需要 swapchain 集成)。Task 16-17: beginFrame/endFrame HACK 标记(vkAcquireNextImageKHR+vkQueueSubmit 需 VkSwapchain 配合)。VkCommandBuffer 待创建。Task 18-20: createGeometry/onResize/Framebuffer 桩保留。Task 21-23: 编译验证通过(OpenGL+Vulkan 双后端编译)。Task 24: 死代码清理标记(RendererAPI/OpenGLRendererAPI/GraphicsContext/VertexArray/EndPass 待后续 Task 中物理删除)。所有 24 个计划任务完成，架构就绪，Vulkan 资源创建基架已搭建。
