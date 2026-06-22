@@ -90,12 +90,22 @@ void GLCommandBuffer::BindPipeline(rhi::PipelineHandle pipeline)
 {
     if (!pipeline.IsValid())
         return;
+
     uint32_t pid = pipeline.GetId();
     if (pid == m_CurrentPipelineId)
         return;
     m_CurrentPipelineId = pid;
 
-    // [HACK: resolve GL program from device slot — Task 14]
+    auto* slot = m_Device.GetSlot(pid);
+    if (!slot || !slot->Alive)
+    {
+        VKT_CORE_WARN("GLCommandBuffer::BindPipeline: invalid handle id={0}", pid);
+        return;
+    }
+
+    GLuint program = static_cast<GLuint>(slot->GpuHandle);
+    if (program)
+        glUseProgram(program);
 }
 
 void GLCommandBuffer::BindGeometry(rhi::GeometryHandle geometry)

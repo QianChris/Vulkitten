@@ -51,8 +51,7 @@ public:
     // ---- Legacy ----
     void Submit(FrameContext& frameContext) override;
 
-private:
-    // ---- Internal Handle Pool ----
+    // ---- Internal Handle Pool (public for GLCommandBuffer access) ----
     struct GpuSlot
     {
         uint64_t GpuHandle = 0;     // GLuint / GL program handle
@@ -60,9 +59,11 @@ private:
         bool     Alive = false;
     };
 
+    GpuSlot* GetSlot(uint32_t id);
+
+private:
     template<typename Tag>
     rhi::Handle<Tag> AllocHandle();
-    GpuSlot* GetSlot(uint32_t id);
     uint32_t FindFreeSlot();
 
     void*              m_NativeWindow = nullptr;

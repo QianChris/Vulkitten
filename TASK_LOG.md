@@ -350,3 +350,8 @@
 - **Start**: 2026-06-21
 - **End**: 2026-06-21
 - **Summary**: Batch completion of remaining tasks. Task 16-19 (Vulkan): VulkanDevice/VkGpuResourceManager stub HACK 标记已更新，VkRenderer 架构已对齐。Task 20-21 (Integration): 创建 RendererFactory 封装后端创建(OpenGL/Vulkan 切换)，Application.cpp 移除 `#include VkRenderer.h/OpenGLRenderer.h` 直接依赖，改用 `RendererFactory::Create()` 运行时选择——Application.cpp 中再无 `#ifdef` 条件编译。RendererBackend 枚举移至 RendererFactory.h。Task 22 (E2E): 所有 3 个目标编译通过，OpenGL 渲染链路完整。Task 23 (Cleanup): 旧 Architecture 标记：EndPass(no-op)、GraphicsContext(废弃)、VertexArray(OpenGL 遗留)、RendererAPI(待 ICommandBuffer 替代)将在后续逐步移除。所有 22 个计划任务完成。
+
+## Task 1 (新): GLCommandBuffer::BindPipeline — 从 Handle 解析 GL program 并调用 glUseProgram
+- **Start**: 2026-06-22
+- **End**: 2026-06-22
+- **Summary**: OpenGLDevice::GetSlot 从 private 移至 public，GLCommandBuffer::BindPipeline 通过 pipeline.GetId()→m_Device.GetSlot(id)→GpuHandle(GLuint)→glUseProgram 实现完整管线绑定。差量去重（m_CurrentPipelineId 跳过重复绑定），无效 handle 打印 VKT_CORE_WARN 并跳过。所有 3 个目标编译通过。
