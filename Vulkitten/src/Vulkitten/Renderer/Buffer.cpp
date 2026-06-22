@@ -1,6 +1,5 @@
 #include "Buffer.h"
 
-#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRenderer.h"
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLBuffer.h"
 
@@ -12,16 +11,7 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
     {
         VKT_PROFILE_FUNCTION();
 
-        Ref<VertexBuffer> result;
-        switch (OpenGLRenderer::GetAPI())
-        {
-            case RendererAPI::API::None:
-                VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
-                return nullptr;
-            case RendererAPI::API::OpenGL:
-                result = CreateRef<OpenGLVertexBuffer>(vertices, size);
-                break;
-        }
+        Ref<VertexBuffer> result = CreateRef<OpenGLVertexBuffer>(vertices, size);
 
         if (!result)
             return nullptr;
@@ -39,16 +29,7 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
     {
         VKT_PROFILE_FUNCTION();
 
-        Ref<VertexBuffer> result;
-        switch (OpenGLRenderer::GetAPI())
-        {
-            case RendererAPI::API::None:
-                VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
-                return nullptr;
-            case RendererAPI::API::OpenGL:
-                result = CreateRef<OpenGLVertexBuffer>(size);
-                break;
-        }
+        Ref<VertexBuffer> result = CreateRef<OpenGLVertexBuffer>(size);
 
         if (!result)
             return nullptr;
@@ -66,16 +47,7 @@ Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
     {
         VKT_PROFILE_FUNCTION();
 
-        Ref<IndexBuffer> result;
-        switch (OpenGLRenderer::GetAPI())
-        {
-            case RendererAPI::API::None:
-                VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
-                return nullptr;
-            case RendererAPI::API::OpenGL:
-                result = CreateRef<OpenGLIndexBuffer>(indices, count);
-                break;
-        }
+        Ref<IndexBuffer> result = CreateRef<OpenGLIndexBuffer>(indices, count);
 
         if (!result)
             return nullptr;

@@ -370,3 +370,8 @@
 - **Start**: 2026-06-22
 - **End**: 2026-06-22
 - **Summary**: Task 6: createShader 完整 SPIR-V→GL 编译——ShaderStage→GLenum→glCreateShader→glShaderBinary(GL_SHADER_BINARY_FORMAT_SPIR_V)→glSpecializeShader→错误日志→ShaderHandle。Task 9: OpenGLRenderer::EndFrame 改为调用 Renderer::EndFrame()→IDevice::endFrame()(glfwSwapBuffers)，OpenGLDevice::Submit 改为空 no-op(SwapBuffers 迁至 endFrame)。Tasks 7-8 已在 Task 2 完成(createPipeline 链接 shader+存储 layout，createGeometry 存储 desc)。所有 3 个目标编译通过。
+
+## Tasks 10-13 (新): OpenGLRenderer 移除 RendererAPI + Pass ICommandBuffer 迁移 + 删除 EndPass
+- **Start**: 2026-06-22
+- **End**: 2026-06-22
+- **Summary**: Task 10: OpenGLRenderer 移除 m_RendererAPI(OpenGLRendererAPI)成员、GetRendererAPI()访问器、RendererAPI.h 依赖。OnWindowResize 委托给 Renderer 基类(IDevice::onResize+glViewport)。Task 11-12: SpriteRenderPass::Flush 改为获取 ICommandBuffer→DrawIndexed，PreparePass 改为 ICommandBuffer::BeginRenderPass(clearValues 数组)。修复 ClearValue union 默认构造。Task 13: 删除 EndPass 注册和 include。Buffer/Texture/Framebuffer/Shader/VertexArray 工厂方法移除 GetAPI() switch 直接创建 OpenGL 实现。所有 3 个目标编译通过。

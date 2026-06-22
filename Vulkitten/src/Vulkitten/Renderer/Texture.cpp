@@ -1,7 +1,6 @@
 #include "vktpch.h"
 #include "Texture.h"
 
-#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRenderer.h"
 #include "Vulkitten/Renderer/IRenderer.h"
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLTexture.h"
@@ -14,21 +13,11 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        Ref<Texture2D> result;
-        switch (OpenGLRenderer::GetAPI())
-        {
-            case RendererAPI::API::None:
-                VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
-                return nullptr;
-            case RendererAPI::API::OpenGL:
-                result = CreateRef<OpenGLTexture2D>(width, height);
-                break;
-        }
+        Ref<Texture2D> result = CreateRef<OpenGLTexture2D>(width, height);
 
         if (!result)
             return nullptr;
 
-        // Register with GpuResourceManager for lifecycle tracking.
         auto& resources = IRenderer::Get().GetResourceManager();
         GpuTextureDesc desc;
         desc.Width = result->GetWidth();
@@ -44,21 +33,11 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        Ref<Texture2D> result;
-        switch (OpenGLRenderer::GetAPI())
-        {
-            case RendererAPI::API::None:
-                VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
-                return nullptr;
-            case RendererAPI::API::OpenGL:
-                result = CreateRef<OpenGLTexture2D>(path);
-                break;
-        }
+        Ref<Texture2D> result = CreateRef<OpenGLTexture2D>(path);
 
         if (!result)
             return nullptr;
 
-        // Register with GpuResourceManager for lifecycle tracking.
         auto& resources = IRenderer::Get().GetResourceManager();
         GpuTextureDesc desc;
         desc.Width = result->GetWidth();

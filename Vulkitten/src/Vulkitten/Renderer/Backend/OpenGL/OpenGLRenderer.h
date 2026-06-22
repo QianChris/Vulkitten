@@ -2,7 +2,6 @@
 
 #include "Vulkitten/Core/Core.h"
 #include "Vulkitten/Renderer/Renderer.h"
-#include "Vulkitten/Renderer/RendererAPI.h"
 
 namespace Vulkitten {
 
@@ -22,12 +21,6 @@ public:
     void Execute() override;
     void EndFrame() override;
     void OnWindowResize(uint32_t width, uint32_t height) override;
-
-    RendererAPI* GetRendererAPI() { return m_RendererAPI; }
-    inline static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
-
-private:
-    RendererAPI* m_RendererAPI = nullptr;
 };
 
 } // namespace Vulkitten

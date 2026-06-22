@@ -75,6 +75,8 @@ union ClearValue
 {
     ClearColor Color;
     ClearDepthStencil DepthStencil;
+
+    ClearValue() : DepthStencil{} {}
 };
 
 // ============================================================

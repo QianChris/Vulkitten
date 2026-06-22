@@ -1,7 +1,6 @@
 #include "vktpch.h"
 #include "Shader.h"
 
-#include "Vulkitten/Renderer/RendererAPI.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLShader.h"
 
 #include "Vulkitten/Perf/Instrumentor.h"
@@ -12,34 +11,14 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        switch (RendererAPI::GetAPI())
-        {
-            case RendererAPI::API::None:
-                VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
-                return nullptr;
-            case RendererAPI::API::OpenGL:
-                return CreateRef<OpenGLShader>(filepath);
-            default:
-                VKT_CORE_ASSERT(false, "Unknown RendererAPI!");
-                return nullptr;
-        }
+        return CreateRef<OpenGLShader>(filepath);
     }
 
     Ref<Shader> Shader::CreateCompute(const std::string& name, const std::string& filepath)
     {
         VKT_PROFILE_FUNCTION();
 
-        switch (RendererAPI::GetAPI())
-        {
-            case RendererAPI::API::None:
-                VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
-                return nullptr;
-            case RendererAPI::API::OpenGL:
-                return CreateRef<OpenGLShader>(name, filepath, true);
-            default:
-                VKT_CORE_ASSERT(false, "Unknown RendererAPI!");
-                return nullptr;
-        }
+        return CreateRef<OpenGLShader>(name, filepath, true);
     }
 
     void ShaderLibrary::Add(const std::string& name, const Ref<Shader>& shader)

@@ -2,6 +2,9 @@
 #include "SpriteRenderPass.h"
 
 #include "Vulkitten/Renderer/IRenderer.h"
+#include "Vulkitten/Renderer/Device.h"
+#include "Vulkitten/Renderer/FrameContext.h"
+#include "Vulkitten/RHI/ICommandBuffer.hpp"
 #include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Backend/OpenGL/OpenGLRenderer.h"
 #include "Vulkitten/Renderer/RenderGraph/RenderGraph.h"
@@ -227,9 +230,16 @@ void SpriteRenderPass::Flush()
 
     m_QuadVA->Bind();
 
-    // [HACK: 过渡期仍使用 OpenGLRendererAPI — Task 14 完整迁移到 ICommandBuffer::DrawIndexed]
-    auto* api = static_cast<OpenGLRenderer&>(IRenderer::Get()).GetRendererAPI();
-    api->DrawIndexed(m_QuadVA, m_QuadCount * 6);
+    // [HACK: 过渡期混用旧 VAO + 新 ICommandBuffer — 完整迁移后 VAO 由 BindGeometry 惰性创建]
+    auto& device = IRenderer::Get().GetDevice();
+    auto* cmd = device.createCommandBuffer(FrameContext{});
+    if (cmd)
+    {
+        cmd->Begin();
+        cmd->DrawIndexed(m_QuadCount * 6, 0, 0, 1);
+        cmd->End();
+        delete cmd;
+    }
 
     m_QuadCount = 0;
     m_VBPtr = m_VBBase;
