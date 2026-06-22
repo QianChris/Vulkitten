@@ -98,9 +98,7 @@ void OpenGLRenderer::EndFrame()
 {
     VKT_PROFILE_FUNCTION();
 
-    // [HACK: 过渡期使用 Submit — 完全迁移后调用 Renderer::EndFrame() which calls IDevice::endFrame()]
-    if (m_Device)
-        m_Device->Submit(m_FrameContext);
+    Renderer::EndFrame();  // Calls IDevice::endFrame(ctx) → glfwSwapBuffers
 }
 
 void OpenGLRenderer::OnWindowResize(uint32_t width, uint32_t height)

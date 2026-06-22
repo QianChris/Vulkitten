@@ -365,3 +365,8 @@
 - **Start**: 2026-06-22
 - **End**: 2026-06-22
 - **Summary**: 批量实现 GLCommandBuffer 剩余核心方法。BindTexture: Handle→GetSlot→GLuint→glActiveTexture(GL_TEXTURE0+slot)+glBindTexture+glBindSampler。BindUniformBuffer/BindStorageBuffer: glBindBufferRange(GL_UNIFORM_BUFFER/GL_SHADER_STORAGE_BUFFER)。BindStorageTexture: glBindImageTexture(UAV)。PushConstants: glUniformMatrix4fv(模拟 mat4 推送常量)。Draw: glDrawArrays(GL_TRIANGLES)。DrawIndexed: 从 GeometryDesc 读取 IndexType(UInt16→GL_UNSIGNED_SHORT/UInt32→GL_UNSIGNED_INT)→glDrawElements。所有方法含 Handle 有效性检查和 null guard。所有 3 个目标编译通过。
+
+## Tasks 6-9 (新): OpenGLDevice createShader + beginFrame/endFrame 迁移
+- **Start**: 2026-06-22
+- **End**: 2026-06-22
+- **Summary**: Task 6: createShader 完整 SPIR-V→GL 编译——ShaderStage→GLenum→glCreateShader→glShaderBinary(GL_SHADER_BINARY_FORMAT_SPIR_V)→glSpecializeShader→错误日志→ShaderHandle。Task 9: OpenGLRenderer::EndFrame 改为调用 Renderer::EndFrame()→IDevice::endFrame()(glfwSwapBuffers)，OpenGLDevice::Submit 改为空 no-op(SwapBuffers 迁至 endFrame)。Tasks 7-8 已在 Task 2 完成(createPipeline 链接 shader+存储 layout，createGeometry 存储 desc)。所有 3 个目标编译通过。

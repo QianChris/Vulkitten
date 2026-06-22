@@ -196,10 +196,47 @@ rhi::TextureHandle OpenGLDevice::createTexture(const rhi::TextureDesc& desc, con
 
 #include "Vulkitten/Renderer/Shader.h"
 
-rhi::ShaderHandle OpenGLDevice::createShader(rhi::ShaderStage /*stage*/, const ShaderBytecode& /*bytecode*/)
+rhi::ShaderHandle OpenGLDevice::createShader(rhi::ShaderStage stage, const ShaderBytecode& bytecode)
 {
-    // [HACK: 完整 SPIR-V shader 创建使用现有 OpenGLShader — 后续完善]
+    if (!bytecode.Data || bytecode.Size == 0)
+        return {};
+
+    GLenum glStage = GL_VERTEX_SHADER;
+    if (rhi::HasStage(stage, rhi::ShaderStage::Fragment))
+        glStage = GL_FRAGMENT_SHADER;
+    else if (rhi::HasStage(stage, rhi::ShaderStage::Compute))
+        glStage = GL_COMPUTE_SHADER;
+
+    GLuint glShader = glCreateShader(glStage);
+    if (!glShader)
+        return {};
+
+    const GLsizei count = static_cast<GLsizei>(bytecode.Size / sizeof(uint32_t));
+    glShaderBinary(1, &glShader, GL_SHADER_BINARY_FORMAT_SPIR_V,
+                   bytecode.Data, count * static_cast<GLsizei>(sizeof(uint32_t)));
+    glSpecializeShader(glShader, bytecode.EntryPoint, 0, nullptr, nullptr);
+
+    GLint compiled = 0;
+    glGetShaderiv(glShader, GL_COMPILE_STATUS, &compiled);
+    if (!compiled)
+    {
+        GLint logLen = 0;
+        glGetShaderiv(glShader, GL_INFO_LOG_LENGTH, &logLen);
+        if (logLen > 1)
+        {
+            std::vector<char> log(static_cast<size_t>(logLen));
+            glGetShaderInfoLog(glShader, logLen, nullptr, log.data());
+            VKT_CORE_WARN("OpenGLDevice::createShader compile error: {0}", log.data());
+        }
+        glDeleteShader(glShader);
+        return {};
+    }
+
     auto handle = AllocHandle<rhi::ShaderTag>();
+    GpuSlot* slot = GetSlot(handle.GetId());
+    if (slot)
+        slot->GpuHandle = static_cast<uint64_t>(glShader);
+
     return handle;
 }
 
@@ -370,8 +407,7 @@ void OpenGLDevice::waitIdle()
 
 void OpenGLDevice::Submit(FrameContext& /*frameContext*/)
 {
-    if (m_NativeWindow)
-        glfwSwapBuffers(static_cast<GLFWwindow*>(m_NativeWindow));
+    // Legacy — SwapBuffers now handled by endFrame()
 }
 
 // ---- Metadata accessors ----
