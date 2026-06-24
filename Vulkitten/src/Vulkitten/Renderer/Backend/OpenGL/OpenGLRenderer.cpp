@@ -76,7 +76,7 @@ void OpenGLRenderer::BeginFrame()
     VKT_PROFILE_FUNCTION();
 
     // [HACK: 过渡期 — Task 15: call Renderer::BeginFrame() which delegates to IDevice::beginFrame()]
-    Renderer::BeginFrame();
+    //Renderer::BeginFrame();
 }
 
 void OpenGLRenderer::Execute()

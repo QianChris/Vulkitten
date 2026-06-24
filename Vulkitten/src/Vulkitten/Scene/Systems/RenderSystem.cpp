@@ -11,7 +11,7 @@ const std::string RenderSystem::s_Name = "RenderSystem";
 
 namespace Vulkitten {
 
-    static bool RenderQuadComponent(entt::registry& registry, RenderGraph* graph)
+    static bool RenderQuad(entt::registry& registry, RenderGraph* graph)
     {
         auto view = registry.view<const TransformComponent, SpriteRendererComponent>();
         for (auto entity : view)
@@ -46,7 +46,7 @@ namespace Vulkitten {
             false                                   // clearStencil
         });
 
-        ret = RenderQuadComponent(registry, graph) || ret;
+        ret = RenderQuad(registry, graph) || ret;
 
         return ret || shouldRender;
     }

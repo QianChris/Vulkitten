@@ -195,7 +195,7 @@ void OpenGLGpuResourceManager::Gc(uint32_t maxFramesInFlight)
     for (uint64_t h : toDestroy)
         DestroyResource(h);
     if (!toDestroy.empty())
-        VKT_CORE_INFO("OpenGLGpuResourceManager::Gc — cleaned up {0} resources", toDestroy.size());
+        VKT_CORE_INFO("OpenGLGpuResourceManager::Gc - cleaned up {0} resources", toDestroy.size());
 }
 
 // ---- Shader Loading ----
