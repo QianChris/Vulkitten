@@ -18,7 +18,7 @@ class VKDevice;
 class VKCommandBuffer : public ICommandBuffer
 {
 public:
-    explicit VKCommandBuffer(VKDevice& device, void* vkCommandBuffer);
+    explicit VKCommandBuffer(VKDevice& device, void* vkCommandBuffer, uint32_t frameIndex = 0);
     ~VKCommandBuffer() override;
 
     // ---- ICommandBuffer ----
@@ -79,6 +79,9 @@ private:
     void*     m_VkCmd = nullptr;
     bool      m_InRenderPass = false;
     bool      m_IsRecording = false;
+    uint32_t  m_CurrentPipelineId = 0;
+    uint32_t  m_CurrentGeometryId = 0;
+    uint32_t  m_FrameIndex = 0;
 };
 
 } // namespace rhi

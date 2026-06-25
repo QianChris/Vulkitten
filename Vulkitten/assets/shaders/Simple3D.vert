@@ -1,19 +1,21 @@
 #version 450 core
 
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
+layout (binding = 0) uniform CameraUBO
+{
+    mat4 u_Projection;
+    mat4 u_View;
+    mat4 u_Model;
+};
+
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec3 a_Normal;
 layout(location = 2) in vec2 a_TexCoord;
 
-layout(std140, binding = 0) uniform CameraUBO
-{
-    mat4 u_Projection;
-    mat4 u_View;
-};
-
-uniform mat4 u_Model;
-
-out vec3 v_Normal;
-out vec2 v_TexCoord;
+layout(location = 0) out vec3 v_Normal;
+layout(location = 1) out vec2 v_TexCoord;
 
 void main()
 {

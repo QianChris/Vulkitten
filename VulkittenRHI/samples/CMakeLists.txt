@@ -14,6 +14,7 @@ target_link_libraries(Sample PRIVATE VulkittenRHI glfw)
 target_include_directories(Sample PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/../Vulkitten/vendor/glfw/include
+    ${CMAKE_SOURCE_DIR}/../Vulkitten/vendor/glm
 )
 
 # Windows: add opengl32

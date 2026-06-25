@@ -14,6 +14,7 @@ Arguments:
     --include-dirs Additional GLSL #include search paths
     --output-dir   Output directory (default: same as source file)
     --watch        Watch mode: recompile on file changes
+    --force        Force recompile all shaders, ignoring timestamps
 """
 
 import argparse
@@ -38,15 +39,15 @@ def is_blacklisted(path: Path) -> bool:
     return any(part in BLACKLIST_DIRS for part in path.parts)
 
 
-def compile_shader(src_path: Path, target_env: str, include_dirs: list, output_dir: str = None) -> bool:
+def compile_shader(src_path: Path, target_env: str, include_dirs: list, output_dir: str = None, force: bool = False) -> bool:
     """Compile a single shader file. Returns True on success."""
     if output_dir:
         out_path = Path(output_dir) / (src_path.name + '.spv')
     else:
         out_path = src_path.with_suffix(src_path.suffix + '.spv')
 
-    # Incremental: skip if .spv exists and is newer
-    if out_path.exists() and out_path.stat().st_mtime >= src_path.stat().st_mtime:
+    # Incremental: skip if .spv exists and is newer (unless --force)
+    if not force and out_path.exists() and out_path.stat().st_mtime >= src_path.stat().st_mtime:
         print(f"  [SKIP] {src_path} (up-to-date)")
         return True
 
@@ -62,7 +63,7 @@ def compile_shader(src_path: Path, target_env: str, include_dirs: list, output_d
     ]
 
     for inc in include_dirs:
-        cmd.extend(['-I', inc])
+        cmd.extend(['-I' + inc])
 
     # Ensure output directory exists
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -73,6 +74,7 @@ def compile_shader(src_path: Path, target_env: str, include_dirs: list, output_d
     ])
 
     try:
+        # print(cmd)
         result = subprocess.run(cmd, capture_output=True, text=True, check=False)
         if result.returncode == 0:
             print(f"  [OK]   {src_path} -> {out_path.name}")
@@ -90,7 +92,7 @@ def compile_shader(src_path: Path, target_env: str, include_dirs: list, output_d
         return False
 
 
-def compile_all(root: Path, target_env: str, include_dirs: list, output_dir: str = None):
+def compile_all(root: Path, target_env: str, include_dirs: list, output_dir: str = None, force: bool = False):
     """Find and compile all shader files."""
     shaders = sorted(
         f for f in root.rglob('*')
@@ -104,12 +106,14 @@ def compile_all(root: Path, target_env: str, include_dirs: list, output_dir: str
         return 0, 0
 
     print(f"Found {len(shaders)} shader files, target={target_env}...")
+    if force:
+        print("Force mode: recompiling all shaders")
     if include_dirs:
         print(f"Include dirs: {', '.join(include_dirs)}")
 
     success, failed = 0, 0
     for shader in shaders:
-        if compile_shader(shader, target_env, include_dirs, output_dir):
+        if compile_shader(shader, target_env, include_dirs, output_dir, force):
             success += 1
         else:
             failed += 1
@@ -127,6 +131,8 @@ def main():
                         help='Output directory for .spv files')
     parser.add_argument('--watch', action='store_true',
                         help='Watch mode: recompile on file changes')
+    parser.add_argument('--force', action='store_true',
+                        help='Force recompile all shaders, ignoring timestamps')
 
     args = parser.parse_args()
 
@@ -136,7 +142,7 @@ def main():
 
     if args.watch:
         print(f"Watch mode: compiling shaders on change (target={args.target})...")
-        compile_all(root, args.target, include_dirs, args.output_dir)
+        compile_all(root, args.target, include_dirs, args.output_dir, args.force)
 
         # Track file modification times
         mtimes = {}
@@ -146,7 +152,7 @@ def main():
 
         try:
             while True:
-                time.sleep(1)
+                # time.sleep(1)
                 for f in root.rglob('*'):
                     if f.is_file() and f.suffix.lower() in SHADER_EXTS and not is_blacklisted(f):
                         old_mtime = mtimes.get(f, 0)
@@ -158,7 +164,7 @@ def main():
         except KeyboardInterrupt:
             print("\nWatch mode stopped.")
     else:
-        success, failed = compile_all(root, args.target, include_dirs, args.output_dir)
+        success, failed = compile_all(root, args.target, include_dirs, args.output_dir, args.force)
         print(f"\nDone: {success} succeeded, {failed} failed")
         if failed > 0:
             sys.exit(1)

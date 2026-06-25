@@ -2,6 +2,7 @@
 
 #include "rhi/IRenderDevice.hpp"
 #include "rhi/ISurface.hpp"
+#include "rhi/ResourceDescs.hpp"
 #include "VKSwapchain.hpp"
 
 #include <vector>
@@ -11,6 +12,42 @@
 namespace rhi {
 
 class VKCommandBuffer;
+class IBuffer;
+class ITexture;
+class IShader;
+class IPipeline;
+class IGeometry;
+class ISampler;
+
+// Internal metadata for Vulkan resources
+struct VKShaderMeta
+{
+    void* ShaderModule = nullptr;  // VkShaderModule
+    ShaderStage Stage;
+};
+
+struct VKPipelineMeta
+{
+    void* PipelineLayout = nullptr;    // VkPipelineLayout
+    void* Pipeline = nullptr;          // VkGraphicsPipeline
+    void* DescriptorSetLayout = nullptr; // VkDescriptorSetLayout
+    std::vector<VertexAttribute> VertexLayout;
+    std::vector<BufferSlot> BufferSlots;
+    std::vector<TextureSlot> TextureSlots;
+};
+
+struct VKBufferMeta
+{
+    void*   Buffer = nullptr;      // VkBuffer
+    void*   Memory = nullptr;      // VkDeviceMemory
+    uint64_t Size = 0;
+    BufferUsage Usage;
+};
+
+struct VKGeometryMeta
+{
+    GeometryDesc Desc;
+};
 
 // ============================================================
 // VKDevice — Vulkan implementation of IRenderDevice
@@ -22,20 +59,16 @@ public:
     explicit VKDevice(ISurface* surface);
     ~VKDevice() override;
 
-    // ---- IRenderDevice Lifecycle ----
     void Init() override;
     void Shutdown() override;
 
-    // ---- IRenderDevice Frame Lifecycle ----
     FrameContext BeginFrame() override;
     void EndFrame(FrameContext ctx) override;
 
-    // ---- IRenderDevice Command Buffer ----
     std::unique_ptr<ICommandBuffer> CreateCommandBuffer(
         FrameContext ctx,
         CommandBufferLevel level = CommandBufferLevel::Primary) override;
 
-    // ---- IRenderDevice Resource Creation ----
     BufferHandle   CreateBuffer(const BufferDesc& desc, const void* initialData = nullptr) override;
     TextureHandle  CreateTexture(const TextureDesc& desc, const void* initialData = nullptr) override;
     ShaderHandle   CreateShader(ShaderStage stage, const ShaderBytecode& bytecode) override;
@@ -45,7 +78,13 @@ public:
     RenderPassHandle   CreateRenderPass(const RenderPassDesc& desc) override;
     FramebufferHandle  CreateFramebuffer(const FramebufferDesc& desc) override;
 
-    // ---- IRenderDevice Window Events ----
+    IBuffer*   GetBuffer(BufferHandle handle) override;
+    ITexture*  GetTexture(TextureHandle handle) override;
+    IShader*   GetShader(ShaderHandle handle) override;
+    IPipeline* GetPipeline(PipelineHandle handle) override;
+    IGeometry* GetGeometry(GeometryHandle handle) override;
+    ISampler*  GetSampler(SamplerHandle handle) override;
+
     void OnResize(uint32_t width, uint32_t height) override;
     void WaitIdle() override;
     void* GetNativeDevice() override { return m_Device; }
@@ -58,7 +97,6 @@ public:
     void* GetSwapchainFramebuffer(uint32_t imageIndex) const;
     uint32_t GetCurrentImageIndex() const { return m_CurrentImageIndex; }
 
-    // Sentinel: marks a framebuffer handle as "swapchain-owned"
     static constexpr uint64_t kSwapchainFramebufferSentinel = uint64_t(-1);
 
     // Handle pool
@@ -71,12 +109,22 @@ public:
     };
     GpuSlot* GetSlot(uint32_t id);
 
+    // Metadata access
+    const VKPipelineMeta* GetPipelineMeta(uint32_t id) const;
+    const VKBufferMeta* GetBufferMeta(uint32_t id) const;
+    const VKGeometryMeta* GetGeometryMeta(uint32_t id) const;
+
+    // Descriptor set allocation (per-frame)
+    void* AllocateDescriptorSet(void* pipelineLayout);
+
 private:
     template<typename Tag> Handle<Tag> AllocHandle();
     uint32_t FindFreeSlot();
     uint32_t FindMemoryType(uint32_t typeFilter, uint32_t properties);
     void CreateCommandPools();
     void DestroyCommandPools();
+    void CreateDescriptorPool();
+    void DestroyDescriptorPool();
 
     ISurface*   m_Surface = nullptr;
     void*       m_Instance = nullptr;
@@ -90,19 +138,31 @@ private:
 
     std::unique_ptr<VKSwapchain> m_Swapchain;
 
-    // Per-frame command pools
     std::vector<void*> m_CommandPools;
+    void*              m_DescriptorPool = nullptr;
 
-    // Handle pool
     std::vector<GpuSlot> m_Slots;
     std::vector<uint32_t> m_FreeIndices;
+
+    std::unordered_map<uint32_t, VKShaderMeta> m_ShaderMetas;
+    std::unordered_map<uint32_t, VKPipelineMeta> m_PipelineMetas;
+    std::unordered_map<uint32_t, VKBufferMeta> m_BufferMetas;
+    std::unordered_map<uint32_t, VKGeometryMeta> m_GeometryMetas;
+
+    // Query interface cache (owned)
+    std::unordered_map<uint32_t, std::unique_ptr<IBuffer>> m_BufferQueries;
+    std::unordered_map<uint32_t, std::unique_ptr<ITexture>> m_TextureQueries;
+    std::unordered_map<uint32_t, std::unique_ptr<IShader>> m_ShaderQueries;
+    std::unordered_map<uint32_t, std::unique_ptr<IPipeline>> m_PipelineQueries;
+    std::unordered_map<uint32_t, std::unique_ptr<IGeometry>> m_GeometryQueries;
+    std::unordered_map<uint32_t, std::unique_ptr<ISampler>> m_SamplerQueries;
 
     uint32_t    m_FrameIndex = 0;
     uint32_t    m_CurrentImageIndex = 0;
     uint32_t    m_FramesInFlight = 2;
     bool        m_Initialized = false;
-    void*       m_CurrentVkCmd = nullptr;     // VkCommandBuffer for current frame
-    uint32_t    m_DefaultRenderPassSlotId = 0; // Slot for default swapchain RP
+    void*       m_CurrentVkCmd = nullptr;
+    uint32_t    m_DefaultRenderPassSlotId = 0;
 };
 
 } // namespace rhi

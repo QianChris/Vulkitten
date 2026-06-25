@@ -11,6 +11,12 @@
 namespace rhi {
 
 class ICommandBuffer;
+class IBuffer;
+class ITexture;
+class IShader;
+class IPipeline;
+class IGeometry;
+class ISampler;
 
 // ============================================================
 // ShaderBytecode — shader binary data + entry point
@@ -74,6 +80,14 @@ public:
     virtual SamplerHandle  CreateSampler(const SamplerDesc& desc) = 0;
     virtual RenderPassHandle   CreateRenderPass(const RenderPassDesc& desc) = 0;
     virtual FramebufferHandle  CreateFramebuffer(const FramebufferDesc& desc) = 0;
+
+    // ---- Resource Query (returns interface for inspecting created resources) ----
+    virtual IBuffer*   GetBuffer(BufferHandle handle) = 0;
+    virtual ITexture*  GetTexture(TextureHandle handle) = 0;
+    virtual IShader*   GetShader(ShaderHandle handle) = 0;
+    virtual IPipeline* GetPipeline(PipelineHandle handle) = 0;
+    virtual IGeometry* GetGeometry(GeometryHandle handle) = 0;
+    virtual ISampler*  GetSampler(SamplerHandle handle) = 0;
 
     // ---- Window Events ----
     virtual void OnResize(uint32_t width, uint32_t height) = 0;

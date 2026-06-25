@@ -2,9 +2,9 @@
 
 #include "rhi/ICommandBuffer.hpp"
 #include "rhi/Core/Handle.hpp"
+#include "rhi/ResourceDescs.hpp"
 
 #include <cstdint>
-#include <unordered_map>
 
 namespace rhi {
 
@@ -84,9 +84,6 @@ private:
     uint32_t m_CurrentGeometryId = 0;
     uint32_t m_CurrentFbo = 0;
     bool     m_InRenderPass = false;
-
-    // VAO cache: key = (pipelineId << 32) | geometryId, value = GLuint VAO
-    std::unordered_map<uint64_t, uint32_t> m_VaoCache;
 };
 
 } // namespace rhi

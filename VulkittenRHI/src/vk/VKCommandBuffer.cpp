@@ -6,126 +6,75 @@
 
 #include <cstring>
 #include <cstdio>
+#include <unordered_map>
 
 namespace rhi {
 
-// ============================================================
-// Construction
-// ============================================================
+// Per-pipeline, per-frame descriptor set cache
+// Key: (pipelineId << 8) | frameIndex — one set per in-flight frame
+static std::unordered_map<uint64_t, void*> s_DescriptorSetCache;
 
-VKCommandBuffer::VKCommandBuffer(VKDevice& device, void* vkCommandBuffer)
+VKCommandBuffer::VKCommandBuffer(VKDevice& device, void* vkCommandBuffer, uint32_t frameIndex)
     : m_Device(device)
     , m_VkCmd(vkCommandBuffer)
+    , m_FrameIndex(frameIndex)
 {
 }
 
 VKCommandBuffer::~VKCommandBuffer()
 {
-    // VkCommandBuffer is freed when the command pool is reset/destroyed
     m_VkCmd = nullptr;
 }
 
-// ============================================================
-// Lifecycle
-// ============================================================
+// ---- Lifecycle ----
 
 void VKCommandBuffer::Begin()
 {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
     vkBeginCommandBuffer(static_cast<VkCommandBuffer>(m_VkCmd), &beginInfo);
     m_IsRecording = true;
 }
 
 void VKCommandBuffer::End()
 {
-    if (m_InRenderPass)
-    {
-        EndRenderPass();
-    }
-
+    if (m_InRenderPass) EndRenderPass();
     vkEndCommandBuffer(static_cast<VkCommandBuffer>(m_VkCmd));
     m_IsRecording = false;
-
-    // Submission is done by VKDevice::EndFrame() with proper sync objects
-    // (image-available semaphore wait → submit → render-finished semaphore signal → present)
 }
 
-CommandBufferLevel VKCommandBuffer::GetLevel() const
-{
-    return CommandBufferLevel::Primary;
-}
+CommandBufferLevel VKCommandBuffer::GetLevel() const { return CommandBufferLevel::Primary; }
 
-// ============================================================
-// Barriers
-// ============================================================
+// ---- Barriers ----
 
-void VKCommandBuffer::Barrier(PipelineStage /*srcStage*/, AccessFlags /*srcAccess*/,
-                               PipelineStage /*dstStage*/, AccessFlags /*dstAccess*/)
-{
-    // [STUB: MVP clear-to-red doesn't need barriers]
-}
+void VKCommandBuffer::Barrier(PipelineStage, AccessFlags, PipelineStage, AccessFlags) {}
+void VKCommandBuffer::Barrier(TextureHandle, PipelineStage, AccessFlags,
+                               PipelineStage, AccessFlags, ImageLayout, ImageLayout) {}
 
-void VKCommandBuffer::Barrier(TextureHandle /*texture*/,
-                               PipelineStage /*srcStage*/, AccessFlags /*srcAccess*/,
-                               PipelineStage /*dstStage*/, AccessFlags /*dstAccess*/,
-                               ImageLayout /*oldLayout*/, ImageLayout /*newLayout*/)
-{
-    // [STUB]
-}
-
-// ============================================================
-// RenderPass
-// ============================================================
+// ---- RenderPass ----
 
 void VKCommandBuffer::BeginRenderPass(RenderPassHandle renderPass, FramebufferHandle framebuffer,
                                        const Rect2D& renderArea,
                                        const ClearValue* clearValues, uint32_t clearValueCount)
 {
-    VkRenderPass rp = VK_NULL_HANDLE;
-
-    // Get render pass from device's handle pool
     auto* rpSlot = m_Device.GetSlot(renderPass.GetId());
-    if (rpSlot && rpSlot->Alive)
-        rp = reinterpret_cast<VkRenderPass>(rpSlot->GpuHandle);
+    VkRenderPass rp = rpSlot ? reinterpret_cast<VkRenderPass>(rpSlot->GpuHandle) : VK_NULL_HANDLE;
+    if (rp == VK_NULL_HANDLE) { fprintf(stderr, "VK: invalid render pass\n"); return; }
 
-    if (rp == VK_NULL_HANDLE)
-    {
-        fprintf(stderr, "VKCommandBuffer::BeginRenderPass: invalid render pass\n");
-        return;
-    }
-
-    // Framebuffer: resolve from handle. If it's the swapchain sentinel,
-    // fetch the correct per-image VkFramebuffer from VKSwapchain.
     VkFramebuffer fb = VK_NULL_HANDLE;
     auto* fbSlot = m_Device.GetSlot(framebuffer.GetId());
     if (fbSlot && fbSlot->Alive)
     {
         if (fbSlot->GpuHandle == VKDevice::kSwapchainFramebufferSentinel)
-        {
-            // Swapchain-owned: resolve to the framebuffer for the current image
-            fb = static_cast<VkFramebuffer>(
-                m_Device.GetSwapchainFramebuffer(m_Device.GetCurrentImageIndex()));
-        }
+            fb = static_cast<VkFramebuffer>(m_Device.GetSwapchainFramebuffer(m_Device.GetCurrentImageIndex()));
         else
-        {
             fb = reinterpret_cast<VkFramebuffer>(fbSlot->GpuHandle);
-        }
     }
+    if (fb == VK_NULL_HANDLE) { fprintf(stderr, "VK: invalid framebuffer\n"); return; }
 
-    if (fb == VK_NULL_HANDLE)
-    {
-        fprintf(stderr, "VKCommandBuffer::BeginRenderPass: invalid framebuffer\n");
-        return;
-    }
-
-    // Prepare clear values for Vulkan
     VkClearValue vkClearValues[2]{};
-    uint32_t vkClearCount = std::min(clearValueCount, 2u);
-    for (uint32_t i = 0; i < vkClearCount; ++i)
-    {
+    for (uint32_t i = 0; i < std::min(clearValueCount, 2u); ++i) {
         vkClearValues[i].color.float32[0] = clearValues[i].Color.RGBA[0];
         vkClearValues[i].color.float32[1] = clearValues[i].Color.RGBA[1];
         vkClearValues[i].color.float32[2] = clearValues[i].Color.RGBA[2];
@@ -136,15 +85,26 @@ void VKCommandBuffer::BeginRenderPass(RenderPassHandle renderPass, FramebufferHa
     rpInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     rpInfo.renderPass = rp;
     rpInfo.framebuffer = fb;
-    rpInfo.renderArea.offset = {static_cast<int32_t>(renderArea.Offset.X),
-                                 static_cast<int32_t>(renderArea.Offset.Y)};
+    rpInfo.renderArea.offset = {static_cast<int32_t>(renderArea.Offset.X), static_cast<int32_t>(renderArea.Offset.Y)};
     rpInfo.renderArea.extent = {renderArea.Extent.Width, renderArea.Extent.Height};
-    rpInfo.clearValueCount = vkClearCount;
+    rpInfo.clearValueCount = std::min(clearValueCount, 2u);
     rpInfo.pClearValues = vkClearValues;
 
-    vkCmdBeginRenderPass(static_cast<VkCommandBuffer>(m_VkCmd), &rpInfo,
-                          VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(static_cast<VkCommandBuffer>(m_VkCmd), &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
     m_InRenderPass = true;
+
+    // Set viewport and scissor
+    VkViewport vp{};
+    vp.x = 0; vp.y = 0;
+    vp.width = static_cast<float>(renderArea.Extent.Width);
+    vp.height = static_cast<float>(renderArea.Extent.Height);
+    vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+    vkCmdSetViewport(static_cast<VkCommandBuffer>(m_VkCmd), 0, 1, &vp);
+
+    VkRect2D scissor{};
+    scissor.offset = {static_cast<int32_t>(renderArea.Offset.X), static_cast<int32_t>(renderArea.Offset.Y)};
+    scissor.extent = {renderArea.Extent.Width, renderArea.Extent.Height};
+    vkCmdSetScissor(static_cast<VkCommandBuffer>(m_VkCmd), 0, 1, &scissor);
 }
 
 void VKCommandBuffer::EndRenderPass()
@@ -153,56 +113,157 @@ void VKCommandBuffer::EndRenderPass()
     m_InRenderPass = false;
 }
 
-// ============================================================
-// Binding (stubs for MVP)
-// ============================================================
+// ---- BindPipeline ----
 
-void VKCommandBuffer::BindPipeline(PipelineHandle /*pipeline*/) { /* [STUB] */ }
-void VKCommandBuffer::BindGeometry(GeometryHandle /*geometry*/) { /* [STUB] */ }
-void VKCommandBuffer::BindUniformBuffer(uint32_t, BufferHandle, uint64_t, uint64_t) { /* [STUB] */ }
-void VKCommandBuffer::BindStorageBuffer(uint32_t, BufferHandle, uint64_t, uint64_t) { /* [STUB] */ }
-void VKCommandBuffer::BindTexture(uint32_t, TextureHandle, SamplerHandle) { /* [STUB] */ }
-void VKCommandBuffer::BindStorageTexture(uint32_t, TextureHandle) { /* [STUB] */ }
-void VKCommandBuffer::PushConstants(const void*, uint32_t, uint32_t) { /* [STUB] */ }
-
-// ============================================================
-// Draw (stubs)
-// ============================================================
-
-void VKCommandBuffer::Draw(uint32_t, uint32_t, uint32_t) { /* [STUB] */ }
-void VKCommandBuffer::DrawIndexed(uint32_t, uint32_t, int32_t, uint32_t) { /* [STUB] */ }
-
-// ============================================================
-// Compute (stub)
-// ============================================================
-
-void VKCommandBuffer::DispatchCompute(uint32_t, uint32_t, uint32_t) { /* [STUB] */ }
-
-// ============================================================
-// Copy (stubs)
-// ============================================================
-
-void VKCommandBuffer::CopyBuffer(BufferHandle, BufferHandle, uint64_t, uint64_t, uint64_t) { /* [STUB] */ }
-void VKCommandBuffer::CopyBufferToTexture(BufferHandle, TextureHandle, const Offset3D&, const Extent3D&) { /* [STUB] */ }
-void VKCommandBuffer::CopyTextureToBuffer(TextureHandle, BufferHandle, const Offset3D&, const Extent3D&) { /* [STUB] */ }
-
-// ============================================================
-// Debug
-// ============================================================
-
-void VKCommandBuffer::BeginDebugLabel(const char* /*label*/, std::array<float, 4> /*color*/)
+void VKCommandBuffer::BindPipeline(PipelineHandle pipeline)
 {
-    // [STUB: requires VK_EXT_debug_utils]
+    m_CurrentPipelineId = pipeline.GetId();
+    auto* meta = m_Device.GetPipelineMeta(pipeline.GetId());
+    if (!meta) return;
+
+    vkCmdBindPipeline(static_cast<VkCommandBuffer>(m_VkCmd),
+                      VK_PIPELINE_BIND_POINT_GRAPHICS,
+                      static_cast<VkPipeline>(meta->Pipeline));
 }
 
-void VKCommandBuffer::EndDebugLabel()
+// ---- BindGeometry ----
+
+void VKCommandBuffer::BindGeometry(GeometryHandle geometry)
 {
-    // [STUB]
+    m_CurrentGeometryId = geometry.GetId();
+    auto* geoMeta = m_Device.GetGeometryMeta(geometry.GetId());
+    if (!geoMeta) return;
+
+    const auto& geoDesc = geoMeta->Desc;
+
+    // Bind vertex buffers
+    for (uint32_t i = 0; i < geoDesc.VertexBufferCount; ++i)
+    {
+        BufferHandle bufHandle = geoDesc.VertexBuffers[i];
+        auto* bufMeta = m_Device.GetBufferMeta(bufHandle.GetId());
+        if (!bufMeta) continue;
+
+        VkBuffer vkBuf = static_cast<VkBuffer>(bufMeta->Buffer);
+        VkDeviceSize offset = 0;
+        vkCmdBindVertexBuffers(static_cast<VkCommandBuffer>(m_VkCmd), i, 1, &vkBuf, &offset);
+    }
+
+    // Bind index buffer if present
+    if (geoDesc.IndexBuffer.IsValid())
+    {
+        auto* idxMeta = m_Device.GetBufferMeta(geoDesc.IndexBuffer.GetId());
+        if (idxMeta)
+        {
+            VkIndexType idxType = (geoDesc.IndexType == IndexType::UInt16) ?
+                VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
+            vkCmdBindIndexBuffer(static_cast<VkCommandBuffer>(m_VkCmd),
+                                 static_cast<VkBuffer>(idxMeta->Buffer), 0, idxType);
+        }
+    }
 }
 
-void VKCommandBuffer::InsertDebugMarker(const char* /*marker*/)
+// ---- BindUniformBuffer ----
+
+void VKCommandBuffer::BindUniformBuffer(uint32_t slot, BufferHandle buffer,
+                                         uint64_t offset, uint64_t range)
 {
-    // [STUB]
+    auto* pipelineMeta = m_Device.GetPipelineMeta(m_CurrentPipelineId);
+    auto* bufMeta = m_Device.GetBufferMeta(buffer.GetId());
+    if (!pipelineMeta || !bufMeta) return;
+
+    auto dev = static_cast<VkDevice>(m_Device.GetVkDevice());
+
+    // Allocate or reuse descriptor set — per pipeline, per in-flight frame
+    uint64_t cacheKey = (static_cast<uint64_t>(m_CurrentPipelineId) << 8) | m_FrameIndex;
+    VkDescriptorSet ds = VK_NULL_HANDLE;
+    auto cacheIt = s_DescriptorSetCache.find(cacheKey);
+    if (cacheIt != s_DescriptorSetCache.end())
+    {
+        ds = static_cast<VkDescriptorSet>(cacheIt->second);
+    }
+    else
+    {
+        ds = static_cast<VkDescriptorSet>(
+            m_Device.AllocateDescriptorSet(pipelineMeta->DescriptorSetLayout));
+        s_DescriptorSetCache[cacheKey] = ds;
+    }
+
+    // Write descriptor
+    VkDescriptorBufferInfo bufInfo{};
+    bufInfo.buffer = static_cast<VkBuffer>(bufMeta->Buffer);
+    bufInfo.offset = offset;
+    bufInfo.range = (range > 0) ? range : VK_WHOLE_SIZE;
+
+    VkWriteDescriptorSet write{};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet = ds;
+    write.dstBinding = slot;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    write.pBufferInfo = &bufInfo;
+
+    vkUpdateDescriptorSets(dev, 1, &write, 0, nullptr);
+
+    // Bind descriptor set
+    vkCmdBindDescriptorSets(static_cast<VkCommandBuffer>(m_VkCmd),
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            static_cast<VkPipelineLayout>(pipelineMeta->PipelineLayout),
+                            0, 1, &ds, 0, nullptr);
 }
+
+void VKCommandBuffer::BindStorageBuffer(uint32_t slot, BufferHandle buffer,
+                                         uint64_t offset, uint64_t range)
+{
+    BindUniformBuffer(slot, buffer, offset, range);  // same path for MVP
+}
+
+// ---- Texture binding (stubs) ----
+
+void VKCommandBuffer::BindTexture(uint32_t, TextureHandle, SamplerHandle) {}
+void VKCommandBuffer::BindStorageTexture(uint32_t, TextureHandle) {}
+
+// ---- PushConstants ----
+
+void VKCommandBuffer::PushConstants(const void* data, uint32_t size, uint32_t offset)
+{
+    auto* pipelineMeta = m_Device.GetPipelineMeta(m_CurrentPipelineId);
+    if (!pipelineMeta) return;
+
+    vkCmdPushConstants(static_cast<VkCommandBuffer>(m_VkCmd),
+                       static_cast<VkPipelineLayout>(pipelineMeta->PipelineLayout),
+                       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                       offset, size, data);
+}
+
+// ---- Draw ----
+
+void VKCommandBuffer::Draw(uint32_t vertexCount, uint32_t firstVertex, uint32_t instanceCount)
+{
+    vkCmdDraw(static_cast<VkCommandBuffer>(m_VkCmd), vertexCount, instanceCount, firstVertex, 0);
+}
+
+void VKCommandBuffer::DrawIndexed(uint32_t indexCount, uint32_t firstIndex,
+                                   int32_t vertexOffset, uint32_t instanceCount)
+{
+    vkCmdDrawIndexed(static_cast<VkCommandBuffer>(m_VkCmd), indexCount, instanceCount,
+                     firstIndex, vertexOffset, 0);
+}
+
+// ---- Compute (stub) ----
+
+void VKCommandBuffer::DispatchCompute(uint32_t, uint32_t, uint32_t) {}
+
+// ---- Copy (stubs) ----
+
+void VKCommandBuffer::CopyBuffer(BufferHandle, BufferHandle, uint64_t, uint64_t, uint64_t) {}
+void VKCommandBuffer::CopyBufferToTexture(BufferHandle, TextureHandle, const Offset3D&, const Extent3D&) {}
+void VKCommandBuffer::CopyTextureToBuffer(TextureHandle, BufferHandle, const Offset3D&, const Extent3D&) {}
+
+// ---- Debug (stubs) ----
+
+void VKCommandBuffer::BeginDebugLabel(const char*, std::array<float, 4>) {}
+void VKCommandBuffer::EndDebugLabel() {}
+void VKCommandBuffer::InsertDebugMarker(const char*) {}
 
 } // namespace rhi
