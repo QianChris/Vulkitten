@@ -11,6 +11,7 @@
 namespace rhi {
 
 class IRenderDevice;
+class ResourceManager;
 
 // ============================================================
 // Binding — describes a single resource binding for drawMesh
@@ -38,7 +39,7 @@ struct Binding
 // Responsibilities:
 //   1. Holds this frame's ICommandBuffer reference
 //   2. Provides high-level convenience (drawMesh)
-//   3. Exposes device/cmd for direct low-level access
+//   3. Exposes device/cmd/resources for direct low-level access
 //   4. Chainable fluent API
 //
 // Lifecycle: created by Renderer::BeginFrame(),
@@ -48,11 +49,12 @@ struct Binding
 class RenderCommandList
 {
 public:
-    RenderCommandList(IRenderDevice& device, ICommandBuffer& cmd);
+    RenderCommandList(IRenderDevice& device, ResourceManager& rm, ICommandBuffer& cmd);
 
     // ---- Direct access (escape hatch) ----
-    ICommandBuffer& Cmd() { return m_Cmd; }
-    IRenderDevice&  Device() { return m_Device; }
+    ICommandBuffer&  Cmd()       { return m_Cmd; }
+    IRenderDevice&   Device()    { return m_Device; }
+    ResourceManager& Resources() { return m_Rm; }
 
     // ---- High-level convenience ----
     void DrawMesh(GeometryHandle geo, PipelineHandle pso,
@@ -85,6 +87,7 @@ public:
 
 private:
     IRenderDevice&  m_Device;
+    ResourceManager& m_Rm;
     ICommandBuffer& m_Cmd;
 };
 

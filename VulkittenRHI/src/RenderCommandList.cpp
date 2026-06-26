@@ -1,5 +1,6 @@
 #include "rhi/RenderCommandList.hpp"
 #include "rhi/IRenderDevice.hpp"
+#include "rhi/ResourceManager.hpp"
 #include "rhi/ICommandBuffer.hpp"
 
 namespace rhi {
@@ -8,8 +9,9 @@ namespace rhi {
 // Construction
 // ============================================================
 
-RenderCommandList::RenderCommandList(IRenderDevice& device, ICommandBuffer& cmd)
+RenderCommandList::RenderCommandList(IRenderDevice& device, ResourceManager& rm, ICommandBuffer& cmd)
     : m_Device(device)
+    , m_Rm(rm)
     , m_Cmd(cmd)
 {
 }
@@ -47,7 +49,14 @@ void RenderCommandList::DrawMesh(GeometryHandle geo, PipelineHandle pso,
     if (pushConstants && pushSize > 0)
         m_Cmd.PushConstants(pushConstants, pushSize);
 
-    m_Cmd.DrawIndexed(0, 0, 0, 1);  // Use geo's index count [HACK]
+    // Use geometry's index/vertex count from ResourceManager
+    auto* geoRes = m_Rm.GetGeometry(geo);
+    if (geoRes && geoRes->GetIndexCount() > 0)
+        m_Cmd.DrawIndexed(geoRes->GetIndexCount(), 0, 0, 1);
+    else if (geoRes)
+        m_Cmd.Draw(geoRes->GetVertexCount(), 0, 1);
+    else
+        m_Cmd.DrawIndexed(0, 0, 0, 1);  // fallback
 }
 
 void RenderCommandList::DispatchCompute(PipelineHandle pso,

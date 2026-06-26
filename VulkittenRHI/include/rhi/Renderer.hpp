@@ -13,6 +13,7 @@ namespace rhi {
 class IRenderDevice;
 class ICommandBuffer;
 class RenderCommandList;
+class ResourceManager;
 
 // ============================================================
 // BackendType
@@ -40,8 +41,8 @@ struct RendererConfig
 // ============================================================
 // Renderer — top-level rendering entry point
 //
-// Owns the IRenderDevice, manages the frame lifecycle, and
-// provides access to per-frame command lists.
+// Owns the IRenderDevice, ResourceManager, and manages the
+// frame lifecycle. Provides access to per-frame command lists.
 //
 // Usage:
 //   auto renderer = Renderer::Create(config);
@@ -70,6 +71,7 @@ public:
 
     // ---- Accessors ----
     IRenderDevice&     GetDevice();
+    ResourceManager&   GetResources();
     RenderCommandList& GetCommandList();
     ICommandBuffer&    GetCommandBuffer();
     BackendType        GetBackendType() const;

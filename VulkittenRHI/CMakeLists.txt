@@ -39,6 +39,7 @@ set(RHI_HEADERS
     include/rhi/Core/Format.hpp
     include/rhi/Core/Types.hpp
     include/rhi/ResourceDescs.hpp
+    include/rhi/ResourceManager.hpp
     include/rhi/ISurface.hpp
     include/rhi/FrameContext.hpp
     include/rhi/ICommandBuffer.hpp
@@ -50,8 +51,10 @@ set(RHI_HEADERS
 set(RHI_SOURCES
     src/Renderer.cpp
     src/RenderCommandList.cpp
+    src/ResourceManager.cpp
     src/gl/GLDevice.cpp
     src/gl/GLCommandBuffer.cpp
+    src/gl/GLResources.cpp
 )
 
 # Vulkan backend (conditional)
@@ -60,6 +63,7 @@ if(Vulkan_FOUND)
         src/vk/VKDevice.cpp
         src/vk/VKCommandBuffer.cpp
         src/vk/VKSwapchain.cpp
+        src/vk/VKResources.cpp
     )
 endif()
 

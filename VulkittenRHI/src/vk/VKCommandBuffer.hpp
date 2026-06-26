@@ -3,16 +3,21 @@
 #include "rhi/ICommandBuffer.hpp"
 #include "rhi/Core/Handle.hpp"
 
+#include <cstdint>
+
 namespace rhi {
 
 class VKDevice;
+class ResourceManager;
+class VKPipelineResource;
+class VKBufferResource;
+class VKGeometryResource;
 
 // ============================================================
 // VKCommandBuffer — Vulkan ICommandBuffer implementation.
 //
 // True recording: commands go into a VkCommandBuffer.
-// begin() → vkBeginCommandBuffer, end() → vkEndCommandBuffer.
-// BeginRenderPass → vkCmdBeginRenderPass with clear values.
+// Uses ResourceManager for resource handle lookups.
 // ============================================================
 
 class VKCommandBuffer : public ICommandBuffer
@@ -20,6 +25,9 @@ class VKCommandBuffer : public ICommandBuffer
 public:
     explicit VKCommandBuffer(VKDevice& device, void* vkCommandBuffer, uint32_t frameIndex = 0);
     ~VKCommandBuffer() override;
+
+    // Clear the global descriptor set cache (call before pool destruction)
+    static void ClearDescriptorSetCache();
 
     // ---- ICommandBuffer ----
     void Begin() override;
@@ -71,17 +79,21 @@ public:
     void EndDebugLabel() override;
     void InsertDebugMarker(const char* marker) override;
 
-    // Internal: get the VkCommandBuffer for submission
     void* GetVkCommandBuffer() const { return m_VkCmd; }
 
 private:
-    VKDevice& m_Device;
-    void*     m_VkCmd = nullptr;
-    bool      m_InRenderPass = false;
-    bool      m_IsRecording = false;
-    uint32_t  m_CurrentPipelineId = 0;
-    uint32_t  m_CurrentGeometryId = 0;
-    uint32_t  m_FrameIndex = 0;
+    VKDevice&       m_Device;
+    ResourceManager& m_Resources;
+    void*           m_VkCmd = nullptr;
+    bool            m_InRenderPass = false;
+    bool            m_IsRecording = false;
+    uint32_t        m_CurrentPipelineId = 0;
+    uint32_t        m_CurrentGeometryId = 0;
+    uint32_t        m_FrameIndex = 0;
+
+    // Cached resource pointers (valid for current frame)
+    VKPipelineResource* m_CurrentPipeline = nullptr;
+    VKGeometryResource* m_CurrentGeometry = nullptr;
 };
 
 } // namespace rhi

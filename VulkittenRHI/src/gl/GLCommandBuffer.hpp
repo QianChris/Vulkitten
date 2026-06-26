@@ -5,10 +5,15 @@
 #include "rhi/ResourceDescs.hpp"
 
 #include <cstdint>
+#include <unordered_map>
 
 namespace rhi {
 
 class GLDevice;
+class ResourceManager;
+class GLPipelineResource;
+class GLBufferResource;
+class GLGeometryResource;
 
 // ============================================================
 // GLCommandBuffer — OpenGL ICommandBuffer implementation.
@@ -16,8 +21,11 @@ class GLDevice;
 // OpenGL is immediate-mode; most commands execute directly.
 // State caching avoids redundant GL calls.
 //
-// Lazy VAO: BindGeometry creates a VAO on first use from
-// the Pipeline's vertexLayout + Geometry's buffer handles.
+// PSO-driven state: BindPipeline calls GLPipelineResource::
+// ApplyGLState(), which sets ALL GL state from the PSO.
+//
+// Lazy VAO: BindGeometry creates a VAO on first use, cached
+// per pipeline+geometry pair inside GLPipelineResource.
 // ============================================================
 
 class GLCommandBuffer : public ICommandBuffer
@@ -78,12 +86,17 @@ public:
 
 private:
     GLDevice& m_Device;
+    ResourceManager& m_Resources;
 
     // State cache
     uint32_t m_CurrentPipelineId = 0;
     uint32_t m_CurrentGeometryId = 0;
     uint32_t m_CurrentFbo = 0;
     bool     m_InRenderPass = false;
+
+    // Cached resource pointers (valid for current frame)
+    GLPipelineResource* m_CurrentPipeline = nullptr;
+    GLGeometryResource* m_CurrentGeometry = nullptr;
 };
 
 } // namespace rhi

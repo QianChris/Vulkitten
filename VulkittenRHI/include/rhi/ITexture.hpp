@@ -3,6 +3,7 @@
 #include "rhi/Core/Handle.hpp"
 #include "rhi/Core/Format.hpp"
 #include "rhi/Core/Types.hpp"
+#include "rhi/ResourceDescs.hpp"
 
 namespace rhi {
 

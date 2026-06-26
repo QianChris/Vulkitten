@@ -1,12 +1,7 @@
 #include "VKDevice.hpp"
 #include "VKCommandBuffer.hpp"
-
-#include "rhi/IBuffer.hpp"
-#include "rhi/ITexture.hpp"
-#include "rhi/IShader.hpp"
-#include "rhi/IPipeline.hpp"
-#include "rhi/IGeometry.hpp"
-#include "rhi/ISampler.hpp"
+#include "VKResources.hpp"
+#include "rhi/ResourceManager.hpp"
 
 #include <vulkan/vulkan.h>
 #define GLFW_INCLUDE_VULKAN
@@ -19,59 +14,6 @@
 #include <vector>
 
 namespace rhi {
-
-// ============================================================
-// Internal query interface implementations
-// ============================================================
-
-class VKBuffer final : public IBuffer
-{
-public:
-    VKBuffer(const VKBufferMeta& meta) : m_Meta(meta) {}
-    uint64_t GetSize() const override { return m_Meta.Size; }
-    void* Map(uint64_t /*offset*/, uint64_t /*size*/) override { return nullptr; }
-    void Unmap() override {}
-    void Flush(uint64_t, uint64_t) override {}
-private:
-    const VKBufferMeta& m_Meta;
-};
-
-class VKTexture final : public ITexture
-{
-public:
-    TextureType GetType() const override { return TextureType::Texture2D; }
-    Format GetFormat() const override { return Format::Unknown; }
-    Extent3D GetExtent() const override { return {}; }
-    uint32_t GetMipLevels() const override { return 1; }
-};
-
-class VKShaderImpl final : public IShader
-{
-public:
-    VKShaderImpl(const VKShaderMeta& meta) : m_Meta(meta) {}
-    ShaderStage GetStage() const override { return m_Meta.Stage; }
-    const char* GetEntryPoint() const override { return "main"; }
-private:
-    const VKShaderMeta& m_Meta;
-};
-
-class VKPipelineImpl final : public IPipeline
-{
-public:
-    bool IsCompute() const override { return false; }
-};
-
-class VKGeometryImpl final : public IGeometry
-{
-public:
-    VKGeometryImpl(const VKGeometryMeta& meta) : m_Meta(meta) {}
-    uint32_t GetVertexCount() const override { return m_Meta.Desc.VertexCount; }
-    uint32_t GetIndexCount() const override { return m_Meta.Desc.IndexCount; }
-private:
-    const VKGeometryMeta& m_Meta;
-};
-
-class VKSamplerImpl final : public ISampler {};
 
 #define VK_CHECK(call) \
     do { \
@@ -90,64 +32,13 @@ class VKSamplerImpl final : public ISampler {};
 #endif
 
 // ============================================================
-// Helpers: RHI → Vulkan enum mapping
-// ============================================================
-
-static VkFormat ToVkFormat(Format f)
-{
-    switch (f) {
-        case Format::R32_FLOAT:  return VK_FORMAT_R32_SFLOAT;
-        case Format::RG32_FLOAT: return VK_FORMAT_R32G32_SFLOAT;
-        case Format::RGB32_FLOAT:return VK_FORMAT_R32G32B32_SFLOAT;
-        case Format::RGBA32_FLOAT:return VK_FORMAT_R32G32B32A32_SFLOAT;
-        case Format::BGRA8_UNORM: return VK_FORMAT_B8G8R8A8_UNORM;
-        default: return VK_FORMAT_UNDEFINED;
-    }
-}
-
-static VkShaderStageFlagBits ToVkShaderStage(ShaderStage stage)
-{
-    switch (stage) {
-        case ShaderStage::Vertex:   return VK_SHADER_STAGE_VERTEX_BIT;
-        case ShaderStage::Fragment: return VK_SHADER_STAGE_FRAGMENT_BIT;
-        case ShaderStage::Compute:  return VK_SHADER_STAGE_COMPUTE_BIT;
-        default: return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
-    }
-}
-
-static VkCullModeFlags ToVkCullMode(RasterState::CullMode m)
-{
-    switch (m) {
-        case RasterState::CullMode::None:  return VK_CULL_MODE_NONE;
-        case RasterState::CullMode::Front: return VK_CULL_MODE_FRONT_BIT;
-        case RasterState::CullMode::Back:  return VK_CULL_MODE_BACK_BIT;
-        default: return VK_CULL_MODE_BACK_BIT;
-    }
-}
-
-static VkCompareOp ToVkCompareOp(DepthStencilState::CompareOp op)
-{
-    switch (op) {
-        case DepthStencilState::CompareOp::Never:    return VK_COMPARE_OP_NEVER;
-        case DepthStencilState::CompareOp::Less:     return VK_COMPARE_OP_LESS;
-        case DepthStencilState::CompareOp::Equal:    return VK_COMPARE_OP_EQUAL;
-        case DepthStencilState::CompareOp::LessEqual:return VK_COMPARE_OP_LESS_OR_EQUAL;
-        case DepthStencilState::CompareOp::Greater:  return VK_COMPARE_OP_GREATER;
-        case DepthStencilState::CompareOp::NotEqual: return VK_COMPARE_OP_NOT_EQUAL;
-        case DepthStencilState::CompareOp::GreaterEqual: return VK_COMPARE_OP_GREATER_OR_EQUAL;
-        case DepthStencilState::CompareOp::Always:   return VK_COMPARE_OP_ALWAYS;
-        default: return VK_COMPARE_OP_LESS;
-    }
-}
-
-// ============================================================
 // Construction
 // ============================================================
 
-VKDevice::VKDevice(ISurface* surface)
+VKDevice::VKDevice(ISurface* surface, ResourceManager& rm)
     : m_Surface(surface)
+    , m_Resources(rm)
 {
-    m_Slots.push_back({0, 0, 1, false});
 }
 
 VKDevice::~VKDevice()
@@ -276,26 +167,14 @@ void VKDevice::Shutdown()
     auto dev = static_cast<VkDevice>(m_Device);
     vkDeviceWaitIdle(dev);
 
+    // ResourceManager::DestroyAll() handles RAII cleanup of all resources.
+    // Called by Renderer (owner of ResourceManager), not here.
+
+    // Clear descriptor set cache BEFORE destroying the descriptor pool
+    VKCommandBuffer::ClearDescriptorSetCache();
+
     DestroyDescriptorPool();
     DestroyCommandPools();
-
-    // Clean up resources
-    for (auto& [id, meta] : m_PipelineMetas) {
-        if (meta.Pipeline) vkDestroyPipeline(dev, static_cast<VkPipeline>(meta.Pipeline), nullptr);
-        if (meta.PipelineLayout) vkDestroyPipelineLayout(dev, static_cast<VkPipelineLayout>(meta.PipelineLayout), nullptr);
-        if (meta.DescriptorSetLayout) vkDestroyDescriptorSetLayout(dev, static_cast<VkDescriptorSetLayout>(meta.DescriptorSetLayout), nullptr);
-    }
-    for (auto& [id, meta] : m_ShaderMetas) {
-        if (meta.ShaderModule) vkDestroyShaderModule(dev, static_cast<VkShaderModule>(meta.ShaderModule), nullptr);
-    }
-    for (auto& [id, meta] : m_BufferMetas) {
-        if (meta.Buffer) vkDestroyBuffer(dev, static_cast<VkBuffer>(meta.Buffer), nullptr);
-        if (meta.Memory) vkFreeMemory(dev, static_cast<VkDeviceMemory>(meta.Memory), nullptr);
-    }
-    m_PipelineMetas.clear();
-    m_ShaderMetas.clear();
-    m_BufferMetas.clear();
-    m_GeometryMetas.clear();
 
     m_Swapchain.reset();
     if (m_Device) { vkDestroyDevice(dev, nullptr); m_Device = nullptr; }
@@ -363,64 +242,48 @@ BufferHandle VKDevice::CreateBuffer(const BufferDesc& desc, const void* initialD
 {
     auto dev = static_cast<VkDevice>(m_Device);
 
-    VkBufferCreateInfo bufferInfo{};
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = desc.Size;
+    // Create a temporary buffer to query memory requirements
+    VkBufferCreateInfo tempInfo{};
+    tempInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    tempInfo.size = desc.Size;
+    tempInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    tempInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkBufferUsageFlags usage = 0;
-    if (desc.Usage == BufferUsage::Vertex)   usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    else if (desc.Usage == BufferUsage::Index)    usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    else if (desc.Usage == BufferUsage::Uniform)  usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    else if (desc.Usage == BufferUsage::Storage)  usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-    bufferInfo.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    VkBuffer tempBuf = VK_NULL_HANDLE;
+    if (vkCreateBuffer(dev, &tempInfo, nullptr, &tempBuf) != VK_SUCCESS)
+        return BufferHandle{};
 
-    VkBuffer buffer = VK_NULL_HANDLE;
-    VK_CHECK(vkCreateBuffer(dev, &bufferInfo, nullptr, &buffer));
-
-    // Allocate memory (host-visible for MVP simplicity)
     VkMemoryRequirements memReqs{};
-    vkGetBufferMemoryRequirements(dev, buffer, &memReqs);
+    vkGetBufferMemoryRequirements(dev, tempBuf, &memReqs);
+    vkDestroyBuffer(dev, tempBuf, nullptr);
 
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memReqs.size;
-    allocInfo.memoryTypeIndex = FindMemoryType(memReqs.memoryTypeBits,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    uint32_t memoryTypeIndex = static_cast<uint32_t>(FindMemoryType(
+        memReqs.memoryTypeBits,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
 
-    VkDeviceMemory memory = VK_NULL_HANDLE;
-    VK_CHECK(vkAllocateMemory(dev, &allocInfo, nullptr, &memory));
-    vkBindBufferMemory(dev, buffer, memory, 0);
+    uint32_t id = m_Resources.AllocateSlot();
 
-    // Upload initial data
-    if (initialData)
-    {
-        void* mapped = nullptr;
-        vkMapMemory(dev, memory, 0, desc.Size, 0, &mapped);
-        memcpy(mapped, initialData, static_cast<size_t>(desc.Size));
-        vkUnmapMemory(dev, memory);
-    }
+    auto buffer = std::make_unique<VKBufferResource>(
+        dev, desc, initialData, memoryTypeIndex);
 
-    uint32_t id = FindFreeSlot();
-    m_Slots[id].Alive = true;
-    m_Slots[id].GpuHandle = reinterpret_cast<uint64_t>(buffer);
-    m_Slots[id].GpuHandle2 = reinterpret_cast<uint64_t>(memory);
+    m_Resources.StoreBuffer(id, std::move(buffer));
 
-    VKBufferMeta meta;
-    meta.Buffer = buffer;
-    meta.Memory = memory;
-    meta.Size = desc.Size;
-    meta.Usage = desc.Usage;
-    m_BufferMetas[id] = meta;
-
-    return BufferHandle{id, m_Slots[id].Generation};
+    uint32_t gen = m_Resources.GetGeneration(id);
+    return BufferHandle{id, gen};
 }
 
 // ============================================================
 // Texture (stub)
 // ============================================================
 
-TextureHandle VKDevice::CreateTexture(const TextureDesc&, const void*) { return TextureHandle{}; }
+TextureHandle VKDevice::CreateTexture(const TextureDesc& desc, const void* initialData)
+{
+    uint32_t id = m_Resources.AllocateSlot();
+    auto texture = std::make_unique<VKTextureResource>(static_cast<VkDevice>(m_Device), desc, initialData);
+    m_Resources.StoreTexture(id, std::move(texture));
+    uint32_t gen = m_Resources.GetGeneration(id);
+    return TextureHandle{id, gen};
+}
 
 // ============================================================
 // Shader
@@ -428,31 +291,20 @@ TextureHandle VKDevice::CreateTexture(const TextureDesc&, const void*) { return 
 
 ShaderHandle VKDevice::CreateShader(ShaderStage stage, const ShaderBytecode& bytecode)
 {
-    auto dev = static_cast<VkDevice>(m_Device);
+    uint32_t id = m_Resources.AllocateSlot();
 
-    VkShaderModuleCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.codeSize = bytecode.Size;
-    createInfo.pCode = reinterpret_cast<const uint32_t*>(bytecode.Data);
+    auto shader = std::make_unique<VKShaderResource>(static_cast<VkDevice>(m_Device), stage, bytecode);
 
-    VkShaderModule module = VK_NULL_HANDLE;
-    VkResult res = vkCreateShaderModule(dev, &createInfo, nullptr, &module);
-    if (res != VK_SUCCESS)
+    if (!shader->IsValid())
     {
-        fprintf(stderr, "VKDevice::CreateShader: failed to create shader module (%d)\n", res);
+        m_Resources.FreeSlot(id);
         return ShaderHandle{};
     }
 
-    uint32_t id = FindFreeSlot();
-    m_Slots[id].Alive = true;
-    m_Slots[id].GpuHandle = reinterpret_cast<uint64_t>(module);
+    m_Resources.StoreShader(id, std::move(shader));
 
-    VKShaderMeta meta;
-    meta.ShaderModule = module;
-    meta.Stage = stage;
-    m_ShaderMetas[id] = meta;
-
-    return ShaderHandle{id, m_Slots[id].Generation};
+    uint32_t gen = m_Resources.GetGeneration(id);
+    return ShaderHandle{id, gen};
 }
 
 // ============================================================
@@ -461,224 +313,27 @@ ShaderHandle VKDevice::CreateShader(ShaderStage stage, const ShaderBytecode& byt
 
 PipelineHandle VKDevice::CreatePipeline(const PipelineDesc& desc)
 {
-    auto dev = static_cast<VkDevice>(m_Device);
+    auto* vs = dynamic_cast<VKShaderResource*>(m_Resources.GetShader(desc.VertexShader));
+    auto* fs = dynamic_cast<VKShaderResource*>(m_Resources.GetShader(desc.FragmentShader));
+    auto* cs = dynamic_cast<VKShaderResource*>(m_Resources.GetShader(desc.ComputeShader));
 
-    // Build shader stages
-    std::vector<VkPipelineShaderStageCreateInfo> stages;
+    VkRenderPass rp = m_Swapchain ? static_cast<VkRenderPass>(m_Swapchain->GetRenderPass()) : VK_NULL_HANDLE;
 
-    auto addStage = [&](ShaderHandle handle) {
-        if (!handle.IsValid()) return;
-        auto it = m_ShaderMetas.find(handle.GetId());
-        if (it == m_ShaderMetas.end()) return;
-        VkPipelineShaderStageCreateInfo s{};
-        s.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        s.stage = ToVkShaderStage(it->second.Stage);
-        s.module = static_cast<VkShaderModule>(it->second.ShaderModule);
-        s.pName = "main";
-        stages.push_back(s);
-    };
+    uint32_t id = m_Resources.AllocateSlot();
 
-    addStage(desc.VertexShader);
-    addStage(desc.FragmentShader);
+    auto pipeline = std::make_unique<VKPipelineResource>(
+        static_cast<VkDevice>(m_Device), desc, vs, fs, cs, rp);
 
-    if (stages.empty())
+    if (pipeline->GetVkPipeline() == VK_NULL_HANDLE)
     {
-        fprintf(stderr, "VKDevice::CreatePipeline: no valid shader stages\n");
+        m_Resources.FreeSlot(id);
         return PipelineHandle{};
     }
 
-    // Vertex input state
-    std::vector<VkVertexInputBindingDescription> bindings;
-    std::vector<VkVertexInputAttributeDescription> attributes;
+    m_Resources.StorePipeline(id, std::move(pipeline));
 
-    for (auto& attr : desc.VertexLayout)
-    {
-        // Check if binding already exists
-        bool bindingExists = false;
-        for (auto& b : bindings) {
-            if (b.binding == attr.BufferSlot) { bindingExists = true; break; }
-        }
-        if (!bindingExists) {
-            VkVertexInputBindingDescription b{};
-            b.binding = attr.BufferSlot;
-            b.stride = attr.Stride;
-            b.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-            bindings.push_back(b);
-        }
-
-        VkVertexInputAttributeDescription a{};
-        a.location = attr.Location;
-        a.binding = attr.BufferSlot;
-        a.format = ToVkFormat(attr.Format);
-        a.offset = attr.Offset;
-        attributes.push_back(a);
-    }
-
-    VkPipelineVertexInputStateCreateInfo vertexInput{};
-    vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInput.vertexBindingDescriptionCount = static_cast<uint32_t>(bindings.size());
-    vertexInput.pVertexBindingDescriptions = bindings.data();
-    vertexInput.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributes.size());
-    vertexInput.pVertexAttributeDescriptions = attributes.data();
-
-    // Input assembly
-    VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-    // Viewport state
-    VkPipelineViewportStateCreateInfo viewportState{};
-    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.viewportCount = 1;
-    viewportState.scissorCount = 1;
-
-    // Rasterization
-    VkPipelineRasterizationStateCreateInfo rasterizer{};
-    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterizer.depthClampEnable = VK_FALSE;
-    rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = ToVkCullMode(desc.Raster.Cull);
-    rasterizer.frontFace = (desc.Raster.Front == RasterState::FrontFace::CounterClockwise) ?
-        VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
-
-    // Multisampling
-    VkPipelineMultisampleStateCreateInfo multisampling{};
-    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisampling.sampleShadingEnable = VK_FALSE;
-    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
-    // Depth/stencil
-    VkPipelineDepthStencilStateCreateInfo depthStencil{};
-    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.depthTestEnable = desc.DepthStencil.DepthTestEnable ? VK_TRUE : VK_FALSE;
-    depthStencil.depthWriteEnable = desc.DepthStencil.DepthWriteEnable ? VK_TRUE : VK_FALSE;
-    depthStencil.depthCompareOp = ToVkCompareOp(desc.DepthStencil.DepthCompareOp);
-
-    // Color blend
-    std::vector<VkPipelineColorBlendAttachmentState> blendAttachments;
-    for (auto& b : desc.Blends)
-    {
-        VkPipelineColorBlendAttachmentState ba{};
-        ba.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                            VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        blendAttachments.push_back(ba);
-    }
-    if (blendAttachments.empty())
-    {
-        VkPipelineColorBlendAttachmentState ba{};
-        ba.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                            VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        blendAttachments.push_back(ba);
-    }
-
-    VkPipelineColorBlendStateCreateInfo colorBlending{};
-    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorBlending.logicOpEnable = VK_FALSE;
-    colorBlending.attachmentCount = static_cast<uint32_t>(blendAttachments.size());
-    colorBlending.pAttachments = blendAttachments.data();
-
-    // Dynamic state
-    VkDynamicState dynamicStates[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-    VkPipelineDynamicStateCreateInfo dynamicState{};
-    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamicState.dynamicStateCount = 2;
-    dynamicState.pDynamicStates = dynamicStates;
-
-    // Descriptor set layout (from pipeline slots)
-    std::vector<VkDescriptorSetLayoutBinding> dslBindings;
-    for (auto& bs : desc.BufferSlots)
-    {
-        VkDescriptorSetLayoutBinding lb{};
-        lb.binding = bs.Slot;
-        lb.descriptorType = (bs.SlotType == BufferSlot::Type::Uniform) ?
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        lb.descriptorCount = 1;
-        lb.stageFlags = ToVkShaderStage(bs.Stages);
-        dslBindings.push_back(lb);
-    }
-    for (auto& ts : desc.TextureSlots)
-    {
-        VkDescriptorSetLayoutBinding lb{};
-        lb.binding = ts.Slot;
-        lb.descriptorType = (ts.SlotType == TextureSlot::Type::Sampled) ?
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        lb.descriptorCount = 1;
-        lb.stageFlags = ToVkShaderStage(ts.Stages);
-        dslBindings.push_back(lb);
-    }
-
-    VkDescriptorSetLayoutCreateInfo dslInfo{};
-    dslInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    dslInfo.bindingCount = static_cast<uint32_t>(dslBindings.size());
-    dslInfo.pBindings = dslBindings.data();
-
-    VkDescriptorSetLayout dsl = VK_NULL_HANDLE;
-    VK_CHECK(vkCreateDescriptorSetLayout(dev, &dslInfo, nullptr, &dsl));
-
-    // Pipeline layout
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &dsl;
-
-    if (desc.PushConstantsSize > 0)
-    {
-        VkPushConstantRange pcRange{};
-        pcRange.stageFlags = (desc.ComputeShader.IsValid() ? VK_SHADER_STAGE_COMPUTE_BIT :
-                              VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-        pcRange.offset = 0;
-        pcRange.size = desc.PushConstantsSize;
-        pipelineLayoutInfo.pushConstantRangeCount = 1;
-        pipelineLayoutInfo.pPushConstantRanges = &pcRange;
-    }
-
-    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
-    VK_CHECK(vkCreatePipelineLayout(dev, &pipelineLayoutInfo, nullptr, &pipelineLayout));
-
-    // Graphics pipeline
-    VkGraphicsPipelineCreateInfo pipelineInfo{};
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = static_cast<uint32_t>(stages.size());
-    pipelineInfo.pStages = stages.data();
-    pipelineInfo.pVertexInputState = &vertexInput;
-    pipelineInfo.pInputAssemblyState = &inputAssembly;
-    pipelineInfo.pViewportState = &viewportState;
-    pipelineInfo.pRasterizationState = &rasterizer;
-    pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pDepthStencilState = &depthStencil;
-    pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.pDynamicState = &dynamicState;
-    pipelineInfo.layout = pipelineLayout;
-    pipelineInfo.renderPass = static_cast<VkRenderPass>(m_Swapchain->GetRenderPass());
-    pipelineInfo.subpass = 0;
-
-    VkPipeline pipeline = VK_NULL_HANDLE;
-    VkResult pipeRes = vkCreateGraphicsPipelines(dev, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline);
-    if (pipeRes != VK_SUCCESS)
-    {
-        fprintf(stderr, "VKDevice::CreatePipeline: vkCreateGraphicsPipelines failed (%d)\n", pipeRes);
-        vkDestroyPipelineLayout(dev, pipelineLayout, nullptr);
-        vkDestroyDescriptorSetLayout(dev, dsl, nullptr);
-        return PipelineHandle{};
-    }
-
-    uint32_t id = FindFreeSlot();
-    m_Slots[id].Alive = true;
-    m_Slots[id].GpuHandle = reinterpret_cast<uint64_t>(pipeline);
-
-    VKPipelineMeta meta;
-    meta.Pipeline = pipeline;
-    meta.PipelineLayout = pipelineLayout;
-    meta.DescriptorSetLayout = dsl;
-    meta.VertexLayout = desc.VertexLayout;
-    meta.BufferSlots = desc.BufferSlots;
-    meta.TextureSlots = desc.TextureSlots;
-    m_PipelineMetas[id] = meta;
-
-    return PipelineHandle{id, m_Slots[id].Generation};
+    uint32_t gen = m_Resources.GetGeneration(id);
+    return PipelineHandle{id, gen};
 }
 
 // ============================================================
@@ -687,45 +342,62 @@ PipelineHandle VKDevice::CreatePipeline(const PipelineDesc& desc)
 
 GeometryHandle VKDevice::CreateGeometry(const GeometryDesc& desc)
 {
-    uint32_t id = FindFreeSlot();
-    m_Slots[id].Alive = true;
-    m_Slots[id].GpuHandle = 0;
+    uint32_t id = m_Resources.AllocateSlot();
 
-    VKGeometryMeta meta;
-    meta.Desc = desc;
-    m_GeometryMetas[id] = meta;
+    auto geometry = std::make_unique<VKGeometryResource>(desc);
 
-    return GeometryHandle{id, m_Slots[id].Generation};
+    m_Resources.StoreGeometry(id, std::move(geometry));
+
+    uint32_t gen = m_Resources.GetGeneration(id);
+    return GeometryHandle{id, gen};
 }
 
 // ============================================================
-// Sampler (stub)
+// Sampler
 // ============================================================
 
-SamplerHandle VKDevice::CreateSampler(const SamplerDesc&) { return SamplerHandle{}; }
+SamplerHandle VKDevice::CreateSampler(const SamplerDesc& desc)
+{
+    uint32_t id = m_Resources.AllocateSlot();
+
+    auto sampler = std::make_unique<VKSamplerResource>(static_cast<VkDevice>(m_Device), desc);
+
+    m_Resources.StoreSampler(id, std::move(sampler));
+
+    uint32_t gen = m_Resources.GetGeneration(id);
+    return SamplerHandle{id, gen};
+}
 
 // ============================================================
 // RenderPass
 // ============================================================
 
-RenderPassHandle VKDevice::CreateRenderPass(const RenderPassDesc&)
+RenderPassHandle VKDevice::CreateRenderPass(const RenderPassDesc& desc)
 {
-    m_DefaultRenderPassSlotId = FindFreeSlot();
-    m_Slots[m_DefaultRenderPassSlotId].Alive = true;
-    m_Slots[m_DefaultRenderPassSlotId].GpuHandle = reinterpret_cast<uint64_t>(m_Swapchain->GetRenderPass());
-    return RenderPassHandle{m_DefaultRenderPassSlotId, m_Slots[m_DefaultRenderPassSlotId].Generation};
+    uint32_t id = m_Resources.AllocateSlot();
+    m_Resources.StoreRenderPassDesc(id, desc);
+
+    // Also store the VkRenderPass pointer (from swapchain) for use by command buffer
+    m_FramebufferHandles[id] = reinterpret_cast<uint64_t>(m_Swapchain->GetRenderPass());
+
+    uint32_t gen = m_Resources.GetGeneration(id);
+    return RenderPassHandle{id, gen};
 }
 
 // ============================================================
 // Framebuffer
 // ============================================================
 
-FramebufferHandle VKDevice::CreateFramebuffer(const FramebufferDesc&)
+FramebufferHandle VKDevice::CreateFramebuffer(const FramebufferDesc& desc)
 {
-    uint32_t id = FindFreeSlot();
-    m_Slots[id].Alive = true;
-    m_Slots[id].GpuHandle = kSwapchainFramebufferSentinel;
-    return FramebufferHandle{id, m_Slots[id].Generation};
+    uint32_t id = m_Resources.AllocateSlot();
+    m_Resources.StoreFramebufferDesc(id, desc);
+
+    // Use sentinel to indicate swapchain framebuffers
+    m_FramebufferHandles[id] = kSwapchainFramebufferSentinel;
+
+    uint32_t gen = m_Resources.GetGeneration(id);
+    return FramebufferHandle{id, gen};
 }
 
 // ============================================================
@@ -740,8 +412,6 @@ void VKDevice::OnResize(uint32_t width, uint32_t height)
     m_Swapchain->Destroy();
     if (!m_Swapchain->Create(m_Instance, m_PhysicalDevice, m_Device, m_Surface, m_FramesInFlight))
         fprintf(stderr, "VKDevice: failed to recreate swapchain on resize\n");
-    if (m_DefaultRenderPassSlotId > 0 && m_DefaultRenderPassSlotId < m_Slots.size())
-        m_Slots[m_DefaultRenderPassSlotId].GpuHandle = reinterpret_cast<uint64_t>(m_Swapchain->GetRenderPass());
 }
 
 void VKDevice::WaitIdle()
@@ -801,51 +471,6 @@ void* VKDevice::AllocateDescriptorSet(void* descriptorSetLayout)
     return ds;
 }
 
-// ============================================================
-// Metadata Access
-// ============================================================
-
-VKDevice::GpuSlot* VKDevice::GetSlot(uint32_t id)
-{
-    if (id == 0 || id >= m_Slots.size()) return nullptr;
-    return &m_Slots[id];
-}
-
-const VKPipelineMeta* VKDevice::GetPipelineMeta(uint32_t id) const
-{
-    auto it = m_PipelineMetas.find(id);
-    return (it != m_PipelineMetas.end()) ? &it->second : nullptr;
-}
-
-const VKBufferMeta* VKDevice::GetBufferMeta(uint32_t id) const
-{
-    auto it = m_BufferMetas.find(id);
-    return (it != m_BufferMetas.end()) ? &it->second : nullptr;
-}
-
-const VKGeometryMeta* VKDevice::GetGeometryMeta(uint32_t id) const
-{
-    auto it = m_GeometryMetas.find(id);
-    return (it != m_GeometryMetas.end()) ? &it->second : nullptr;
-}
-
-// ============================================================
-// Internal
-// ============================================================
-
-uint32_t VKDevice::FindFreeSlot()
-{
-    if (!m_FreeIndices.empty()) {
-        uint32_t idx = m_FreeIndices.back();
-        m_FreeIndices.pop_back();
-        m_Slots[idx].Generation++;
-        return idx;
-    }
-    uint32_t idx = static_cast<uint32_t>(m_Slots.size());
-    m_Slots.push_back({0, 0, 1, false});
-    return idx;
-}
-
 uint32_t VKDevice::FindMemoryType(uint32_t typeFilter, uint32_t properties)
 {
     VkPhysicalDeviceMemoryProperties memProps{};
@@ -890,79 +515,14 @@ void* VKDevice::GetSwapchainFramebuffer(uint32_t imageIndex) const
 }
 
 // ============================================================
-// Resource Query
+// Resource Query (delegates to ResourceManager)
 // ============================================================
 
-IBuffer* VKDevice::GetBuffer(BufferHandle handle)
-{
-    if (!handle.IsValid()) return nullptr;
-    auto it = m_BufferQueries.find(handle.GetId());
-    if (it != m_BufferQueries.end()) return it->second.get();
-    auto metaIt = m_BufferMetas.find(handle.GetId());
-    if (metaIt == m_BufferMetas.end()) return nullptr;
-    auto ptr = std::make_unique<VKBuffer>(metaIt->second);
-    IBuffer* raw = ptr.get();
-    m_BufferQueries[handle.GetId()] = std::move(ptr);
-    return raw;
-}
-
-ITexture* VKDevice::GetTexture(TextureHandle handle)
-{
-    if (!handle.IsValid()) return nullptr;
-    auto it = m_TextureQueries.find(handle.GetId());
-    if (it != m_TextureQueries.end()) return it->second.get();
-    auto ptr = std::make_unique<VKTexture>();
-    ITexture* raw = ptr.get();
-    m_TextureQueries[handle.GetId()] = std::move(ptr);
-    return raw;
-}
-
-IShader* VKDevice::GetShader(ShaderHandle handle)
-{
-    if (!handle.IsValid()) return nullptr;
-    auto it = m_ShaderQueries.find(handle.GetId());
-    if (it != m_ShaderQueries.end()) return it->second.get();
-    auto metaIt = m_ShaderMetas.find(handle.GetId());
-    if (metaIt == m_ShaderMetas.end()) return nullptr;
-    auto ptr = std::make_unique<VKShaderImpl>(metaIt->second);
-    IShader* raw = ptr.get();
-    m_ShaderQueries[handle.GetId()] = std::move(ptr);
-    return raw;
-}
-
-IPipeline* VKDevice::GetPipeline(PipelineHandle handle)
-{
-    if (!handle.IsValid()) return nullptr;
-    auto it = m_PipelineQueries.find(handle.GetId());
-    if (it != m_PipelineQueries.end()) return it->second.get();
-    auto ptr = std::make_unique<VKPipelineImpl>();
-    IPipeline* raw = ptr.get();
-    m_PipelineQueries[handle.GetId()] = std::move(ptr);
-    return raw;
-}
-
-IGeometry* VKDevice::GetGeometry(GeometryHandle handle)
-{
-    if (!handle.IsValid()) return nullptr;
-    auto it = m_GeometryQueries.find(handle.GetId());
-    if (it != m_GeometryQueries.end()) return it->second.get();
-    auto metaIt = m_GeometryMetas.find(handle.GetId());
-    if (metaIt == m_GeometryMetas.end()) return nullptr;
-    auto ptr = std::make_unique<VKGeometryImpl>(metaIt->second);
-    IGeometry* raw = ptr.get();
-    m_GeometryQueries[handle.GetId()] = std::move(ptr);
-    return raw;
-}
-
-ISampler* VKDevice::GetSampler(SamplerHandle handle)
-{
-    if (!handle.IsValid()) return nullptr;
-    auto it = m_SamplerQueries.find(handle.GetId());
-    if (it != m_SamplerQueries.end()) return it->second.get();
-    auto ptr = std::make_unique<VKSamplerImpl>();
-    ISampler* raw = ptr.get();
-    m_SamplerQueries[handle.GetId()] = std::move(ptr);
-    return raw;
-}
+IBuffer*   VKDevice::GetBuffer(BufferHandle handle)     { return m_Resources.GetBuffer(handle); }
+ITexture*  VKDevice::GetTexture(TextureHandle handle)    { return m_Resources.GetTexture(handle); }
+IShader*   VKDevice::GetShader(ShaderHandle handle)      { return m_Resources.GetShader(handle); }
+IPipeline* VKDevice::GetPipeline(PipelineHandle handle)  { return m_Resources.GetPipeline(handle); }
+IGeometry* VKDevice::GetGeometry(GeometryHandle handle)  { return m_Resources.GetGeometry(handle); }
+ISampler*  VKDevice::GetSampler(SamplerHandle handle)    { return m_Resources.GetSampler(handle); }
 
 } // namespace rhi

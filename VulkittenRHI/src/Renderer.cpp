@@ -2,6 +2,7 @@
 #include "rhi/IRenderDevice.hpp"
 #include "rhi/ICommandBuffer.hpp"
 #include "rhi/RenderCommandList.hpp"
+#include "rhi/ResourceManager.hpp"
 #include "rhi/ResourceDescs.hpp"
 
 #include "gl/GLDevice.hpp"
@@ -22,6 +23,7 @@ namespace rhi {
 struct Renderer::Impl
 {
     RendererConfig         Config;
+    std::unique_ptr<ResourceManager> Resources;
     std::unique_ptr<IRenderDevice> Device;
     std::unique_ptr<ICommandBuffer> CurrentCmd;
     std::unique_ptr<RenderCommandList> CurrentList;
@@ -47,16 +49,21 @@ std::unique_ptr<Renderer> Renderer::Create(const RendererConfig& config)
     renderer->m_Impl = std::make_unique<Impl>();
     renderer->m_Impl->Config = config;
 
+    // Create ResourceManager first (device needs it)
+    renderer->m_Impl->Resources = std::make_unique<ResourceManager>();
+
     // Create backend device
     switch (config.Backend)
     {
         case BackendType::OpenGL:
-            renderer->m_Impl->Device = std::make_unique<GLDevice>(config.Surface);
+            renderer->m_Impl->Device = std::make_unique<GLDevice>(
+                config.Surface, *renderer->m_Impl->Resources);
             break;
 
         case BackendType::Vulkan:
 #ifdef RHI_HAS_VULKAN
-            renderer->m_Impl->Device = std::make_unique<VKDevice>(config.Surface);
+            renderer->m_Impl->Device = std::make_unique<VKDevice>(
+                config.Surface, *renderer->m_Impl->Resources);
 #else
             throw std::runtime_error("Renderer::Create: Vulkan backend not available "
                                      "(rebuild with Vulkan SDK)");
@@ -105,10 +112,26 @@ std::unique_ptr<Renderer> Renderer::Create(const RendererConfig& config)
 
 Renderer::~Renderer()
 {
-    if (m_Impl && m_Impl->Device)
+    if (m_Impl)
     {
-        m_Impl->Device->WaitIdle();
-        m_Impl->Device->Shutdown();
+        if (m_Impl->Device)
+        {
+            m_Impl->Device->WaitIdle();
+        }
+
+        // IMPORTANT: Destroy all GPU resources BEFORE shutting down the device.
+        // ResourceManager::DestroyAll() triggers RAII destructors which call
+        // vkDestroyBuffer/vkDestroyPipeline/etc. These must complete before
+        // vkDestroyDevice is called.
+        if (m_Impl->Resources)
+        {
+            m_Impl->Resources->DestroyAll();
+        }
+
+        if (m_Impl->Device)
+        {
+            m_Impl->Device->Shutdown();
+        }
     }
 }
 
@@ -130,7 +153,7 @@ void Renderer::BeginFrame()
     if (m_Impl->CurrentCmd)
     {
         m_Impl->CurrentList = std::make_unique<RenderCommandList>(
-            *m_Impl->Device, *m_Impl->CurrentCmd);
+            *m_Impl->Device, *m_Impl->Resources, *m_Impl->CurrentCmd);
         m_Impl->CurrentCmd->Begin();
     }
 
@@ -168,6 +191,11 @@ bool Renderer::IsFrameInProgress() const
 IRenderDevice& Renderer::GetDevice()
 {
     return *m_Impl->Device;
+}
+
+ResourceManager& Renderer::GetResources()
+{
+    return *m_Impl->Resources;
 }
 
 RenderCommandList& Renderer::GetCommandList()

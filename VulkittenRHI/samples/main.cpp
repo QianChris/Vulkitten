@@ -92,8 +92,8 @@ struct UniformBufferObject {
 int main()
 {
     // ---- Select Backend (CHANGE THIS ONE LINE) ----
-    const rhi::BackendType BACKEND = rhi::BackendType::OpenGL;
-    //const rhi::BackendType BACKEND = rhi::BackendType::Vulkan;
+    //const rhi::BackendType BACKEND = rhi::BackendType::OpenGL;
+    const rhi::BackendType BACKEND = rhi::BackendType::Vulkan;
 
     // ---- GLFW ----
     glfwSetErrorCallback(GlfwErrorCallback);
