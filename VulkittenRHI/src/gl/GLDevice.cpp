@@ -235,6 +235,25 @@ SamplerHandle GLDevice::CreateSampler(const SamplerDesc& desc)
 }
 
 // ============================================================
+// QueryPool
+// ============================================================
+
+QueryPoolHandle GLDevice::CreateQueryPool(const QueryPoolDesc& desc)
+{
+    uint32_t id = m_Resources.AllocateSlot();
+
+    for (uint32_t i = 0; i < desc.Count; ++i)
+    {
+        GLuint query = 0;
+        glGenQueries(1, &query);
+        SetQueryGL(id, i, query);
+    }
+
+    uint32_t gen = m_Resources.GetGeneration(id);
+    return QueryPoolHandle{id, gen};
+}
+
+// ============================================================
 // RenderPass
 // ============================================================
 

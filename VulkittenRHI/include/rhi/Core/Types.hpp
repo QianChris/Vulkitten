@@ -299,6 +299,17 @@ enum class StoreOp : uint32_t
 };
 
 // ============================================================
+// Query Type (for GPU timestamp / occlusion / statistics queries)
+// ============================================================
+
+enum class QueryType : uint32_t
+{
+    Timestamp,
+    Occlusion,
+    PipelineStatistics,
+};
+
+// ============================================================
 // Command Buffer Level  [RESERVE: Multi-threaded recording]
 // ============================================================
 

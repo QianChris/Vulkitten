@@ -48,6 +48,7 @@ public:
     SamplerHandle  CreateSampler(const SamplerDesc& desc) override;
     RenderPassHandle   CreateRenderPass(const RenderPassDesc& desc) override;
     FramebufferHandle  CreateFramebuffer(const FramebufferDesc& desc) override;
+    QueryPoolHandle    CreateQueryPool(const QueryPoolDesc& desc) override;
 
     IBuffer*   GetBuffer(BufferHandle handle) override;
     ITexture*  GetTexture(TextureHandle handle) override;
@@ -74,6 +75,18 @@ public:
 
     // ---- ResourceManager access ----
     ResourceManager& GetResourceManager() { return m_Resources; }
+
+    // ---- Per-device descriptor set cache ----
+    std::unordered_map<uint64_t, void*>& GetDescriptorSetCache() { return m_DescriptorSetCache; }
+
+    // ---- Query pool access ----
+    void* GetQueryPoolVK(uint32_t poolId) const;
+    void LoadDebugUtilsFunctions();
+
+    // ---- Debug utils function pointers ----
+    void* GetDebugUtilsLabelBegin() const { return m_pfnBeginDebugUtilsLabel; }
+    void* GetDebugUtilsLabelEnd()   const { return m_pfnEndDebugUtilsLabel; }
+    void* GetDebugUtilsLabelInsert()const { return m_pfnInsertDebugUtilsLabel; }
 
 private:
     uint32_t FindMemoryType(uint32_t typeFilter, uint32_t properties);
@@ -105,6 +118,17 @@ private:
 
     // Framebuffer ID cache (maps handle ID → sentinel or native pointer)
     std::unordered_map<uint32_t, uint64_t> m_FramebufferHandles;
+
+    // Per-device descriptor set cache: (pipelineId << 8) | frameIndex → VkDescriptorSet
+    std::unordered_map<uint64_t, void*> m_DescriptorSetCache;
+
+    // Query pool storage: poolId → VkQueryPool
+    std::unordered_map<uint32_t, void*> m_QueryPools;
+
+    // Debug utils function pointers (VK_EXT_debug_utils)
+    void* m_pfnBeginDebugUtilsLabel = nullptr;
+    void* m_pfnEndDebugUtilsLabel = nullptr;
+    void* m_pfnInsertDebugUtilsLabel = nullptr;
 
     ResourceManager& m_Resources;
 };

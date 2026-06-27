@@ -15,26 +15,12 @@ class GLPipelineResource;
 class GLBufferResource;
 class GLGeometryResource;
 
-// ============================================================
-// GLCommandBuffer — OpenGL ICommandBuffer implementation.
-//
-// OpenGL is immediate-mode; most commands execute directly.
-// State caching avoids redundant GL calls.
-//
-// PSO-driven state: BindPipeline calls GLPipelineResource::
-// ApplyGLState(), which sets ALL GL state from the PSO.
-//
-// Lazy VAO: BindGeometry creates a VAO on first use, cached
-// per pipeline+geometry pair inside GLPipelineResource.
-// ============================================================
-
 class GLCommandBuffer : public ICommandBuffer
 {
 public:
     explicit GLCommandBuffer(GLDevice& device);
     ~GLCommandBuffer() override;
 
-    // ---- ICommandBuffer ----
     void Begin() override;
     void End() override;
 
@@ -69,8 +55,11 @@ public:
               uint32_t instanceCount = 1) override;
     void DrawIndexed(uint32_t indexCount, uint32_t firstIndex = 0,
                      int32_t vertexOffset = 0, uint32_t instanceCount = 1) override;
+    void DrawIndirect(BufferHandle indirectBuffer, uint64_t offset,
+                      uint32_t drawCount, uint32_t stride) override;
 
     void DispatchCompute(uint32_t groupX, uint32_t groupY, uint32_t groupZ = 1) override;
+    void DispatchIndirect(BufferHandle indirectBuffer, uint64_t offset) override;
 
     void CopyBuffer(BufferHandle src, BufferHandle dst,
                     uint64_t srcOffset, uint64_t dstOffset, uint64_t size) override;
@@ -78,6 +67,11 @@ public:
                              const Offset3D& dstOffset, const Extent3D& dstExtent) override;
     void CopyTextureToBuffer(TextureHandle src, BufferHandle dst,
                              const Offset3D& srcOffset, const Extent3D& srcExtent) override;
+
+    void ResetQueryPool(QueryPoolHandle pool, uint32_t firstQuery, uint32_t queryCount) override;
+    void BeginQuery(QueryPoolHandle pool, uint32_t queryIndex) override;
+    void EndQuery(QueryPoolHandle pool, uint32_t queryIndex) override;
+    void WriteTimestamp(PipelineStage stage, QueryPoolHandle pool, uint32_t queryIndex) override;
 
     void BeginDebugLabel(const char* label,
                          std::array<float, 4> color = {1,1,1,1}) override;
@@ -88,13 +82,11 @@ private:
     GLDevice& m_Device;
     ResourceManager& m_Resources;
 
-    // State cache
     uint32_t m_CurrentPipelineId = 0;
     uint32_t m_CurrentGeometryId = 0;
     uint32_t m_CurrentFbo = 0;
     bool     m_InRenderPass = false;
 
-    // Cached resource pointers (valid for current frame)
     GLPipelineResource* m_CurrentPipeline = nullptr;
     GLGeometryResource* m_CurrentGeometry = nullptr;
 };

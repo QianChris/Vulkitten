@@ -145,9 +145,29 @@ RenderCommandList& RenderCommandList::Draw(uint32_t vertexCount, uint32_t firstV
     return *this;
 }
 
+RenderCommandList& RenderCommandList::DrawIndirect(BufferHandle indirectBuffer, uint64_t offset,
+                                                    uint32_t drawCount, uint32_t stride)
+{
+    m_Cmd.DrawIndirect(indirectBuffer, offset, drawCount, stride);
+    return *this;
+}
+
 RenderCommandList& RenderCommandList::Dispatch(uint32_t groupX, uint32_t groupY, uint32_t groupZ)
 {
     m_Cmd.DispatchCompute(groupX, groupY, groupZ);
+    return *this;
+}
+
+RenderCommandList& RenderCommandList::DispatchIndirect(BufferHandle indirectBuffer, uint64_t offset)
+{
+    m_Cmd.DispatchIndirect(indirectBuffer, offset);
+    return *this;
+}
+
+RenderCommandList& RenderCommandList::Barrier(PipelineStage srcStage, AccessFlags srcAccess,
+                                               PipelineStage dstStage, AccessFlags dstAccess)
+{
+    m_Cmd.Barrier(srcStage, srcAccess, dstStage, dstAccess);
     return *this;
 }
 

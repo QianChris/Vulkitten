@@ -87,9 +87,18 @@ public:
         uint32_t IndexCount, uint32_t FirstIndex = 0,
         int32_t VertexOffset = 0, uint32_t InstanceCount = 1) = 0;
 
+    // Indirect draw: parameters read from a GPU buffer
+    virtual void DrawIndirect(
+        BufferHandle IndirectBuffer, uint64_t Offset,
+        uint32_t DrawCount, uint32_t Stride) = 0;
+
     // ---- Compute ----
     virtual void DispatchCompute(
         uint32_t GroupX, uint32_t GroupY, uint32_t GroupZ = 1) = 0;
+
+    // Indirect dispatch: parameters read from a GPU buffer
+    virtual void DispatchIndirect(
+        BufferHandle IndirectBuffer, uint64_t Offset) = 0;
 
     // ---- Copy Commands ----
     virtual void CopyBuffer(
@@ -103,6 +112,16 @@ public:
     virtual void CopyTextureToBuffer(
         TextureHandle Src, BufferHandle Dst,
         const Offset3D& SrcOffset, const Extent3D& SrcExtent) = 0;
+
+    // ---- GPU Queries / Timestamps ----
+    virtual void ResetQueryPool(
+        QueryPoolHandle Pool, uint32_t FirstQuery, uint32_t QueryCount) = 0;
+    virtual void BeginQuery(
+        QueryPoolHandle Pool, uint32_t QueryIndex) = 0;
+    virtual void EndQuery(
+        QueryPoolHandle Pool, uint32_t QueryIndex) = 0;
+    virtual void WriteTimestamp(
+        PipelineStage Stage, QueryPoolHandle Pool, uint32_t QueryIndex) = 0;
 
     // ---- Debug Markers ----
     virtual void BeginDebugLabel(

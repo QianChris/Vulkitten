@@ -158,6 +158,7 @@ void VKDevice::Init()
 
     CreateCommandPools();
     CreateDescriptorPool();
+    LoadDebugUtilsFunctions();
     m_Initialized = true;
 }
 
@@ -171,7 +172,12 @@ void VKDevice::Shutdown()
     // Called by Renderer (owner of ResourceManager), not here.
 
     // Clear descriptor set cache BEFORE destroying the descriptor pool
-    VKCommandBuffer::ClearDescriptorSetCache();
+    m_DescriptorSetCache.clear();
+
+    // Destroy query pools
+    for (auto& [id, pool] : m_QueryPools)
+        if (pool) vkDestroyQueryPool(dev, static_cast<VkQueryPool>(pool), nullptr);
+    m_QueryPools.clear();
 
     DestroyDescriptorPool();
     DestroyCommandPools();
@@ -279,7 +285,10 @@ BufferHandle VKDevice::CreateBuffer(const BufferDesc& desc, const void* initialD
 TextureHandle VKDevice::CreateTexture(const TextureDesc& desc, const void* initialData)
 {
     uint32_t id = m_Resources.AllocateSlot();
-    auto texture = std::make_unique<VKTextureResource>(static_cast<VkDevice>(m_Device), desc, initialData);
+    auto texture = std::make_unique<VKTextureResource>(
+        static_cast<VkDevice>(m_Device),
+        static_cast<VkPhysicalDevice>(m_PhysicalDevice),
+        desc, initialData);
     m_Resources.StoreTexture(id, std::move(texture));
     uint32_t gen = m_Resources.GetGeneration(id);
     return TextureHandle{id, gen};
@@ -350,6 +359,54 @@ GeometryHandle VKDevice::CreateGeometry(const GeometryDesc& desc)
 
     uint32_t gen = m_Resources.GetGeneration(id);
     return GeometryHandle{id, gen};
+}
+
+// ============================================================
+// QueryPool
+// ============================================================
+
+QueryPoolHandle VKDevice::CreateQueryPool(const QueryPoolDesc& desc)
+{
+    auto dev = static_cast<VkDevice>(m_Device);
+
+    VkQueryPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+
+    switch (desc.Type)
+    {
+        case QueryType::Timestamp:         poolInfo.queryType = VK_QUERY_TYPE_TIMESTAMP; break;
+        case QueryType::Occlusion:         poolInfo.queryType = VK_QUERY_TYPE_OCCLUSION; break;
+        case QueryType::PipelineStatistics: poolInfo.queryType = VK_QUERY_TYPE_PIPELINE_STATISTICS; break;
+        default: poolInfo.queryType = VK_QUERY_TYPE_TIMESTAMP; break;
+    }
+    poolInfo.queryCount = desc.Count;
+
+    VkQueryPool pool = VK_NULL_HANDLE;
+    if (vkCreateQueryPool(dev, &poolInfo, nullptr, &pool) != VK_SUCCESS)
+        return QueryPoolHandle{};
+
+    uint32_t id = m_Resources.AllocateSlot();
+    m_QueryPools[id] = static_cast<void*>(pool);
+
+    uint32_t gen = m_Resources.GetGeneration(id);
+    return QueryPoolHandle{id, gen};
+}
+
+void* VKDevice::GetQueryPoolVK(uint32_t poolId) const
+{
+    auto it = m_QueryPools.find(poolId);
+    return (it != m_QueryPools.end()) ? it->second : nullptr;
+}
+
+void VKDevice::LoadDebugUtilsFunctions()
+{
+    auto inst = static_cast<VkInstance>(m_Instance);
+    m_pfnBeginDebugUtilsLabel = reinterpret_cast<void*>(
+        vkGetInstanceProcAddr(inst, "vkCmdBeginDebugUtilsLabelEXT"));
+    m_pfnEndDebugUtilsLabel = reinterpret_cast<void*>(
+        vkGetInstanceProcAddr(inst, "vkCmdEndDebugUtilsLabelEXT"));
+    m_pfnInsertDebugUtilsLabel = reinterpret_cast<void*>(
+        vkGetInstanceProcAddr(inst, "vkCmdInsertDebugUtilsLabelEXT"));
 }
 
 // ============================================================

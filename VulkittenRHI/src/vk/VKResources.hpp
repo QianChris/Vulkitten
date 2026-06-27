@@ -48,12 +48,13 @@ private:
 };
 
 // ============================================================
-// VKTextureResource — RAII VkImage (stub for now)
+// VKTextureResource — RAII VkImage + VkDeviceMemory + VkImageView
 // ============================================================
 class VKTextureResource : public ITexture
 {
 public:
-    VKTextureResource(VkDevice device, const TextureDesc& desc, const void* initialData);
+    VKTextureResource(VkDevice device, VkPhysicalDevice physicalDevice,
+                      const TextureDesc& desc, const void* initialData);
     ~VKTextureResource() override;
 
     TextureType GetType() const override;
@@ -61,9 +62,17 @@ public:
     Extent3D    GetExtent() const override;
     uint32_t    GetMipLevels() const override;
 
+    VkImage     GetVkImage() const { return m_Image; }
+    VkImageView GetVkImageView() const { return m_ImageView; }
+
 private:
-    VkDevice    m_Device = VK_NULL_HANDLE;
-    TextureDesc m_Desc;
+    uint32_t FindMemoryType(VkPhysicalDevice physDev, uint32_t typeFilter,
+                            VkMemoryPropertyFlags properties);
+    VkDevice         m_Device = VK_NULL_HANDLE;
+    VkImage          m_Image = VK_NULL_HANDLE;
+    VkDeviceMemory   m_Memory = VK_NULL_HANDLE;
+    VkImageView      m_ImageView = VK_NULL_HANDLE;
+    TextureDesc      m_Desc;
 };
 
 // ============================================================
@@ -150,7 +159,7 @@ private:
 };
 
 // ============================================================
-// VKSamplerResource — RAII VkSampler + ISampler (stub)
+// VKSamplerResource — RAII VkSampler + ISampler
 // ============================================================
 class VKSamplerResource : public ISampler
 {

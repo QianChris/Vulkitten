@@ -292,4 +292,14 @@ struct FramebufferDesc
     uint32_t                  Layers = 1;
 };
 
+// ============================================================
+// QueryPoolDesc
+// ============================================================
+
+struct QueryPoolDesc
+{
+    QueryType Type = QueryType::Timestamp;
+    uint32_t  Count = 2;  // typically 2 for timestamp (begin + end)
+};
+
 } // namespace rhi

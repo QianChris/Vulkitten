@@ -3,6 +3,8 @@
 #include "rhi/IRenderDevice.hpp"
 #include "rhi/ISurface.hpp"
 
+#include <glad/glad.h>
+
 #include <vector>
 #include <unordered_map>
 #include <memory>
@@ -58,6 +60,7 @@ public:
     SamplerHandle  CreateSampler(const SamplerDesc& desc) override;
     RenderPassHandle   CreateRenderPass(const RenderPassDesc& desc) override;
     FramebufferHandle  CreateFramebuffer(const FramebufferDesc& desc) override;
+    QueryPoolHandle    CreateQueryPool(const QueryPoolDesc& desc) override;
 
     // ---- IRenderDevice Resource Query (delegates to ResourceManager) ----
     IBuffer*   GetBuffer(BufferHandle handle) override;
@@ -76,14 +79,23 @@ public:
     ResourceManager& GetResourceManager() { return m_Resources; }
 
     // ---- FBO cache (maps framebuffer handle ID → GLuint FBO) ----
-    // [HACK: Framebuffer doesn't have a proper I* interface yet]
     void SetFbo(uint32_t id, uint32_t fbo) { m_FboMap[id] = fbo; }
     uint32_t GetFbo(uint32_t id) const {
         auto it = m_FboMap.find(id);
         return (it != m_FboMap.end()) ? it->second : 0;
     }
 
+    // ---- Query pool (maps poolID × index → GLuint query object) ----
+    void SetQueryGL(uint32_t poolId, uint32_t index, GLuint query) { m_QueryMap[Key(poolId, index)] = query; }
+    GLuint GetQueryGL(uint32_t poolId, uint32_t index) const {
+        auto it = m_QueryMap.find(Key(poolId, index));
+        return (it != m_QueryMap.end()) ? it->second : 0;
+    }
+
 private:
+    static uint64_t Key(uint32_t poolId, uint32_t index) {
+        return (static_cast<uint64_t>(poolId) << 32) | index;
+    }
     ISurface*   m_Surface = nullptr;
     GLFWwindow* m_Window = nullptr;
     uint32_t    m_FrameIndex = 0;
@@ -92,6 +104,7 @@ private:
 
     ResourceManager& m_Resources;
     std::unordered_map<uint32_t, uint32_t> m_FboMap;
+    std::unordered_map<uint64_t, GLuint>  m_QueryMap;
 };
 
 } // namespace rhi

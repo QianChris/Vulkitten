@@ -48,7 +48,13 @@ private:
 };
 
 // ============================================================
-// GLTextureResource — RAII GL texture (stub)
+// Format helpers (used by VAO and texture creation)
+// ============================================================
+GLenum FormatToGLInternal(Format f);
+GLenum FormatToGLType(Format f, bool& outNormalized);
+
+// ============================================================
+// GLTextureResource — RAII GL texture
 // ============================================================
 class GLTextureResource : public ITexture
 {
@@ -62,7 +68,14 @@ public:
     Extent3D    GetExtent() const override;
     uint32_t    GetMipLevels() const override;
 
+    // Native access
+    GLuint GetGLTexture() const { return m_GlTexture; }
+    GLenum GetGLTarget() const;
+
 private:
+    void CreateTexture2D(const TextureDesc& desc, const void* initialData);
+
+    GLuint     m_GlTexture = 0;
     TextureDesc m_Desc;
 };
 

@@ -71,11 +71,14 @@ VKBufferResource::VKBufferResource(VkDevice device, const BufferDesc& desc,
     bufferInfo.size = desc.Size;
 
     VkBufferUsageFlags usage = 0;
-    if (desc.Usage == BufferUsage::Vertex)   usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    else if (desc.Usage == BufferUsage::Index)    usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    else if (desc.Usage == BufferUsage::Uniform)  usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    else if (desc.Usage == BufferUsage::Storage)  usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-    bufferInfo.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    if (HasUsage(desc.Usage, BufferUsage::Vertex))    usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    if (HasUsage(desc.Usage, BufferUsage::Index))     usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    if (HasUsage(desc.Usage, BufferUsage::Uniform))   usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    if (HasUsage(desc.Usage, BufferUsage::Storage))   usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    if (HasUsage(desc.Usage, BufferUsage::TransferSrc)) usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    if (HasUsage(desc.Usage, BufferUsage::TransferDst)) usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    if (usage == 0) usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT; // fallback
+    bufferInfo.usage = usage;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     VkBuffer buffer = VK_NULL_HANDLE;
@@ -145,16 +148,100 @@ void VKBufferResource::Flush(uint64_t offset, uint64_t size)
 }
 
 // ============================================================
-// VKTextureResource (stub)
+// VKTextureResource
 // ============================================================
 
-VKTextureResource::VKTextureResource(VkDevice device, const TextureDesc& desc, const void* /*initialData*/)
+VKTextureResource::VKTextureResource(VkDevice device, VkPhysicalDevice physicalDevice,
+                                     const TextureDesc& desc, const void* initialData)
     : m_Device(device)
     , m_Desc(desc)
 {
+    if (desc.Type != TextureType::Texture2D)
+        return; // [HACK: only 2D textures supported for MVP]
+
+    // Create VkImage
+    VkImageCreateInfo imageInfo{};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.format = VK_FORMAT_R8G8B8A8_UNORM; // [HACK: format mapping incomplete]
+    imageInfo.extent = {desc.Extent.Width, desc.Extent.Height, 1};
+    imageInfo.mipLevels = desc.MipLevels;
+    imageInfo.arrayLayers = desc.ArrayLayers;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+
+    VkImageUsageFlags imgUsage = 0;
+    if (HasUsage(desc.Usage, TextureUsage::Sampled))    imgUsage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (HasUsage(desc.Usage, TextureUsage::ColorAttachment)) imgUsage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    if (HasUsage(desc.Usage, TextureUsage::DepthStencilAttachment)) imgUsage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    if (HasUsage(desc.Usage, TextureUsage::Storage))    imgUsage |= VK_IMAGE_USAGE_STORAGE_BIT;
+    if (HasUsage(desc.Usage, TextureUsage::TransferSrc)) imgUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    if (HasUsage(desc.Usage, TextureUsage::TransferDst)) imgUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    if (imgUsage == 0) imgUsage = VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageInfo.usage = imgUsage;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    if (vkCreateImage(device, &imageInfo, nullptr, &m_Image) != VK_SUCCESS)
+    {
+        fprintf(stderr, "VKTextureResource: failed to create image\n");
+        return;
+    }
+
+    // Allocate memory
+    VkMemoryRequirements memReqs{};
+    vkGetImageMemoryRequirements(device, m_Image, &memReqs);
+
+    uint32_t memTypeIndex = FindMemoryType(physicalDevice, memReqs.memoryTypeBits,
+                                            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memReqs.size;
+    allocInfo.memoryTypeIndex = memTypeIndex;
+
+    if (vkAllocateMemory(device, &allocInfo, nullptr, &m_Memory) != VK_SUCCESS)
+    {
+        fprintf(stderr, "VKTextureResource: failed to allocate memory\n");
+        return;
+    }
+    vkBindImageMemory(device, m_Image, m_Memory, 0);
+
+    // Create image view
+    VkImageViewCreateInfo viewInfo{};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = m_Image;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.baseMipLevel = 0;
+    viewInfo.subresourceRange.levelCount = desc.MipLevels;
+    viewInfo.subresourceRange.baseArrayLayer = 0;
+    viewInfo.subresourceRange.layerCount = desc.ArrayLayers;
+
+    if (vkCreateImageView(device, &viewInfo, nullptr, &m_ImageView) != VK_SUCCESS)
+        fprintf(stderr, "VKTextureResource: failed to create image view\n");
+
+    (void)initialData; // upload not implemented yet
 }
 
-VKTextureResource::~VKTextureResource() = default;
+VKTextureResource::~VKTextureResource()
+{
+    if (m_ImageView) vkDestroyImageView(m_Device, m_ImageView, nullptr);
+    if (m_Image)     vkDestroyImage(m_Device, m_Image, nullptr);
+    if (m_Memory)    vkFreeMemory(m_Device, m_Memory, nullptr);
+}
+
+uint32_t VKTextureResource::FindMemoryType(VkPhysicalDevice physDev, uint32_t typeFilter,
+                                            VkMemoryPropertyFlags properties)
+{
+    VkPhysicalDeviceMemoryProperties memProps{};
+    vkGetPhysicalDeviceMemoryProperties(physDev, &memProps);
+    for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+        if ((typeFilter & (1 << i)) && (memProps.memoryTypes[i].propertyFlags & properties) == properties)
+            return i;
+    return 0;
+}
 
 TextureType VKTextureResource::GetType() const     { return m_Desc.Type; }
 Format      VKTextureResource::GetFormat() const    { return m_Desc.Format; }
@@ -276,11 +363,19 @@ VKPipelineResource::VKPipelineResource(VkDevice device,
     viewportState.scissorCount = 1;
 
     // ---- Rasterization ----
+    VkPolygonMode vkPolyMode = VK_POLYGON_MODE_FILL;
+    switch (desc.Raster.Poly)
+    {
+        case RasterState::PolygonMode::Fill:  vkPolyMode = VK_POLYGON_MODE_FILL;  break;
+        case RasterState::PolygonMode::Line:  vkPolyMode = VK_POLYGON_MODE_LINE;  break;
+        case RasterState::PolygonMode::Point: vkPolyMode = VK_POLYGON_MODE_POINT; break;
+    }
+
     VkPipelineRasterizationStateCreateInfo rasterizer{};
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterizer.depthClampEnable = VK_FALSE;
+    rasterizer.depthClampEnable = desc.Raster.DepthClampEnable ? VK_TRUE : VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.polygonMode = vkPolyMode;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = ToVkCullMode(desc.Raster.Cull);
     rasterizer.frontFace = (desc.Raster.Front == RasterState::FrontFace::CounterClockwise) ?
@@ -300,12 +395,45 @@ VKPipelineResource::VKPipelineResource(VkDevice device,
     depthStencil.depthCompareOp = ToVkCompareOp(desc.DepthStencil.DepthCompareOp);
 
     // ---- Color blend ----
+    auto ToVkBlendFactor = [](BlendState::BlendFactor f) -> VkBlendFactor {
+        switch (f) {
+            case BlendState::BlendFactor::Zero:             return VK_BLEND_FACTOR_ZERO;
+            case BlendState::BlendFactor::One:              return VK_BLEND_FACTOR_ONE;
+            case BlendState::BlendFactor::SrcColor:         return VK_BLEND_FACTOR_SRC_COLOR;
+            case BlendState::BlendFactor::OneMinusSrcColor: return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+            case BlendState::BlendFactor::SrcAlpha:         return VK_BLEND_FACTOR_SRC_ALPHA;
+            case BlendState::BlendFactor::OneMinusSrcAlpha: return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            case BlendState::BlendFactor::DstAlpha:         return VK_BLEND_FACTOR_DST_ALPHA;
+            case BlendState::BlendFactor::DstColor:         return VK_BLEND_FACTOR_DST_COLOR;
+            default: return VK_BLEND_FACTOR_ONE;
+        }
+    };
+    auto ToVkBlendOp = [](BlendState::BlendOp op) -> VkBlendOp {
+        switch (op) {
+            case BlendState::BlendOp::Add:             return VK_BLEND_OP_ADD;
+            case BlendState::BlendOp::Subtract:        return VK_BLEND_OP_SUBTRACT;
+            case BlendState::BlendOp::ReverseSubtract: return VK_BLEND_OP_REVERSE_SUBTRACT;
+            case BlendState::BlendOp::Min:             return VK_BLEND_OP_MIN;
+            case BlendState::BlendOp::Max:             return VK_BLEND_OP_MAX;
+            default: return VK_BLEND_OP_ADD;
+        }
+    };
+
     std::vector<VkPipelineColorBlendAttachmentState> blendAttachments;
     for (auto& b : desc.Blends)
     {
         VkPipelineColorBlendAttachmentState ba{};
-        ba.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                            VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        ba.blendEnable = b.Enable ? VK_TRUE : VK_FALSE;
+        ba.srcColorBlendFactor = ToVkBlendFactor(b.SrcColorFactor);
+        ba.dstColorBlendFactor = ToVkBlendFactor(b.DstColorFactor);
+        ba.colorBlendOp = ToVkBlendOp(b.ColorOp);
+        ba.srcAlphaBlendFactor = ToVkBlendFactor(b.SrcAlphaFactor);
+        ba.dstAlphaBlendFactor = ToVkBlendFactor(b.DstAlphaFactor);
+        ba.alphaBlendOp = ToVkBlendOp(b.AlphaOp);
+        ba.colorWriteMask = (b.WriteR ? VK_COLOR_COMPONENT_R_BIT : 0) |
+                            (b.WriteG ? VK_COLOR_COMPONENT_G_BIT : 0) |
+                            (b.WriteB ? VK_COLOR_COMPONENT_B_BIT : 0) |
+                            (b.WriteA ? VK_COLOR_COMPONENT_A_BIT : 0);
         blendAttachments.push_back(ba);
     }
     if (blendAttachments.empty())
@@ -441,13 +569,42 @@ VKGeometryResource::VKGeometryResource(const GeometryDesc& desc)
 }
 
 // ============================================================
-// VKSamplerResource (stub)
+// VKSamplerResource
 // ============================================================
 
-VKSamplerResource::VKSamplerResource(VkDevice device, const SamplerDesc&)
+static VkFilter ToVkFilter(FilterMode m) { return m == FilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR; }
+static VkSamplerMipmapMode ToVkMipMode(MipMode m) { return m == MipMode::Nearest ? VK_SAMPLER_MIPMAP_MODE_NEAREST : VK_SAMPLER_MIPMAP_MODE_LINEAR; }
+static VkSamplerAddressMode ToVkWrap(WrapMode w) {
+    switch (w) {
+        case WrapMode::Repeat:         return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        case WrapMode::ClampToEdge:    return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        case WrapMode::ClampToBorder:  return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        case WrapMode::MirroredRepeat: return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+        default: return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    }
+}
+
+VKSamplerResource::VKSamplerResource(VkDevice device, const SamplerDesc& desc)
     : m_Device(device)
 {
-    // [HACK: VkSampler creation omitted for MVP]
+    VkSamplerCreateInfo samplerInfo{};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.magFilter = ToVkFilter(desc.MagFilter);
+    samplerInfo.minFilter = ToVkFilter(desc.MinFilter);
+    samplerInfo.mipmapMode = ToVkMipMode(desc.Mip);
+    samplerInfo.addressModeU = ToVkWrap(desc.WrapU);
+    samplerInfo.addressModeV = ToVkWrap(desc.WrapV);
+    samplerInfo.addressModeW = ToVkWrap(desc.WrapW);
+    samplerInfo.anisotropyEnable = desc.MaxAnisotropy > 1.0f ? VK_TRUE : VK_FALSE;
+    samplerInfo.maxAnisotropy = desc.MaxAnisotropy;
+    samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = VK_LOD_CLAMP_NONE;
+
+    vkCreateSampler(device, &samplerInfo, nullptr, &m_Sampler);
 }
 
 VKSamplerResource::~VKSamplerResource()

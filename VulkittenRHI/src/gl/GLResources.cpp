@@ -45,31 +45,191 @@ GLBufferResource::~GLBufferResource()
         glDeleteBuffers(1, &m_GlBuffer);
 }
 
-void* GLBufferResource::Map(uint64_t /*offset*/, uint64_t /*size*/)
+void* GLBufferResource::Map(uint64_t offset, uint64_t size)
 {
-    // [HACK: GL buffer mapping not implemented for MVP]
-    return nullptr;
+    // Determine the correct GL target for buffer mapping
+    GLenum target = GL_ARRAY_BUFFER;
+    if (m_Usage == BufferUsage::Uniform)
+        target = GL_UNIFORM_BUFFER;
+    else if (m_Usage == BufferUsage::Storage)
+        target = GL_SHADER_STORAGE_BUFFER;
+
+    glBindBuffer(target, m_GlBuffer);
+    return glMapBufferRange(target, static_cast<GLintptr>(offset),
+                            static_cast<GLsizeiptr>(size > 0 ? size : m_Size),
+                            GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 }
 
-void GLBufferResource::Unmap() {}
+void GLBufferResource::Unmap()
+{
+    // Unmap currently bound buffer (assumes it was the one mapped)
+    glUnmapBuffer(GL_ARRAY_BUFFER);
+}
 
-void GLBufferResource::Flush(uint64_t, uint64_t) {}
+void GLBufferResource::Flush(uint64_t offset, uint64_t size)
+{
+    GLenum target = GL_ARRAY_BUFFER;
+    if (m_Usage == BufferUsage::Uniform)
+        target = GL_UNIFORM_BUFFER;
+    else if (m_Usage == BufferUsage::Storage)
+        target = GL_SHADER_STORAGE_BUFFER;
+
+    glBindBuffer(target, m_GlBuffer);
+    glFlushMappedBufferRange(target, static_cast<GLintptr>(offset),
+                             static_cast<GLsizeiptr>(size));
+}
 
 // ============================================================
-// GLTextureResource (stub)
+// Format Helpers
 // ============================================================
 
-GLTextureResource::GLTextureResource(const TextureDesc& desc, const void* /*initialData*/)
+GLenum FormatToGLInternal(Format f)
+{
+    switch (f)
+    {
+        case Format::R8_UNORM:       return GL_R8;
+        case Format::RG8_UNORM:      return GL_RG8;
+        case Format::RGBA8_UNORM:    return GL_RGBA8;
+        case Format::BGRA8_UNORM:    return GL_RGBA8;  // GL doesn't have BGRA8 internal
+        case Format::RGBA8_SRGB:     return GL_SRGB8_ALPHA8;
+        case Format::BGRA8_SRGB:     return GL_SRGB8_ALPHA8;
+        case Format::R16_FLOAT:      return GL_R16F;
+        case Format::RG16_FLOAT:     return GL_RG16F;
+        case Format::RGBA16_FLOAT:   return GL_RGBA16F;
+        case Format::R16_UNORM:      return GL_R16;
+        case Format::R32_FLOAT:      return GL_R32F;
+        case Format::RG32_FLOAT:     return GL_RG32F;
+        case Format::RGB32_FLOAT:    return GL_RGB32F;
+        case Format::RGBA32_FLOAT:   return GL_RGBA32F;
+        case Format::R32_UINT:       return GL_R32UI;
+        case Format::R32_SINT:       return GL_R32I;
+        case Format::RG32_UINT:      return GL_RG32UI;
+        case Format::RGBA32_UINT:    return GL_RGBA32UI;
+        case Format::D16_UNORM:      return GL_DEPTH_COMPONENT16;
+        case Format::D32_FLOAT:      return GL_DEPTH_COMPONENT32F;
+        case Format::D24_UNORM_S8_UINT: return GL_DEPTH24_STENCIL8;
+        case Format::D32_FLOAT_S8_UINT: return GL_DEPTH32F_STENCIL8;
+        default:                     return GL_RGBA8;
+    }
+}
+
+GLenum FormatToGLType(Format f, bool& outNormalized)
+{
+    outNormalized = false;
+    switch (f)
+    {
+        case Format::R8_UNORM:
+        case Format::RG8_UNORM:
+        case Format::RGBA8_UNORM:
+        case Format::BGRA8_UNORM:
+        case Format::RGBA8_SRGB:
+        case Format::BGRA8_SRGB:
+            outNormalized = true;
+            return GL_UNSIGNED_BYTE;
+
+        case Format::R16_UNORM:
+            outNormalized = true;
+            return GL_UNSIGNED_SHORT;
+
+        case Format::R16_FLOAT:
+        case Format::RG16_FLOAT:
+            return GL_HALF_FLOAT;
+
+        case Format::RGBA16_FLOAT:
+            return GL_HALF_FLOAT;
+
+        case Format::R32_FLOAT:
+        case Format::RG32_FLOAT:
+        case Format::RGB32_FLOAT:
+        case Format::RGBA32_FLOAT:
+            return GL_FLOAT;
+
+        case Format::R32_UINT:
+        case Format::RG32_UINT:
+        case Format::RGBA32_UINT:
+            return GL_UNSIGNED_INT;
+
+        case Format::R32_SINT:
+            return GL_INT;
+
+        default:
+            return GL_FLOAT;
+    }
+}
+
+// ============================================================
+// GLTextureResource
+// ============================================================
+
+GLTextureResource::GLTextureResource(const TextureDesc& desc, const void* initialData)
     : m_Desc(desc)
 {
+    if (desc.Type == TextureType::Texture2D)
+        CreateTexture2D(desc, initialData);
+    // Other types: stub for now
 }
 
-GLTextureResource::~GLTextureResource() = default;
+GLTextureResource::~GLTextureResource()
+{
+    if (m_GlTexture)
+        glDeleteTextures(1, &m_GlTexture);
+}
 
 TextureType GLTextureResource::GetType() const { return m_Desc.Type; }
 Format      GLTextureResource::GetFormat() const { return m_Desc.Format; }
 Extent3D    GLTextureResource::GetExtent() const { return m_Desc.Extent; }
 uint32_t    GLTextureResource::GetMipLevels() const { return m_Desc.MipLevels; }
+
+GLenum GLTextureResource::GetGLTarget() const
+{
+    switch (m_Desc.Type)
+    {
+        case TextureType::Texture2D:       return GL_TEXTURE_2D;
+        case TextureType::Texture3D:       return GL_TEXTURE_3D;
+        case TextureType::TextureCube:     return GL_TEXTURE_CUBE_MAP;
+        case TextureType::Texture2DArray:  return GL_TEXTURE_2D_ARRAY;
+        default:                           return GL_TEXTURE_2D;
+    }
+}
+
+void GLTextureResource::CreateTexture2D(const TextureDesc& desc, const void* initialData)
+{
+    glGenTextures(1, &m_GlTexture);
+    glBindTexture(GL_TEXTURE_2D, m_GlTexture);
+
+    GLenum internalFmt = FormatToGLInternal(desc.Format);
+
+    // Determine format/type for pixel transfer
+    bool isDepth = IsDepthFormat(desc.Format);
+
+    GLenum dataFormat = GL_RGBA;
+    GLenum dataType = GL_UNSIGNED_BYTE;
+    uint32_t compCount = FormatComponentCount(desc.Format);
+    if (compCount == 1) dataFormat = GL_RED;
+    else if (compCount == 2) dataFormat = GL_RG;
+    else if (compCount == 3) dataFormat = GL_RGB;
+    else dataFormat = GL_RGBA;
+
+    if (isDepth) dataFormat = GL_DEPTH_COMPONENT;
+
+    // Use FormatToGLType for correct pixel transfer type
+    bool normalized = false;
+    dataType = FormatToGLType(desc.Format, normalized);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(internalFmt),
+                 static_cast<GLsizei>(desc.Extent.Width),
+                 static_cast<GLsizei>(desc.Extent.Height),
+                 0, dataFormat, dataType, initialData);
+
+    // Default filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, desc.MipLevels > 1 ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    if (desc.MipLevels > 1)
+        glGenerateMipmap(GL_TEXTURE_2D);
+}
 
 // ============================================================
 // GLShaderResource
@@ -325,19 +485,44 @@ void GLPipelineResource::ApplyGLState() const
     if (!m_BlendStates.empty() && m_BlendStates[0].Enable)
     {
         glEnable(GL_BLEND);
-        // [HACK: only first blend state applied; multi-RT not supported yet]
         const auto& b = m_BlendStates[0];
-        // Use simple blend func — full blend factor mapping is complex
-        // For MVP, standard alpha blending:
-        //   srcAlpha = SrcAlpha, dstAlpha = OneMinusSrcAlpha
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // Map RHI blend factors to GL
+        auto ToGLFactor = [](BlendState::BlendFactor f) -> GLenum {
+            switch (f) {
+                case BlendState::BlendFactor::Zero:             return GL_ZERO;
+                case BlendState::BlendFactor::One:              return GL_ONE;
+                case BlendState::BlendFactor::SrcColor:         return GL_SRC_COLOR;
+                case BlendState::BlendFactor::OneMinusSrcColor: return GL_ONE_MINUS_SRC_COLOR;
+                case BlendState::BlendFactor::SrcAlpha:         return GL_SRC_ALPHA;
+                case BlendState::BlendFactor::OneMinusSrcAlpha: return GL_ONE_MINUS_SRC_ALPHA;
+                case BlendState::BlendFactor::DstAlpha:         return GL_DST_ALPHA;
+                case BlendState::BlendFactor::DstColor:         return GL_DST_COLOR;
+                default: return GL_ONE;
+            }
+        };
+
+        auto ToGLOp = [](BlendState::BlendOp op) -> GLenum {
+            switch (op) {
+                case BlendState::BlendOp::Add:             return GL_FUNC_ADD;
+                case BlendState::BlendOp::Subtract:        return GL_FUNC_SUBTRACT;
+                case BlendState::BlendOp::ReverseSubtract: return GL_FUNC_REVERSE_SUBTRACT;
+                case BlendState::BlendOp::Min:             return GL_MIN;
+                case BlendState::BlendOp::Max:             return GL_MAX;
+                default: return GL_FUNC_ADD;
+            }
+        };
+
+        glBlendFuncSeparate(ToGLFactor(b.SrcColorFactor), ToGLFactor(b.DstColorFactor),
+                            ToGLFactor(b.SrcAlphaFactor), ToGLFactor(b.DstAlphaFactor));
+        glBlendEquationSeparate(ToGLOp(b.ColorOp), ToGLOp(b.AlphaOp));
     }
     else
     {
         glDisable(GL_BLEND);
     }
 
-    // Color write mask from first blend state (or default all-on)
+    // Color write mask from first blend state
     if (!m_BlendStates.empty())
     {
         const auto& b = m_BlendStates[0];
@@ -385,14 +570,12 @@ GLuint GLPipelineResource::GetOrCreateVAO(uint32_t geometryId,
         GLint compCount = static_cast<GLint>(FormatComponentCount(attr.Format));
         glEnableVertexAttribArray(attr.Location);
 
-        // Determine GL type from format
-        GLenum glType = GL_FLOAT;
-        Format fmt = attr.Format;
-        if (fmt == Format::R32_UINT || fmt == Format::R32_SINT || fmt == Format::RG32_UINT || fmt == Format::RGBA32_UINT)
-            glType = GL_UNSIGNED_INT;
-        // else default to FLOAT for MVP
+        // Determine GL type and normalized flag from format
+        bool normalized = false;
+        GLenum glType = FormatToGLType(attr.Format, normalized);
 
-        glVertexAttribPointer(attr.Location, compCount, glType, GL_FALSE,
+        glVertexAttribPointer(attr.Location, compCount, glType,
+                              normalized ? GL_TRUE : GL_FALSE,
                               static_cast<GLsizei>(attr.Stride),
                               reinterpret_cast<void*>(static_cast<uintptr_t>(attr.Offset)));
     }

@@ -80,6 +80,7 @@ public:
     virtual SamplerHandle  CreateSampler(const SamplerDesc& desc) = 0;
     virtual RenderPassHandle   CreateRenderPass(const RenderPassDesc& desc) = 0;
     virtual FramebufferHandle  CreateFramebuffer(const FramebufferDesc& desc) = 0;
+    virtual QueryPoolHandle   CreateQueryPool(const QueryPoolDesc& desc) = 0;
 
     // ---- Resource Query (returns interface for inspecting created resources) ----
     virtual IBuffer*   GetBuffer(BufferHandle handle) = 0;

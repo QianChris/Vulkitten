@@ -79,7 +79,12 @@ public:
     RenderCommandList& DrawIndexed(uint32_t indexCount, uint32_t firstIndex = 0,
                                    int32_t vertexOffset = 0);
     RenderCommandList& Draw(uint32_t vertexCount, uint32_t firstVertex = 0);
+    RenderCommandList& DrawIndirect(BufferHandle indirectBuffer, uint64_t offset,
+                                    uint32_t drawCount, uint32_t stride);
     RenderCommandList& Dispatch(uint32_t groupX, uint32_t groupY, uint32_t groupZ = 1);
+    RenderCommandList& DispatchIndirect(BufferHandle indirectBuffer, uint64_t offset);
+    RenderCommandList& Barrier(PipelineStage srcStage, AccessFlags srcAccess,
+                               PipelineStage dstStage, AccessFlags dstAccess);
     RenderCommandList& Barrier(TextureHandle texture,
                                PipelineStage srcStage, AccessFlags srcAccess,
                                PipelineStage dstStage, AccessFlags dstAccess,

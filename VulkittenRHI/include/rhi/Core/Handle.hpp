@@ -67,6 +67,7 @@ struct GeometryTag {};
 struct SamplerTag {};
 struct RenderPassTag {};
 struct FramebufferTag {};
+struct QueryPoolTag {};
 struct AccelerationStructureTag {};  // [RESERVE: RayTracing]
 
 // ============================================================
@@ -81,6 +82,7 @@ using GeometryHandle    = Handle<GeometryTag>;
 using SamplerHandle     = Handle<SamplerTag>;
 using RenderPassHandle  = Handle<RenderPassTag>;
 using FramebufferHandle = Handle<FramebufferTag>;
+using QueryPoolHandle   = Handle<QueryPoolTag>;
 using AccelerationStructureHandle = Handle<AccelerationStructureTag>;  // [RESERVE]
 
 } // namespace rhi

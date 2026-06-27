@@ -4,6 +4,7 @@
 #include "rhi/Core/Handle.hpp"
 
 #include <cstdint>
+#include <unordered_map>
 
 namespace rhi {
 
@@ -13,23 +14,14 @@ class VKPipelineResource;
 class VKBufferResource;
 class VKGeometryResource;
 
-// ============================================================
-// VKCommandBuffer — Vulkan ICommandBuffer implementation.
-//
-// True recording: commands go into a VkCommandBuffer.
-// Uses ResourceManager for resource handle lookups.
-// ============================================================
-
 class VKCommandBuffer : public ICommandBuffer
 {
 public:
     explicit VKCommandBuffer(VKDevice& device, void* vkCommandBuffer, uint32_t frameIndex = 0);
     ~VKCommandBuffer() override;
 
-    // Clear the global descriptor set cache (call before pool destruction)
     static void ClearDescriptorSetCache();
 
-    // ---- ICommandBuffer ----
     void Begin() override;
     void End() override;
 
@@ -64,8 +56,11 @@ public:
               uint32_t instanceCount = 1) override;
     void DrawIndexed(uint32_t indexCount, uint32_t firstIndex = 0,
                      int32_t vertexOffset = 0, uint32_t instanceCount = 1) override;
+    void DrawIndirect(BufferHandle indirectBuffer, uint64_t offset,
+                      uint32_t drawCount, uint32_t stride) override;
 
     void DispatchCompute(uint32_t groupX, uint32_t groupY, uint32_t groupZ = 1) override;
+    void DispatchIndirect(BufferHandle indirectBuffer, uint64_t offset) override;
 
     void CopyBuffer(BufferHandle src, BufferHandle dst,
                     uint64_t srcOffset, uint64_t dstOffset, uint64_t size) override;
@@ -73,6 +68,11 @@ public:
                              const Offset3D& dstOffset, const Extent3D& dstExtent) override;
     void CopyTextureToBuffer(TextureHandle src, BufferHandle dst,
                              const Offset3D& srcOffset, const Extent3D& srcExtent) override;
+
+    void ResetQueryPool(QueryPoolHandle pool, uint32_t firstQuery, uint32_t queryCount) override;
+    void BeginQuery(QueryPoolHandle pool, uint32_t queryIndex) override;
+    void EndQuery(QueryPoolHandle pool, uint32_t queryIndex) override;
+    void WriteTimestamp(PipelineStage stage, QueryPoolHandle pool, uint32_t queryIndex) override;
 
     void BeginDebugLabel(const char* label,
                          std::array<float, 4> color = {1,1,1,1}) override;
@@ -82,6 +82,9 @@ public:
     void* GetVkCommandBuffer() const { return m_VkCmd; }
 
 private:
+    void WriteDescriptorSet(uint32_t slot, uint32_t type,
+                            void* vkBuf, uint64_t offset, uint64_t range);
+
     VKDevice&       m_Device;
     ResourceManager& m_Resources;
     void*           m_VkCmd = nullptr;
@@ -91,9 +94,11 @@ private:
     uint32_t        m_CurrentGeometryId = 0;
     uint32_t        m_FrameIndex = 0;
 
-    // Cached resource pointers (valid for current frame)
     VKPipelineResource* m_CurrentPipeline = nullptr;
     VKGeometryResource* m_CurrentGeometry = nullptr;
+
+    // Per-frame descriptor set cache pointer (points to VKDevice's cache)
+    std::unordered_map<uint64_t, void*>* m_DescriptorCache = nullptr;
 };
 
 } // namespace rhi
