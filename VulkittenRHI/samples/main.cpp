@@ -2,8 +2,8 @@
 // VulkittenRHI Sample — Clear-to-Red + Triangle
 //
 // Switch between OpenGL and Vulkan by changing ONE line:
-//   const rhi::BackendType BACKEND = rhi::BackendType::OpenGL;
-//   const rhi::BackendType BACKEND = rhi::BackendType::Vulkan;
+//   const rhi::BackendType backend = rhi::BackendType::OpenGL;
+//   const rhi::BackendType backend = rhi::BackendType::Vulkan;
 // ============================================================
 
 #include <rhi/Renderer.hpp>
@@ -89,17 +89,22 @@ struct UniformBufferObject {
 // ============================================================
 // main
 // ============================================================
-int main()
+int main(int argc, char* argv[])
 {
-    // ---- Select Backend (CHANGE THIS ONE LINE) ----
-    const rhi::BackendType BACKEND = rhi::BackendType::OpenGL;
-    //const rhi::BackendType BACKEND = rhi::BackendType::Vulkan;
+    // ---- Select Backend: --vulkan (default) or --opengl ----
+    rhi::BackendType backend = rhi::BackendType::Vulkan;
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--opengl") == 0 || strcmp(argv[i], "-gl") == 0)
+            backend = rhi::BackendType::OpenGL;
+        else if (strcmp(argv[i], "--vulkan") == 0 || strcmp(argv[i], "-vk") == 0)
+            backend = rhi::BackendType::Vulkan;
+    }
 
     // ---- GLFW ----
     glfwSetErrorCallback(GlfwErrorCallback);
     if (!glfwInit()) { fprintf(stderr, "GLFW init failed\n"); return 1; }
 
-    if (BACKEND == rhi::BackendType::OpenGL) {
+    if (backend == rhi::BackendType::OpenGL) {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -115,7 +120,7 @@ int main()
 
     // ---- Create Renderer ----
     rhi::RendererConfig config;
-    config.Backend = BACKEND;
+    config.Backend = backend;
     config.Surface = &surface;
 
     std::unique_ptr<rhi::Renderer> renderer;
@@ -124,21 +129,12 @@ int main()
         fprintf(stderr, "Renderer failed: %s\n", e.what());
         glfwDestroyWindow(window); glfwTerminate(); return 1;
     }
-    printf("Backend: %s\n", BACKEND == rhi::BackendType::OpenGL ? "OpenGL" : "Vulkan");
+    printf("Backend: %s\n", renderer->GetBackendType() == rhi::BackendType::OpenGL ? "OpenGL" : "Vulkan");
 
-    // ---- Load shaders (SPIR-V for Vulkan, GLSL source for OpenGL) ----
+    // ---- Load shaders (SPIR-V works for both Vulkan and OpenGL 4.6 with GL_ARB_gl_spirv) ----
     std::vector<uint8_t> vsData, fsData;
-    if (BACKEND == rhi::BackendType::OpenGL)
-    {
-        // GL backend: load GLSL source directly (SPIR-V path may have driver issues)
-        vsData = ReadFile("../../../Vulkitten/assets/shaders/Triangle.vert");
-        fsData = ReadFile("../../../Vulkitten/assets/shaders/Triangle.frag");
-    }
-    else
-    {
-        vsData = ReadFile("../../../Vulkitten/assets/shaders/Triangle.vert.spv");
-        fsData = ReadFile("../../../Vulkitten/assets/shaders/Triangle.frag.spv");
-    }
+    vsData = ReadFile("../Vulkitten/assets/shaders/Triangle.vert.spv");
+    fsData = ReadFile("../Vulkitten/assets/shaders/Triangle.frag.spv");
     if (vsData.empty() || fsData.empty()) { fprintf(stderr, "Shader load failed\n"); return 1; }
 
     // ---- Create resources ----
