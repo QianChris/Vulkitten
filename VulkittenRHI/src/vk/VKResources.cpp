@@ -75,6 +75,7 @@ VKBufferResource::VKBufferResource(VkDevice device, const BufferDesc& desc,
     if (HasUsage(desc.Usage, BufferUsage::Index))     usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     if (HasUsage(desc.Usage, BufferUsage::Uniform))   usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     if (HasUsage(desc.Usage, BufferUsage::Storage))   usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    if (HasUsage(desc.Usage, BufferUsage::Indirect))  usage |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
     if (HasUsage(desc.Usage, BufferUsage::TransferSrc)) usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     if (HasUsage(desc.Usage, BufferUsage::TransferDst)) usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     if (usage == 0) usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT; // fallback
@@ -317,6 +318,114 @@ VKPipelineResource::VKPipelineResource(VkDevice device,
         return;
     }
 
+    // ---- Descriptor set layout (from pipeline slots) ----
+    // For compute pipelines with no explicit slots, create default storage
+    // buffer bindings for slots 0-3. This covers the common case where
+    // shaders declare bindings without explicit pipeline slot declarations.
+    // TODO: replace with proper SPIR-V reflection.
+    std::vector<BufferSlot> effectiveBufferSlots = desc.BufferSlots;
+    std::vector<TextureSlot> effectiveTextureSlots = desc.TextureSlots;
+    if (m_IsCompute && effectiveBufferSlots.empty() && effectiveTextureSlots.empty())
+    {
+        for (uint32_t s = 0; s < 4; ++s)
+        {
+            BufferSlot slot;
+            slot.Slot = s;
+            slot.SlotType = BufferSlot::Type::Storage;
+            slot.Stages = ShaderStage::Compute;
+            effectiveBufferSlots.push_back(slot);
+        }
+    }
+
+    std::vector<VkDescriptorSetLayoutBinding> dslBindings;
+    for (auto& bs : effectiveBufferSlots)
+    {
+        VkDescriptorSetLayoutBinding lb{};
+        lb.binding = bs.Slot;
+        lb.descriptorType = (bs.SlotType == BufferSlot::Type::Uniform) ?
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        lb.descriptorCount = 1;
+        lb.stageFlags = ToVkShaderStage(bs.Stages);
+        dslBindings.push_back(lb);
+    }
+    for (auto& ts : effectiveTextureSlots)
+    {
+        VkDescriptorSetLayoutBinding lb{};
+        lb.binding = ts.Slot;
+        lb.descriptorType = (ts.SlotType == TextureSlot::Type::Sampled) ?
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        lb.descriptorCount = 1;
+        lb.stageFlags = ToVkShaderStage(ts.Stages);
+        dslBindings.push_back(lb);
+    }
+
+    VkDescriptorSetLayoutCreateInfo dslInfo{};
+    dslInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    dslInfo.bindingCount = static_cast<uint32_t>(dslBindings.size());
+    dslInfo.pBindings = dslBindings.data();
+
+    VkDescriptorSetLayout dsl = VK_NULL_HANDLE;
+    if (vkCreateDescriptorSetLayout(device, &dslInfo, nullptr, &dsl) != VK_SUCCESS)
+    {
+        fprintf(stderr, "VKPipelineResource: failed to create descriptor set layout\n");
+        return;
+    }
+    m_DescriptorSetLayout = dsl;
+
+    // ---- Pipeline layout ----
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &dsl;
+
+    if (desc.PushConstantsSize > 0)
+    {
+        VkPushConstantRange pcRange{};
+        pcRange.stageFlags = (m_IsCompute ? VK_SHADER_STAGE_COMPUTE_BIT :
+                              VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+        pcRange.offset = 0;
+        pcRange.size = desc.PushConstantsSize;
+        pipelineLayoutInfo.pushConstantRangeCount = 1;
+        pipelineLayoutInfo.pPushConstantRanges = &pcRange;
+    }
+
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+    {
+        fprintf(stderr, "VKPipelineResource: failed to create pipeline layout\n");
+        vkDestroyDescriptorSetLayout(device, dsl, nullptr);
+        return;
+    }
+    m_PipelineLayout = pipelineLayout;
+
+    // ============================================================
+    // Compute pipeline
+    // ============================================================
+    if (m_IsCompute)
+    {
+        VkComputePipelineCreateInfo computeInfo{};
+        computeInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+        computeInfo.stage = stages[0];
+        computeInfo.layout = pipelineLayout;
+
+        VkPipeline pipeline = VK_NULL_HANDLE;
+        VkResult res = vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &computeInfo, nullptr, &pipeline);
+        if (res != VK_SUCCESS)
+        {
+            fprintf(stderr, "VKPipelineResource: vkCreateComputePipelines failed (%d)\n", res);
+            vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+            vkDestroyDescriptorSetLayout(device, dsl, nullptr);
+            m_PipelineLayout = VK_NULL_HANDLE;
+            m_DescriptorSetLayout = VK_NULL_HANDLE;
+            return;
+        }
+        m_Pipeline = pipeline;
+        return;
+    }
+
+    // ============================================================
+    // Graphics pipeline
+    // ============================================================
     // ---- Vertex input state ----
     std::vector<VkVertexInputBindingDescription> bindings;
     std::vector<VkVertexInputAttributeDescription> attributes;
@@ -456,67 +565,6 @@ VKPipelineResource::VKPipelineResource(VkDevice device,
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamicState.dynamicStateCount = 2;
     dynamicState.pDynamicStates = dynamicStates;
-
-    // ---- Descriptor set layout (from pipeline slots) ----
-    std::vector<VkDescriptorSetLayoutBinding> dslBindings;
-    for (auto& bs : desc.BufferSlots)
-    {
-        VkDescriptorSetLayoutBinding lb{};
-        lb.binding = bs.Slot;
-        lb.descriptorType = (bs.SlotType == BufferSlot::Type::Uniform) ?
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        lb.descriptorCount = 1;
-        lb.stageFlags = ToVkShaderStage(bs.Stages);
-        dslBindings.push_back(lb);
-    }
-    for (auto& ts : desc.TextureSlots)
-    {
-        VkDescriptorSetLayoutBinding lb{};
-        lb.binding = ts.Slot;
-        lb.descriptorType = (ts.SlotType == TextureSlot::Type::Sampled) ?
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        lb.descriptorCount = 1;
-        lb.stageFlags = ToVkShaderStage(ts.Stages);
-        dslBindings.push_back(lb);
-    }
-
-    VkDescriptorSetLayoutCreateInfo dslInfo{};
-    dslInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    dslInfo.bindingCount = static_cast<uint32_t>(dslBindings.size());
-    dslInfo.pBindings = dslBindings.data();
-
-    VkDescriptorSetLayout dsl = VK_NULL_HANDLE;
-    if (vkCreateDescriptorSetLayout(device, &dslInfo, nullptr, &dsl) != VK_SUCCESS)
-    {
-        fprintf(stderr, "VKPipelineResource: failed to create descriptor set layout\n");
-        return;
-    }
-    m_DescriptorSetLayout = dsl;
-
-    // ---- Pipeline layout ----
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &dsl;
-
-    if (desc.PushConstantsSize > 0)
-    {
-        VkPushConstantRange pcRange{};
-        pcRange.stageFlags = (desc.ComputeShader.IsValid() ? VK_SHADER_STAGE_COMPUTE_BIT :
-                              VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-        pcRange.offset = 0;
-        pcRange.size = desc.PushConstantsSize;
-        pipelineLayoutInfo.pushConstantRangeCount = 1;
-        pipelineLayoutInfo.pPushConstantRanges = &pcRange;
-    }
-
-    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
-    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
-    {
-        fprintf(stderr, "VKPipelineResource: failed to create pipeline layout\n");
-        return;
-    }
-    m_PipelineLayout = pipelineLayout;
 
     // ---- Graphics pipeline ----
     VkGraphicsPipelineCreateInfo pipelineInfo{};

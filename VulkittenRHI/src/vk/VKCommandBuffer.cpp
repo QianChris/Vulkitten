@@ -222,8 +222,10 @@ void VKCommandBuffer::BindPipeline(PipelineHandle pipeline)
     m_CurrentPipeline = dynamic_cast<VKPipelineResource*>(m_Resources.GetPipeline(pipeline));
     if (!m_CurrentPipeline) return;
 
+    VkPipelineBindPoint bindPoint = m_CurrentPipeline->IsCompute() ?
+        VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS;
     vkCmdBindPipeline(static_cast<VkCommandBuffer>(m_VkCmd),
-                      VK_PIPELINE_BIND_POINT_GRAPHICS,
+                      bindPoint,
                       m_CurrentPipeline->GetVkPipeline());
 }
 
@@ -302,8 +304,10 @@ void VKCommandBuffer::WriteDescriptorSet(uint32_t slot, uint32_t type,
 
     vkUpdateDescriptorSets(static_cast<VkDevice>(m_Device.GetVkDevice()), 1, &write, 0, nullptr);
 
+    VkPipelineBindPoint bindPoint = m_CurrentPipeline->IsCompute() ?
+        VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS;
     vkCmdBindDescriptorSets(static_cast<VkCommandBuffer>(m_VkCmd),
-                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            bindPoint,
                             m_CurrentPipeline->GetVkPipelineLayout(),
                             0, 1, &ds, 0, nullptr);
 }

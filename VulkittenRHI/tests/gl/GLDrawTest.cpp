@@ -95,6 +95,29 @@ protected:
 };
 
 // ============================================================
+// Diagnostic: verify the GL context renders via raw OpenGL
+// ============================================================
+
+TEST_F(GLDrawTest, RawGL_ClearAndReadback) {
+    // Bypass RHI entirely — verify GL context + default FB work
+    glClearColor(1.0f, 0.0f, 0.0f, 1.0f); // red
+    glClear(GL_COLOR_BUFFER_BIT);
+    glFinish();
+
+    auto pixels = ReadAllPixels();
+    ASSERT_EQ(pixels.size(), kTestWidth * kTestHeight * 4);
+
+    // Every pixel should be red (255,0,0,255)
+    const uint8_t* p = pixels.data();
+    for (size_t i = 0; i < pixels.size(); i += 4) {
+        ASSERT_EQ(p[i], 255u) << "R at pixel " << (i/4);
+        ASSERT_EQ(p[i+1], 0u) << "G at pixel " << (i/4);
+        ASSERT_EQ(p[i+2], 0u) << "B at pixel " << (i/4);
+        ASSERT_EQ(p[i+3], 255u) << "A at pixel " << (i/4);
+    }
+}
+
+// ============================================================
 // Draw tests
 // ============================================================
 
@@ -162,10 +185,12 @@ TEST_F(GLDrawTest, Draw_FirstVertex_SkipsLeadingVertices) {
     glFinish();
     auto pixels = ReadAllPixels();
 
-    // Right-center should not be black (red triangle should render there)
-    const uint8_t* rightMid = &pixels[((kTestHeight / 2) * kTestWidth + kTestWidth - 5) * 4];
+    // Second triangle covers x ∈ [0, 0.5] at y=0 (NDC). Column 40 (x≈0.28) is inside.
+    uint32_t testX = kTestWidth * 5 / 8; // column 40
+    uint32_t testY = kTestHeight / 2;    // center row
+    const uint8_t* rightMid = &pixels[(testY * kTestWidth + testX) * 4];
     EXPECT_FALSE(IsPixelColor(rightMid, 0, 0, 0, 0))
-        << "firstVertex=3: right side is black";
+        << "firstVertex=3: pixel at (" << testX << "," << testY << ") is black";
 }
 
 TEST_F(GLDrawTest, Draw_InstanceCount_TwoInstances) {

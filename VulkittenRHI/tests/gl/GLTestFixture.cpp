@@ -229,17 +229,23 @@ BufferHandle GLTestFixture::CreateStorageBuffer(uint64_t size, const void* data)
 
 BufferHandle GLTestFixture::CreateIndirectDrawBuffer(const std::vector<uint32_t>& drawParams)
 {
-    // drawParams is an array of DrawArraysIndirectCommand:
-    // { vertexCount, instanceCount, firstVertex, firstInstance }
-    // Or for DrawElementsIndirectCommand:
-    // { indexCount, instanceCount, firstIndex, vertexOffset, firstInstance }
-    return CreateStorageBuffer(drawParams.size() * sizeof(uint32_t), drawParams.data());
+    BufferDesc desc;
+    desc.Size = drawParams.size() * sizeof(uint32_t);
+    desc.Usage = BufferUsage::Storage | BufferUsage::Indirect;
+    desc.Memory = MemoryProperty::HostVisible;
+    desc.CpuAccessible = true;
+    return m_Device->CreateBuffer(desc, drawParams.data());
 }
 
 BufferHandle GLTestFixture::CreateIndirectDispatchBuffer(uint32_t x, uint32_t y, uint32_t z)
 {
     uint32_t params[3] = {x, y, z};
-    return CreateStorageBuffer(sizeof(params), params);
+    BufferDesc desc;
+    desc.Size = sizeof(params);
+    desc.Usage = BufferUsage::Storage | BufferUsage::Indirect;
+    desc.Memory = MemoryProperty::HostVisible;
+    desc.CpuAccessible = true;
+    return m_Device->CreateBuffer(desc, params);
 }
 
 ShaderHandle GLTestFixture::CreateShaderFromGLSL(ShaderStage stage, const char* source)

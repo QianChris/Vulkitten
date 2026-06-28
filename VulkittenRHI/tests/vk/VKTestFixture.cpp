@@ -3,6 +3,7 @@
 #include "vk/VKCommandBuffer.hpp"
 #include "vk/VKResources.hpp"
 
+#include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 #include <cstring>
 #include <cstdio>
@@ -59,12 +60,17 @@ void VKTestFixture::TearDown() {
         m_CommandBuffer->End();
         m_CommandBuffer.reset();
     }
+    // IMPORTANT: destroy GPU resources BEFORE shutting down the device.
+    // Vulkan child objects (VkBuffer, VkShaderModule, VkDeviceMemory)
+    // must be destroyed before vkDestroyDevice.
+    m_Resources.DestroyAll();
     if (m_Device) {
-        m_Device->EndFrame(m_CurrentFrame);
+        // Use WaitIdle instead of EndFrame: headless tests don't render
+        // to the swapchain, so presenting would crash.
+        m_Device->WaitIdle();
         m_Device->Shutdown();
         m_Device.reset();
     }
-    m_Resources.DestroyAll();
     if (m_Window) {
         glfwDestroyWindow(m_Window);
         m_Window = nullptr;
@@ -92,7 +98,12 @@ BufferHandle VKTestFixture::CreateStorageBuffer(uint64_t size, const void* data)
 
 BufferHandle VKTestFixture::CreateIndirectDispatchBuffer(uint32_t x, uint32_t y, uint32_t z) {
     uint32_t params[3] = {x, y, z};
-    return CreateStorageBuffer(sizeof(params), params);
+    BufferDesc desc;
+    desc.Size = sizeof(params);
+    desc.Usage = BufferUsage::Storage | BufferUsage::Indirect;
+    desc.Memory = MemoryProperty::HostVisible;
+    desc.CpuAccessible = true;
+    return m_Device->CreateBuffer(desc, params);
 }
 
 ShaderHandle VKTestFixture::LoadSpirvFile(ShaderStage stage, const char* filepath) {
@@ -122,6 +133,36 @@ GeometryHandle VKTestFixture::CreateSimpleGeometry(BufferHandle vb, uint32_t vtx
     desc.VertexBufferCount = 1;
     desc.VertexCount = vtxCount;
     return m_Device->CreateGeometry(desc);
+}
+
+void VKTestFixture::SubmitAndWait() {
+    if (!m_CommandBuffer || !m_Device) return;
+
+    // End recording
+    m_CommandBuffer->End();
+
+    // Get the Vulkan handles
+    auto* vkCmdBuf = dynamic_cast<VKCommandBuffer*>(m_CommandBuffer.get());
+    auto* vkDev = dynamic_cast<VKDevice*>(m_Device.get());
+    if (!vkCmdBuf || !vkDev) return;
+
+    VkCommandBuffer cmd = static_cast<VkCommandBuffer>(vkCmdBuf->GetVkCommandBuffer());
+    VkQueue queue = static_cast<VkQueue>(vkDev->GetGraphicsQueue());
+    VkDevice dev = static_cast<VkDevice>(vkDev->GetNativeDevice());
+
+    // Submit and wait
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &cmd;
+
+    vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(queue);
+
+    // Reset the SAME command buffer for reuse, instead of allocating a new one.
+    // This avoids exhausting the command pool over multiple SubmitAndWait calls.
+    vkResetCommandBuffer(cmd, 0);
+    m_CommandBuffer->Begin();
 }
 
 std::vector<uint8_t> VKTestFixture::ReadBufferData(BufferHandle handle, uint64_t offset, uint64_t size) {

@@ -50,6 +50,11 @@ protected:
     ShaderHandle   LoadSpirvFile(ShaderStage stage, const char* filepath);
     PipelineHandle CreateComputePipeline(ShaderHandle cs);
 
+    // Submit the recorded command buffer to the GPU and wait for completion.
+    // Required because Vulkan executes commands only on explicit submission,
+    // unlike OpenGL's immediate execution.
+    void SubmitAndWait();
+
     GeometryHandle CreateSimpleGeometry(BufferHandle vb, uint32_t vtxCount, uint32_t stride);
 
     // Buffer readback
