@@ -1,13 +1,13 @@
 #include "vktpch.h"
 #include "FileSystem.h"
 
-namespace Vulkitten {
+#include <filesystem>
 
-    std::map<std::string, std::string> FileSystem::s_Paths;
+namespace Vulkitten {
 
     void FileSystem::RegisterPath(const std::string& path, const std::string& protocol)
     {
-        s_Paths[protocol] = path;
+        m_Paths[protocol] = path;
     }
 
     std::string FileSystem::Resolve(const std::string& path)
@@ -21,13 +21,13 @@ namespace Vulkitten {
         std::string protocol = path.substr(0, pos);
         std::string filePath = path.substr(pos + 3);
 
-        if (s_Paths.find(protocol) == s_Paths.end())
+        if (m_Paths.find(protocol) == m_Paths.end())
         {
             VKT_CORE_ERROR("Unknown protocol: {0}", protocol);
             return path;
         }
 
-        return s_Paths[protocol] + "/" + filePath;
+        return m_Paths[protocol] + "/" + filePath;
     }
 
     bool FileSystem::Exists(const std::string& path)

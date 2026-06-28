@@ -13,6 +13,15 @@ add_subdirectory(vendor/yaml-cpp)
 # 宏开关
 add_definitions(-DVULKITTEN_ENABLE_ASSERTS=1)
 
+# Vulkan SDK (optional - gates VKT_HAS_VULKAN)
+find_package(Vulkan QUIET)
+if(Vulkan_FOUND)
+    add_definitions(-DVKT_HAS_VULKAN)
+    message(STATUS "Vulkan SDK found: ${Vulkan_INCLUDE_DIRS}")
+else()
+    message(STATUS "Vulkan SDK not found - Vulkan backend disabled")
+endif()
+
 # 收集源文件
 file(GLOB_RECURSE VULKITTEN_SOURCES 
     src/*.cpp 
@@ -69,8 +78,21 @@ target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/
 # OpenGL (Windows system library)
 target_link_libraries(Vulkitten PUBLIC opengl32)
 
+# Vulkan (optional)
+if(Vulkan_FOUND)
+    target_link_libraries(Vulkitten PUBLIC Vulkan::Vulkan)
+endif()
+
 # yaml-cpp
 target_link_libraries(Vulkitten PUBLIC yaml-cpp::yaml-cpp)
+
+# tinygltf (glTF 2.0 loader) - header-only to avoid stb_image conflicts
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_INSTALL OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_HEADER_ONLY ON CACHE BOOL "" FORCE)
+add_subdirectory(vendor/tinygltf)
+target_link_libraries(Vulkitten PUBLIC tinygltf)
 
 # 公开头文件目录 (供SandBox使用)
 target_include_directories(Vulkitten 

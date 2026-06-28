@@ -1,59 +1,72 @@
 #!/usr/bin/env python3
 """
-批量编译 GLSL 着色器为 SPIR-V (.spv)，目标环境 OpenGL 4.5。
-遍历当前目录及所有子目录，处理 .vert, .frag, .geom, .comp 文件。
-输出文件: 原文件名 + .spv
+Batch compile GLSL shaders to SPIR-V (.spv).
 
-支持 BLACKLIST_DIR：列出的目录名及其所有子目录都会被跳过。
-支持 INCLUDE_DIR：编译时额外提供的头文件搜索路径。
+Usage:
+    python compile_shader.py [--target opengl|vulkan] [--include-dirs DIRS...]
+                             [--output-dir DIR] [--watch]
+
+Traverses current directory and subdirectories, compiling .vert, .frag,
+.geom, .comp files to .spv using glslangValidator.
+
+Arguments:
+    --target       Target API: 'opengl' (default) or 'vulkan'
+    --include-dirs Additional GLSL #include search paths
+    --output-dir   Output directory (default: same as source file)
+    --watch        Watch mode: recompile on file changes
+    --force        Force recompile all shaders, ignoring timestamps
 """
 
+import argparse
 import subprocess
 import sys
+import time
 from pathlib import Path
 
-# ==================== 配置区 ====================
-
-# 支持的着色器扩展名（glslangValidator 自动识别 stage）
+# Default supported extensions
 SHADER_EXTS = {'.vert', '.frag', '.geom', '.comp'}
 
-# 黑名单目录名：这些目录及其所有子目录下的 shader 都会被跳过
-# 例如：['.git', 'node_modules', 'build', 'third_party']
-BLACKLIST_DIRS = {
-    'vendor',
-}
+# Default blacklist
+BLACKLIST_DIRS = {'vendor'}
 
-# 额外的头文件搜索路径（对应 glslangValidator 的 -I 参数）
-# 例如：['./shaders/include', './common']
-# 留空则不添加额外 include 路径
-INCLUDE_DIRS = [
-    'Vulkitten/src',
-    'Sandbox/assets/computeshaders/common'
+# Default include dirs
+DEFAULT_INCLUDE_DIRS = [
+    'Vulkitten/assets/computeshaders/common'
 ]
 
-# ==================== 逻辑区 ====================
 
 def is_blacklisted(path: Path) -> bool:
-    """检查路径是否位于任何黑名单目录下。"""
     return any(part in BLACKLIST_DIRS for part in path.parts)
 
-def compile_shader(src_path: Path) -> bool:
-    """编译单个着色器文件，返回是否成功。"""
-    out_path = src_path.with_suffix(src_path.suffix + '.spv')
 
-    # 增量编译：如果 spv 存在且比源文件新，则跳过
-    if out_path.exists() and out_path.stat().st_mtime >= src_path.stat().st_mtime:
+def compile_shader(src_path: Path, target_env: str, include_dirs: list, output_dir: str = None, force: bool = False) -> bool:
+    """Compile a single shader file. Returns True on success."""
+    if output_dir:
+        out_path = Path(output_dir) / (src_path.name + '.spv')
+    else:
+        out_path = src_path.with_suffix(src_path.suffix + '.spv')
+
+    # Incremental: skip if .spv exists and is newer (unless --force)
+    if not force and out_path.exists() and out_path.stat().st_mtime >= src_path.stat().st_mtime:
         print(f"  [SKIP] {src_path} (up-to-date)")
         return True
 
+    # Select target-env for glslangValidator
+    if target_env == 'vulkan':
+        target_flag = 'vulkan1.3'
+    else:
+        target_flag = 'opengl'
+
     cmd = [
         'glslangValidator',
-        '--target-env', 'opengl',
+        '--target-env', target_flag,
     ]
 
-    # 添加 include 路径
-    for inc in INCLUDE_DIRS:
+    for inc in include_dirs:
         cmd.extend(['-I' + inc])
+
+    # Ensure output directory exists
+    out_path.parent.mkdir(parents=True, exist_ok=True)
 
     cmd.extend([
         '-o', str(out_path),
@@ -61,12 +74,8 @@ def compile_shader(src_path: Path) -> bool:
     ])
 
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=False
-        )
+        # print(cmd)
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
         if result.returncode == 0:
             print(f"  [OK]   {src_path} -> {out_path.name}")
             return True
@@ -76,16 +85,15 @@ def compile_shader(src_path: Path) -> bool:
             print(result.stderr, file=sys.stderr)
             return False
     except FileNotFoundError:
-        print("  [ERR]  glslangValidator 未找到，请确保 Vulkan SDK / glslang 已安装并在 PATH 中", file=sys.stderr)
+        print("  [ERR]  glslangValidator not found. Install Vulkan SDK.", file=sys.stderr)
         return False
     except Exception as e:
         print(f"  [ERR]  {src_path}: {e}", file=sys.stderr)
         return False
 
-def main():
-    root = Path('.')
 
-    # 收集所有 shader 文件，同时过滤黑名单目录
+def compile_all(root: Path, target_env: str, include_dirs: list, output_dir: str = None, force: bool = False):
+    """Find and compile all shader files."""
     shaders = sorted(
         f for f in root.rglob('*')
         if f.is_file()
@@ -94,24 +102,73 @@ def main():
     )
 
     if not shaders:
-        print("未找到任何需要编译的着色器文件（或被黑名单过滤）。")
-        return
+        print("No shader files found (or all blacklisted).")
+        return 0, 0
 
-    print(f"发现 {len(shaders)} 个着色器文件，开始编译...")
-    if INCLUDE_DIRS:
-        print(f"Include 路径: {', '.join(INCLUDE_DIRS)}")
-    success = 0
-    failed = 0
+    print(f"Found {len(shaders)} shader files, target={target_env}...")
+    if force:
+        print("Force mode: recompiling all shaders")
+    if include_dirs:
+        print(f"Include dirs: {', '.join(include_dirs)}")
 
+    success, failed = 0, 0
     for shader in shaders:
-        if compile_shader(shader):
+        if compile_shader(shader, target_env, include_dirs, output_dir, force):
             success += 1
         else:
             failed += 1
 
-    print(f"\n完成: {success} 成功, {failed} 失败")
-    if failed > 0:
-        sys.exit(1)
+    return success, failed
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Compile GLSL shaders to SPIR-V')
+    parser.add_argument('--target', choices=['opengl', 'vulkan'], default='opengl',
+                        help='Target API (default: opengl)')
+    parser.add_argument('--include-dirs', nargs='*', default=None,
+                        help='Additional GLSL #include search paths')
+    parser.add_argument('--output-dir', default=None,
+                        help='Output directory for .spv files')
+    parser.add_argument('--watch', action='store_true',
+                        help='Watch mode: recompile on file changes')
+    parser.add_argument('--force', action='store_true',
+                        help='Force recompile all shaders, ignoring timestamps')
+
+    args = parser.parse_args()
+
+    include_dirs = args.include_dirs if args.include_dirs is not None else DEFAULT_INCLUDE_DIRS
+
+    root = Path('.')
+
+    if args.watch:
+        print(f"Watch mode: compiling shaders on change (target={args.target})...")
+        compile_all(root, args.target, include_dirs, args.output_dir, args.force)
+
+        # Track file modification times
+        mtimes = {}
+        for f in root.rglob('*'):
+            if f.is_file() and f.suffix.lower() in SHADER_EXTS and not is_blacklisted(f):
+                mtimes[f] = f.stat().st_mtime
+
+        try:
+            while True:
+                # time.sleep(1)
+                for f in root.rglob('*'):
+                    if f.is_file() and f.suffix.lower() in SHADER_EXTS and not is_blacklisted(f):
+                        old_mtime = mtimes.get(f, 0)
+                        new_mtime = f.stat().st_mtime
+                        if new_mtime > old_mtime:
+                            print(f"\n[CHANGED] {f}")
+                            compile_shader(f, args.target, include_dirs, args.output_dir)
+                            mtimes[f] = new_mtime
+        except KeyboardInterrupt:
+            print("\nWatch mode stopped.")
+    else:
+        success, failed = compile_all(root, args.target, include_dirs, args.output_dir, args.force)
+        print(f"\nDone: {success} succeeded, {failed} failed")
+        if failed > 0:
+            sys.exit(1)
+
 
 if __name__ == '__main__':
     main()

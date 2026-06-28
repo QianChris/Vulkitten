@@ -1,60 +1,47 @@
 #include "vktpch.h"
 #include "Renderer.h"
-#include "RenderCommand.h"
-#include "Shader.h"
-#include "Renderer2D.h"
-
-#include "Vulkitten/Perf/Instrumentor.h"
+#include "Vulkitten/Renderer/Device.h"
 
 namespace Vulkitten {
 
-    Renderer::SceneData* Renderer::s_SceneData = new Renderer::SceneData();
-
-    void Renderer::Init()
-    {
-        VKT_PROFILE_FUNCTION();
-
-        RenderCommand::Init();
-        Renderer2D::Init();
-    }
-
-    void Renderer::OnWindowResize(uint32_t width, uint32_t height)
-    {
-        VKT_PROFILE_FUNCTION();
-
-        RenderCommand::SetViewport(0, 0, width, height);
-    }
-
-    void Renderer::Shutdown()
-    {
-        VKT_PROFILE_FUNCTION();
-
-        Renderer2D::Shutdown();
-    }
-
-    void Renderer::BeginScene(OrthographicCamera& camera)
-    {
-        VKT_PROFILE_FUNCTION();
-
-        s_SceneData->ViewProjectionMatrix = camera.GetViewProjectionMatrix();
-    }
-
-    void Renderer::EndScene()
-    {
-        VKT_PROFILE_FUNCTION();
-
-    }
-
-    void Renderer::Submit(const Ref<Shader>& shader, const Ref<VertexArray>& vertexArray, const glm::mat4& transform)
-    {
-        VKT_PROFILE_FUNCTION();
-
-        shader->Bind();
-        shader->SetUniformMat4("u_ViewProjection", s_SceneData->ViewProjectionMatrix);
-        shader->SetUniformMat4("u_Transform", transform);
-
-        vertexArray->Bind();
-        RenderCommand::DrawIndexed(vertexArray);
-    }
-
+Renderer::Renderer(const RendererConfig& config)
+    : m_Config(config)
+{
 }
+
+Renderer::~Renderer()
+{
+}
+
+IDevice& Renderer::GetDevice()
+{
+    return *m_Device;
+}
+
+IGpuResourceManager& Renderer::GetResourceManager()
+{
+    return *m_Resources;
+}
+
+void Renderer::BeginFrame()
+{
+    if (m_Device)
+        m_FrameContext = m_Device->beginFrame();
+}
+
+void Renderer::EndFrame()
+{
+    if (m_Device)
+        m_Device->endFrame(m_FrameContext);
+}
+
+void Renderer::OnWindowResize(uint32_t width, uint32_t height)
+{
+    if (m_Device)
+        m_Device->onResize(width, height);
+
+    if (m_RenderGraph)
+        m_RenderGraph->ResizeAllFramebuffers(width, height);
+}
+
+} // namespace Vulkitten

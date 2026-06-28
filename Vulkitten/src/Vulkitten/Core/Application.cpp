@@ -2,10 +2,15 @@
 #include "Vulkitten/Core/Application.h"
 
 #include "Vulkitten/Core/Layer.h"
+#include "Vulkitten/Core/Engine.h"
 #include "Vulkitten/Core/Input.h"
+#include "Vulkitten/Core/IWindow.h"
 
-#include "Vulkitten/Renderer/Renderer.h"
-#include "Vulkitten/Renderer/RenderCommand.h"
+#include "Vulkitten/Scene/SceneContext.h"
+
+#include "Vulkitten/Renderer/IRenderer.h"
+#include "Vulkitten/Renderer/IGpuResourceManager.h"
+#include "Vulkitten/Renderer/RendererFactory.h"
 
 #include <glm/glm.hpp>
 
@@ -15,20 +20,32 @@
 namespace Vulkitten
 {
     Application* Application::s_Instance = nullptr;
+    RendererBackend Application::s_Backend = RendererBackend::OpenGL;
 
     Application::Application()
     {
         VKT_PROFILE_FUNCTION();
 
-        Vulkitten::FileSystem::RegisterPath("../../Sandbox", "sandbox");
+        Engine::Get().Init();
+        Engine::Get().GetFileSystem().RegisterPath("../../Sandbox", "sandbox");
 
         VKT_ASSERT(!s_Instance, "Application already exists!");
         s_Instance = this;
 
-        m_Window.reset(Window::Create());
+        WindowProps windowProps;
+        windowProps.VulkanMode = (s_Backend == RendererBackend::Vulkan);
+        m_Window.reset(Window::Create(windowProps));
         m_Window->SetEventCallback(VKT_BIND_EVENT_FN(Application::OnEvent));
 
-        Renderer::Init();
+        // Build RendererConfig (shader loading is now handled by IGpuResourceManager)
+        RendererConfig config;
+        config.FileSys  = &Engine::Get().GetFileSystem();
+        config.Window   = dynamic_cast<IWindow*>(m_Window.get());
+
+        // Create backend-specific IRenderer via factory (no #ifdef in Application)
+        m_Renderer = RendererFactory::Create(s_Backend, config);
+
+        m_Renderer->Init();
 
         m_ImGuiLayer = new ImGuiLayer();
         PushOverlay(m_ImGuiLayer);
@@ -38,7 +55,8 @@ namespace Vulkitten
     {
         VKT_PROFILE_FUNCTION();
 
-        Renderer::Shutdown();
+        if (m_Renderer)
+            m_Renderer->Shutdown();
     }
 
     void Application::Run()
@@ -63,10 +81,20 @@ namespace Vulkitten
                 m_FrameTimeAccumulator = 0.0f;
             }
 
-            if (!m_Minimized) {
-                for (Layer *layer : m_LayerStack) {
-                    VKT_PROFILE_SCOPE("Layer update");
-                    layer->OnUpdate(timestep);
+            if (!m_Minimized && m_Renderer)
+            {
+                // ---- IRenderer Lifecycle: BeginFrame ----
+                m_Renderer->BeginFrame();
+
+                // SceneContext for dependency injection
+                auto* graph = m_Renderer->GetRenderGraph();
+                if (graph)
+                {
+                    SceneContext sceneCtx(*m_Renderer, *graph);
+                    for (Layer *layer : m_LayerStack) {
+                        VKT_PROFILE_SCOPE("Layer update");
+                        layer->OnUpdate(timestep, sceneCtx);
+                    }
                 }
             }
             {
@@ -75,6 +103,20 @@ namespace Vulkitten
                 for (Layer* layer : m_LayerStack)
                     layer->OnImguiRender();
                 m_ImGuiLayer->End();
+            }
+
+            // Execute + EndFrame via IRenderer
+            if (m_Renderer)
+            {
+                m_Renderer->Execute();
+                m_Renderer->EndFrame();
+            }
+
+            // GpuResourceManager GC
+            if (m_Renderer)
+            {
+                m_Renderer->GetResourceManager().TickFrame();
+                m_Renderer->GetResourceManager().Gc(3);
             }
 
             auto frameEndTime = std::chrono::high_resolution_clock::now();
@@ -105,8 +147,6 @@ namespace Vulkitten
             if (e.Handled)
                 break;
         }
-
-        //VKT_CORE_TRACE("{}", e.ToString());
     }
 
     void Application::PushLayer(Layer *layer)
@@ -140,7 +180,8 @@ namespace Vulkitten
         }
 
         m_Minimized = false;
-        Renderer::OnWindowResize(e.GetWidth(), e.GetHeight());
+        if (m_Renderer)
+            m_Renderer->OnWindowResize(e.GetWidth(), e.GetHeight());
         return false;
     }
 }

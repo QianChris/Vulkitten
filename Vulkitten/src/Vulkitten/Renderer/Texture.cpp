@@ -1,8 +1,9 @@
 #include "vktpch.h"
 #include "Texture.h"
 
-#include "Vulkitten/Renderer/Renderer.h"
-#include "Platform/OpenGL/OpenGLTexture.h"
+#include "Vulkitten/Renderer/IRenderer.h"
+#include "Vulkitten/Renderer/IGpuResourceManager.h"
+#include "Vulkitten/Renderer/Backend/OpenGL/OpenGLTexture.h"
 
 #include "Vulkitten/Perf/Instrumentor.h"
 
@@ -12,34 +13,40 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        switch (Renderer::GetAPI())
-        {
-            case RendererAPI::API::None:
-                VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
-                return nullptr;
-            case RendererAPI::API::OpenGL:
-                return CreateRef<OpenGLTexture2D>(width, height);
-        }
+        Ref<Texture2D> result = CreateRef<OpenGLTexture2D>(width, height);
 
-        VKT_CORE_ASSERT(false, "Unknown RendererAPI!");
-        return nullptr;
+        if (!result)
+            return nullptr;
+
+        auto& resources = IRenderer::Get().GetResourceManager();
+        GpuTextureDesc desc;
+        desc.Width = result->GetWidth();
+        desc.Height = result->GetHeight();
+        uint64_t handle = resources.CreateTexture(desc, "Texture2D");
+        resources.SetGpuHandle(handle, result->GetRendererID());
+        resources.TrackExternalRef(handle, result);
+
+        return result;
     }
 
     Ref<Texture2D> Texture2D::Create(const std::string& path)
     {
         VKT_PROFILE_FUNCTION();
 
-        switch (Renderer::GetAPI())
-        {
-            case RendererAPI::API::None:
-                VKT_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
-                return nullptr;
-            case RendererAPI::API::OpenGL:
-                return CreateRef<OpenGLTexture2D>(path);
-        }
+        Ref<Texture2D> result = CreateRef<OpenGLTexture2D>(path);
 
-        VKT_CORE_ASSERT(false, "Unknown RendererAPI!");
-        return nullptr;
+        if (!result)
+            return nullptr;
+
+        auto& resources = IRenderer::Get().GetResourceManager();
+        GpuTextureDesc desc;
+        desc.Width = result->GetWidth();
+        desc.Height = result->GetHeight();
+        uint64_t handle = resources.CreateTexture(desc, path);
+        resources.SetGpuHandle(handle, result->GetRendererID());
+        resources.TrackExternalRef(handle, result);
+
+        return result;
     }
 
 }

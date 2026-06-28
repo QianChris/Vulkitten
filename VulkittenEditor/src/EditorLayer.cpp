@@ -1,5 +1,7 @@
 #include "EditorLayer.h"
 
+#include "Vulkitten/Scene/SceneContext.h"
+
 #include "imgui.h"
 #include <glm/gtc/type_ptr.hpp>
 
@@ -7,7 +9,8 @@
 #include "Vulkitten/Core/KeyCode.h"
 #include "Vulkitten/Core/MouseButtonCode.h"
 #include "Vulkitten/Core/Input.h"
-#include "Vulkitten/Renderer/RenderCommand.h"
+#include "Vulkitten/Renderer/IRenderer.h"
+#include "Vulkitten/Renderer/Renderer.h"
 #include "Vulkitten/Scene/Entity.h"
 #include "Vulkitten/Scene/Components.h"
 #include "Vulkitten/Scene/SceneCamera.h"
@@ -157,7 +160,7 @@ namespace Vulkitten {
     // ═════════════════════════════════════════════════════════════
     // OnUpdate：逻辑 + 渲染到 Viewport Framebuffer（无 ImGui）
     // ═════════════════════════════════════════════════════════════
-    void EditorLayer::OnUpdate(Timestep timestep)
+    void EditorLayer::OnUpdate(Timestep timestep, SceneContext& ctx)
     {
         // Phase 1: 全局输入（EditorCamera 漫游）
         if (IsViewportFocused() && m_Context.isEditorCameraActive)
@@ -181,20 +184,22 @@ namespace Vulkitten {
             );
         }
 
-        // Phase 4: 渲染场景到 Viewport Framebuffer
+        // Phase 4: 渲染场景到 Viewport Framebuffer (via RenderGraph)
         auto framebuffer = m_ViewportPanel->GetFramebuffer();
+        auto* graph = IRenderer::Get().GetRenderGraph();
+        graph->SetFramebuffer("Viewport", framebuffer);
+
+        // Clear entity ID attachment (editor-specific, not yet in RenderGraph)
         framebuffer->Bind();
-        RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
-        RenderCommand::Clear();
         framebuffer->ClearAttachment(1, -1);
+        framebuffer->Unbind();
 
         if (m_Context.isEditorCameraActive)
             m_Scene->SetEditorCamera(&m_EditorCamera);
         else
             m_Scene->SetEditorCamera(nullptr);
 
-        m_Scene->OnUpdate(timestep);
-        framebuffer->Unbind();
+        m_Scene->OnUpdate(timestep, ctx);
     }
 
     // ═════════════════════════════════════════════════════════════

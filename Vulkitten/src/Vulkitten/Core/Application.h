@@ -7,10 +7,14 @@
 
 #include "Vulkitten/ImGui/ImGuiLayer.h"
 
+#include "Vulkitten/Renderer/RendererFactory.h"
+
 #include <chrono>
 
 namespace Vulkitten
 {
+    class IRenderer;
+
     class VKT_API Application
     {
     public:
@@ -30,11 +34,17 @@ namespace Vulkitten
         inline float GetFPS() const { return m_FPS; }
         inline float GetFrameTime() const { return m_FrameTime; }
 
+        // Set backend before constructing app (called by client)
+        static void SetBackend(RendererBackend backend) { s_Backend = backend; }
+
     private:
         bool OnWindowClose(WindowCloseEvent& e);
         bool OnWindowResize(WindowResizeEvent& e);
+        
+        // Backend-agnostic IRenderer (OpenGL or Vulkan)
+        Scope<IRenderer>   m_Renderer;
 
-		Scope<Window> m_Window;
+        Scope<Window> m_Window;
         ImGuiLayer* m_ImGuiLayer;
         LayerStack m_LayerStack;
 
@@ -47,11 +57,11 @@ namespace Vulkitten
         float m_FrameTime = 0.0f;
         float m_FrameCount = 0.0f;
         float m_FrameTimeAccumulator = 0.0f;
-        
+
     private:
         static Application* s_Instance;
+        static RendererBackend s_Backend;
     };
 
-    // to be defined in client
     Application* CreateApplication();
 }

@@ -8,6 +8,11 @@
 #include "Vulkitten/Core/Layer.h"
 #include "Vulkitten/Events/Event.h"
 
+// Window (Platform)
+#include "Vulkitten/Core/Window.h"
+#include "Vulkitten/Core/IWindow.h"
+#include "Vulkitten/Core/ISurface.h"
+
 // IO
 #include "Vulkitten/Core/Input.h"
 #include "Vulkitten/Core/KeyCode.h"
@@ -16,6 +21,8 @@
 // Core
 #include "Vulkitten/Core/Timestep.h"
 #include "Vulkitten/Core/FileSystem.h"
+#include "Vulkitten/Core/ClassFactory.h"
+#include "Vulkitten/Core/Engine.h"
 
 // Performance
 #include "Vulkitten/Perf/Instrumentor.h"
@@ -23,19 +30,24 @@
 
 // Scene
 #include "Vulkitten/Scene/Scene.h"
+#include "Vulkitten/Scene/SceneContext.h"
 #include "Vulkitten/Scene/Components.h"
 #include "Vulkitten/Scene/Entity.h"
 #include "Vulkitten/Scene/ScriptableEntity.h"
 
+#include "Vulkitten/Scene/Systems/RenderSystem.h"
+
 // Renderer
 #include "Vulkitten/Renderer/Renderer.h"
-#include "Vulkitten/Renderer/Renderer2D.h"
-#include "Vulkitten/Renderer/RenderCommand.h"
+#include "Vulkitten/Renderer/IRenderer.h"
+#include "Vulkitten/Renderer/RenderContext.h"
+#include "Vulkitten/Renderer/IGpuResourceManager.h"
 #include "Vulkitten/Renderer/Buffer.h"
 #include "Vulkitten/Renderer/Framebuffer.h"
 #include "Vulkitten/Renderer/VertexArray.h"
 #include "Vulkitten/Renderer/Shader.h"
 #include "Vulkitten/Renderer/Texture.h"
 #include "Vulkitten/Renderer/CameraController.h"
+#include "Vulkitten/Renderer/Gltf/GltfLoader.h"
 
 #include "Vulkitten/ImGui/imguiLayer.h"

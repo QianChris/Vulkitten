@@ -40,27 +40,8 @@ namespace Vulkitten {
     {
         VKT_PROFILE_FUNCTION();
 
-        // Load compute shaders into the ShaderLibrary.
-        // The .comp files use #include directives that are resolved by the
-        // custom preprocessor in OpenGLShader::CompileCompute.
-        m_ShaderLibrary.Add("ParticleSimArg",
-            Shader::CreateCompute("ParticleSimArg",
-                "sandbox://assets/computeshaders/ParticleSimArg.comp"));
-
-        m_ShaderLibrary.Add("ParticleSim",
-            Shader::CreateCompute("ParticleSim",
-                "sandbox://assets/computeshaders/ParticleSim.comp"));
-
-        m_ShaderLibrary.Add("ParticleEmit",
-            Shader::CreateCompute("ParticleEmit",
-                "sandbox://assets/computeshaders/ParticleEmit.comp"));
-
-        m_ShaderLibrary.Add("ParticleRenderArg",
-            Shader::CreateCompute("ParticleRenderArg",
-                "sandbox://assets/computeshaders/ParticleRenderArg.comp"));
-
-        // Load the particle render shader (vertex + fragment)
-        m_ShaderLibrary.Load("sandbox://assets/shaders/Particle.shader");
+        // Engine shaders are now preloaded by RenderContext::Init().
+        // See RenderContext.cpp for the ShaderLibrary setup.
 
         m_Initialized = true;
     }
@@ -174,7 +155,7 @@ namespace Vulkitten {
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ParticleUBO), &ubo);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-        // ---- 1. ParticleSimArg — reset args for the new frame ----
+        // ---- 1. ParticleSimArg - reset args for the new frame ----
         {
             auto shader = shaderLib.Get("ParticleSimArg");
             shader->Bind();
@@ -187,7 +168,7 @@ namespace Vulkitten {
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         }
 
-        // ---- 2. ParticleSim — simulate existing particles, indirect dispatch ----
+        // ---- 2. ParticleSim - simulate existing particles, indirect dispatch ----
         {
             auto shader = shaderLib.Get("ParticleSim");
             shader->Bind();
@@ -206,12 +187,12 @@ namespace Vulkitten {
             glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0);
         }
 
-        // ---- 3. ParticleEmit — emit new particles, direct dispatch ----
+        // ---- 3. ParticleEmit - emit new particles, direct dispatch ----
         {
             auto shader = shaderLib.Get("ParticleEmit");
             shader->Bind();
 
-            // Bind the same output buffers — emit appends after sim survivors
+            // Bind the same output buffers - emit appends after sim survivors
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_ArgSSBO[readIdx]);      // argsRead  (unused by emit)
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_ParticleSSBO[readIdx]);  // particlesRead (unused)
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_ArgSSBO[writeIdx]);     // argsWrite
@@ -225,7 +206,7 @@ namespace Vulkitten {
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         }
 
-        // ---- 4. ParticleRenderArg — set up indirect draw arguments ----
+        // ---- 4. ParticleRenderArg - set up indirect draw arguments ----
         {
             auto shader = shaderLib.Get("ParticleRenderArg");
             shader->Bind();

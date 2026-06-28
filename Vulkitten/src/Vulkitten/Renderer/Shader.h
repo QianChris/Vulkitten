@@ -24,13 +24,16 @@ namespace Vulkitten {
 
         virtual const std::string& GetName() const = 0;
 
+        // Load shader from .spv files: filepath + ".vert.spv" / ".frag.spv"
         static Ref<Shader> Create(const std::string& filepath);
-        static Ref<Shader> Create(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc);
+        // Load compute shader from .spv file
         static Ref<Shader> CreateCompute(const std::string& name, const std::string& filepath);
     };
 
     class VKT_API ShaderLibrary
     {
+        friend class Renderer;
+        friend class VkRenderer;
     public:
         void Add(const std::string& name, const Ref<Shader>& shader);
         void Add(const Ref<Shader>& shader);
@@ -39,6 +42,7 @@ namespace Vulkitten {
         Ref<Shader> Get(const std::string& name) const;
         bool Exists(const std::string& name) const;
     private:
+        ShaderLibrary() = default;
         std::unordered_map<std::string, Ref<Shader>> m_Shaders;
     };
 

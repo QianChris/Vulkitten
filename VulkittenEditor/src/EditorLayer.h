@@ -22,7 +22,7 @@ namespace Vulkitten {
 
         void OnAttach() override;
         void OnDetach() override;
-        void OnUpdate(Timestep timestep) override;
+        void OnUpdate(Timestep timestep, SceneContext& ctx) override;
         void OnImguiRender() override;
         void OnEvent(Event& event) override;
 
