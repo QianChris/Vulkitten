@@ -335,7 +335,7 @@ rhi::SamplerHandle OpenGLDevice::createSampler(const rhi::SamplerDesc& desc)
 
 rhi::RenderPassHandle OpenGLDevice::createRenderPass(const rhi::RenderPassDesc& /*desc*/)
 {
-    // [HACK: GL RenderPass = FBO metadata — 与 Framebuffer 一起管理]
+    // [HACK: GL RenderPass = FBO metadata - 与 Framebuffer 一起管理]
     auto handle = AllocHandle<rhi::RenderPassTag>();
     return handle;
 }
@@ -407,7 +407,7 @@ void OpenGLDevice::waitIdle()
 
 void OpenGLDevice::Submit(FrameContext& /*frameContext*/)
 {
-    // Legacy — SwapBuffers now handled by endFrame()
+    // Legacy - SwapBuffers now handled by endFrame()
 }
 
 // ---- Metadata accessors ----

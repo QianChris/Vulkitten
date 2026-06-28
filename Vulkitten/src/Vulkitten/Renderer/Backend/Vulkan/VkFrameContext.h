@@ -7,7 +7,7 @@ namespace Vulkitten {
 class VulkanDevice;
 
 // ============================================================
-// VkFrameContext — Vulkan per-frame state.
+// VkFrameContext - Vulkan per-frame state.
 //
 // Extends FrameContext with real Vulkan synchronization objects:
 // VkCommandPool, VkFence (in-flight), VkSemaphore pairs

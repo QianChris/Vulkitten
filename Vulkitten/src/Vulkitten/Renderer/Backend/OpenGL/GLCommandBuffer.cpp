@@ -57,7 +57,7 @@ void GLCommandBuffer::BeginRenderPass(rhi::RenderPassHandle /*renderPass*/,
 
     if (framebuffer.IsValid())
     {
-        // [HACK: resolve FBO from device slot — Task 14 Pass integration]
+        // [HACK: resolve FBO from device slot - Task 14 Pass integration]
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         m_CurrentFbo = 0;
     }
@@ -80,7 +80,7 @@ void GLCommandBuffer::BeginRenderPass(rhi::RenderPassHandle /*renderPass*/,
 
 void GLCommandBuffer::EndRenderPass()
 {
-    // [HACK: glBindFramebuffer(0) — Task 14]
+    // [HACK: glBindFramebuffer(0) - Task 14]
     m_InRenderPass = false;
 }
 

@@ -7,7 +7,7 @@ struct GLFWwindow;
 namespace Vulkitten {
 
 // ============================================================
-// WindowsSurface — GLFW-based ISurface implementation.
+// WindowsSurface - GLFW-based ISurface implementation.
 //
 // Wraps a GLFWwindow as the platform drawable surface.
 // GetNativeHandle() returns the GLFWwindow* for OpenGL context

@@ -27,7 +27,7 @@ void OpenGLRenderer::Init()
 {
     VKT_PROFILE_FUNCTION();
 
-    // Register as global IRenderer instance FIRST — Pass constructors
+    // Register as global IRenderer instance FIRST - Pass constructors
     // and resource creation call IOpenGLRenderer::Get() internally.
     s_Current = this;
 
@@ -75,7 +75,7 @@ void OpenGLRenderer::BeginFrame()
 {
     VKT_PROFILE_FUNCTION();
 
-    // [HACK: 过渡期 — Task 15: call Renderer::BeginFrame() which delegates to IDevice::beginFrame()]
+    // [HACK: 过渡期 - Task 15: call Renderer::BeginFrame() which delegates to IDevice::beginFrame()]
     //Renderer::BeginFrame();
 }
 

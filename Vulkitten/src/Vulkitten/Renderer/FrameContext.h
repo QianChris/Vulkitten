@@ -5,7 +5,7 @@
 namespace Vulkitten {
 
 // ============================================================
-// FrameContext — transient per-frame state.
+// FrameContext - transient per-frame state.
 //
 // Owned by IDevice: IDevice::beginFrame() produces it,
 // IDevice::endFrame() consumes it, and createCommandBuffer()

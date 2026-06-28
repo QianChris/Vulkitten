@@ -70,7 +70,7 @@ void GLDevice::Init()
         }
     }
     if (!hasSpirv)
-        fprintf(stderr, "GLDevice: GL_ARB_gl_spirv not supported — shader creation may fail\n");
+        fprintf(stderr, "GLDevice: GL_ARB_gl_spirv not supported - shader creation may fail\n");
 }
 
 void GLDevice::Shutdown()

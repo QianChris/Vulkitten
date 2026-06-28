@@ -5,7 +5,7 @@
 namespace Vulkitten {
 
 // ============================================================
-// VulkanInstance — Vulkan instance wrapper with debug messenger.
+// VulkanInstance - Vulkan instance wrapper with debug messenger.
 //
 // Encapsulates VkInstance creation, validation layer setup,
 // and VK_EXT_debug_utils debug messenger. Created once at

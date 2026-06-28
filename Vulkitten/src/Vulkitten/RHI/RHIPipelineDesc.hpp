@@ -11,7 +11,7 @@ namespace Vulkitten {
 namespace rhi {
 
 // ============================================================
-// VertexAttribute — per-attribute layout in a vertex buffer
+// VertexAttribute - per-attribute layout in a vertex buffer
 //
 // KEY DESIGN: Vertex format lives in Pipeline, NOT in Geometry.
 // A single Geometry can be rendered with different Pipelines
@@ -83,11 +83,11 @@ struct DepthStencilState
     CompareOp DepthCompareOp    = CompareOp::Less;
 
     bool      StencilTestEnable = false;
-    // Full stencil front/back ops deferred — add when needed.
+    // Full stencil front/back ops deferred - add when needed.
 };
 
 // ============================================================
-// BlendState — per color attachment
+// BlendState - per color attachment
 // ============================================================
 
 struct BlendState
@@ -130,7 +130,7 @@ struct BlendState
 };
 
 // ============================================================
-// TextureSlot — declares a texture binding slot in the pipeline
+// TextureSlot - declares a texture binding slot in the pipeline
 //
 // Tells the backend "this pipeline expects a texture at slot N,
 // for use as Sampled or Storage, visible to these shader stages".
@@ -153,7 +153,7 @@ struct TextureSlot
 };
 
 // ============================================================
-// BufferSlot — declares a buffer binding slot in the pipeline
+// BufferSlot - declares a buffer binding slot in the pipeline
 //
 // Tells the backend "this pipeline expects a buffer at slot N,
 // used as Uniform, Storage, or PushConstant, with a given size
@@ -176,7 +176,7 @@ struct BufferSlot
 };
 
 // ============================================================
-// PipelineDesc — complete graphics pipeline description
+// PipelineDesc - complete graphics pipeline description
 //
 // For compute pipelines, set ComputeShader and leave VS/FS null.
 // Vertex format is here (vertexLayout), NOT in GeometryDesc.
@@ -213,7 +213,7 @@ struct PipelineDesc
 };
 
 // ============================================================
-// GeometryDesc — pure vertex/index buffer references
+// GeometryDesc - pure vertex/index buffer references
 //
 // KEY DESIGN: Geometry carries NO vertex format information.
 // The format is determined by the Pipeline that renders this
@@ -240,7 +240,7 @@ struct GeometryDesc
 };
 
 // ============================================================
-// SamplerDesc — texture sampling configuration
+// SamplerDesc - texture sampling configuration
 // ============================================================
 
 struct SamplerDesc

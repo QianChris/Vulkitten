@@ -7,7 +7,7 @@ namespace Vulkitten {
 class VulkanDevice;
 
 // ============================================================
-// VkGpuResourceManager — Vulkan GPU resource management.
+// VkGpuResourceManager - Vulkan GPU resource management.
 //
 // Implements IGpuResourceManager for Vulkan. Allocates VkBuffer
 // and VkImage resources with proper memory binding and staging.

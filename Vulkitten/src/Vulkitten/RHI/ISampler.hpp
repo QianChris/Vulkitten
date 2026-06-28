@@ -5,7 +5,7 @@
 namespace Vulkitten {
 namespace rhi {
 
-// Sampler is mostly a tag — all configuration is in SamplerDesc.
+// Sampler is mostly a tag - all configuration is in SamplerDesc.
 // This interface exists for type completeness and future expansion.
 class ISampler
 {

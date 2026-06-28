@@ -14,7 +14,7 @@ class IRenderDevice;
 class ResourceManager;
 
 // ============================================================
-// Binding — describes a single resource binding for drawMesh
+// Binding - describes a single resource binding for drawMesh
 // ============================================================
 
 struct Binding
@@ -34,7 +34,7 @@ struct Binding
 };
 
 // ============================================================
-// RenderCommandList — thin per-frame draw adapter
+// RenderCommandList - thin per-frame draw adapter
 //
 // Responsibilities:
 //   1. Holds this frame's ICommandBuffer reference

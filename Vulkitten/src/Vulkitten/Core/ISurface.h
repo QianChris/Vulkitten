@@ -7,7 +7,7 @@
 namespace Vulkitten {
 
 // ============================================================
-// SurfaceDesc — describes a platform drawable surface.
+// SurfaceDesc - describes a platform drawable surface.
 //
 // Minimal for now; will be extended with format, sample count,
 // and usage flags for Vulkan swapchain configuration.
@@ -19,7 +19,7 @@ struct SurfaceDesc
 };
 
 // ============================================================
-// ISurface — platform drawable surface abstraction.
+// ISurface - platform drawable surface abstraction.
 //
 // Represents an OS window's drawable region. For GLFW/Windows
 // this wraps the native HWND; for Vulkan this is used to create

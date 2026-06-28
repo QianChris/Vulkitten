@@ -5,7 +5,7 @@
 namespace rhi {
 
 // ============================================================
-// SurfaceDesc — describes a platform drawable surface
+// SurfaceDesc - describes a platform drawable surface
 // ============================================================
 
 struct SurfaceDesc
@@ -15,7 +15,7 @@ struct SurfaceDesc
 };
 
 // ============================================================
-// ISurface — platform drawable surface abstraction
+// ISurface - platform drawable surface abstraction
 //
 // Represents an OS window's drawable region.
 //   OpenGL:  wraps the GLFWwindow for context creation

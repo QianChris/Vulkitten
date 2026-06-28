@@ -19,7 +19,7 @@ class IGeometry;
 class ISampler;
 
 // ============================================================
-// ShaderBytecode — shader binary data + entry point
+// ShaderBytecode - shader binary data + entry point
 // ============================================================
 
 struct ShaderBytecode
@@ -42,7 +42,7 @@ struct DeviceConfig
 };
 
 // ============================================================
-// IRenderDevice — abstract GPU device interface
+// IRenderDevice - abstract GPU device interface
 //
 // Represents a logical GPU device. Owns the frame lifecycle
 // (swapchain acquire → command recording → submit → present),

@@ -39,7 +39,7 @@ struct RendererConfig
 };
 
 // ============================================================
-// Renderer — top-level rendering entry point
+// Renderer - top-level rendering entry point
 //
 // Owns the IRenderDevice, ResourceManager, and manages the
 // frame lifecycle. Provides access to per-frame command lists.

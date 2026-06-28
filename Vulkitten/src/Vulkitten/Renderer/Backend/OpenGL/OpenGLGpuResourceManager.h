@@ -17,7 +17,7 @@ namespace Vulkitten {
 class FileSystem;
 
 // ============================================================
-// OpenGLGpuResourceManager — OpenGL implementation of IGpuResourceManager.
+// OpenGLGpuResourceManager - OpenGL implementation of IGpuResourceManager.
 //
 // All GPU resources are allocated through this manager and
 // referenced via uint64_t handles (encoding index + generation).

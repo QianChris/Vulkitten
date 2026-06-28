@@ -11,7 +11,7 @@ namespace Vulkitten {
 class FileSystem;
 
 // ============================================================
-// GltfMeshData — cooked mesh data extracted from a glTF file.
+// GltfMeshData - cooked mesh data extracted from a glTF file.
 // ============================================================
 
 struct GltfVertex
@@ -30,7 +30,7 @@ struct GltfMeshData
 };
 
 // ============================================================
-// GltfLoader — loads glTF 2.0 files via tinygltf.
+// GltfLoader - loads glTF 2.0 files via tinygltf.
 //
 // Wraps tinygltf to provide a simpler API for extracting mesh
 // data for rendering. Handles virtual path resolution through

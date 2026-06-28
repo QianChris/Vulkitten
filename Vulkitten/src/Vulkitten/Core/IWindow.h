@@ -6,7 +6,7 @@
 namespace Vulkitten {
 
 // ============================================================
-// IWindow — platform window interface for backend consumption.
+// IWindow - platform window interface for backend consumption.
 //
 // Separated from the existing Window class to provide a focused
 // surface-oriented interface. The backend (Vulkan / OpenGL)

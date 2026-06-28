@@ -230,7 +230,7 @@ void SpriteRenderPass::Flush()
 
     m_QuadVA->Bind();
 
-    // [HACK: 过渡期混用旧 VAO + 新 ICommandBuffer — 完整迁移后 VAO 由 BindGeometry 惰性创建]
+    // [HACK: 过渡期混用旧 VAO + 新 ICommandBuffer - 完整迁移后 VAO 由 BindGeometry 惰性创建]
     auto& device = IRenderer::Get().GetDevice();
     auto* cmd = device.createCommandBuffer(FrameContext{});
     if (cmd)

@@ -88,7 +88,7 @@ VKCommandBuffer::~VKCommandBuffer()
 
 void VKCommandBuffer::ClearDescriptorSetCache()
 {
-    // Called from VKDevice::Shutdown() — cache cleared there
+    // Called from VKDevice::Shutdown() - cache cleared there
 }
 
 // ============================================================

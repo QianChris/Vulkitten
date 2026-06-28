@@ -14,7 +14,7 @@ namespace Vulkitten {
     class Scene;
 
     // ============================================================
-    // PerFrameSceneData — per-frame data populated by RenderSystem
+    // PerFrameSceneData - per-frame data populated by RenderSystem
     // and consumed by Passes during Execute().
     // ============================================================
     struct VKT_API PerFrameSceneData

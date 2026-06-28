@@ -10,7 +10,7 @@ class Input;
 class Scene;
 
 // ============================================================
-// Engine — the core engine singleton.
+// Engine - the core engine singleton.
 //
 // Created via ClassFactory::GetInstance<Engine>(). Owns all
 // engine subsystems: FileSystem, Input lifecycle, Log reference,
@@ -41,7 +41,7 @@ public:
     // VKT_CORE_* / VKT_* macros remain the primary logging interface.
     static Log& GetLogger();
 
-    // Convenience accessor — delegates to ClassFactory::GetInstance<Engine>()
+    // Convenience accessor - delegates to ClassFactory::GetInstance<Engine>()
     static Engine& Get();
 
     // ---- Scene Factory ----
@@ -49,7 +49,7 @@ public:
     // Create an empty scene with a fresh entt::registry.
     Scope<Scene> CreateEmptyScene();
 
-    // Load a scene from a glTF file. Stub — returns empty scene for now.
+    // Load a scene from a glTF file. Stub - returns empty scene for now.
     Scope<Scene> LoadSceneFromGltf(const std::string& filepath);
 
     // Merge all entities and components from source into target.

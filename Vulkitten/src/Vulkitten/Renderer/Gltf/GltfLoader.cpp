@@ -4,7 +4,7 @@
 #include "Vulkitten/Core/FileSystem.h"
 
 // TINYGLTF_IMPLEMENTATION pulls in tinygltf function bodies.
-// STB_IMAGE_IMPLEMENTATION is NOT defined here — Vulkitten already
+// STB_IMAGE_IMPLEMENTATION is NOT defined here - Vulkitten already
 // provides it via OpenGLTexture.cpp.
 // STB_IMAGE_WRITE_IMPLEMENTATION is defined here since Vulkitten
 // doesn't include stb_image_write elsewhere.
@@ -52,7 +52,7 @@ uint32_t GltfLoader::Load(const std::string& virtualPath)
 
     if (!success)
     {
-        m_LastError = "Failed to load glTF: " + physicalPath + " — " + err;
+        m_LastError = "Failed to load glTF: " + physicalPath + " - " + err;
         VKT_CORE_ERROR("GltfLoader: {0}", m_LastError);
         return 0;
     }

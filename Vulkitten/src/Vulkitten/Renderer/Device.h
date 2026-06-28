@@ -16,7 +16,7 @@ struct FrameContext;
 namespace rhi { class ICommandBuffer; }
 
 // ============================================================
-// ShaderBytecode — shader binary data + entry point
+// ShaderBytecode - shader binary data + entry point
 // ============================================================
 // Vulkan: SPIR-V binary (detected by magic number 0x07230203)
 // OpenGL: GLSL source or SPIR-V binary
@@ -28,7 +28,7 @@ struct ShaderBytecode
 };
 
 // ============================================================
-// IDevice — abstract GPU device interface.
+// IDevice - abstract GPU device interface.
 //
 // Represents a logical GPU device. Owns the frame lifecycle
 // (swapchain acquire → command recording → submit → present),

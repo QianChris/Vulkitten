@@ -137,7 +137,7 @@ void VkRenderer::BeginCommandBuffer(uint32_t imageIndex)
 
     if (!vkRenderPass || !vkFramebuffer)
     {
-        VKT_CORE_WARN("VkRenderer: RenderPass or Framebuffer is null — swapchain may not be fully created");
+        VKT_CORE_WARN("VkRenderer: RenderPass or Framebuffer is null - swapchain may not be fully created");
         return;
     }
 

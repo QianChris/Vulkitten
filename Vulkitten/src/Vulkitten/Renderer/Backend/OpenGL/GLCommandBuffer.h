@@ -11,7 +11,7 @@ namespace Vulkitten {
 class OpenGLDevice;
 
 // ============================================================
-// GLCommandBuffer — OpenGL ICommandBuffer implementation.
+// GLCommandBuffer - OpenGL ICommandBuffer implementation.
 //
 // OpenGL is immediate-mode; most commands execute directly.
 // State caching avoids redundant GL calls (e.g., skipping

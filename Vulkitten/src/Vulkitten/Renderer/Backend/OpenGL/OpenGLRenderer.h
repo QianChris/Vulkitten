@@ -6,7 +6,7 @@
 namespace Vulkitten {
 
 // ============================================================
-// OpenGLRenderer — OpenGL implementation of Renderer (IRenderer).
+// OpenGLRenderer - OpenGL implementation of Renderer (IRenderer).
 // ============================================================
 class VKT_API OpenGLRenderer : public Renderer
 {

@@ -18,7 +18,7 @@ namespace Vulkitten {
         ImGui::Text("Actual FPS: %.1f", fps);
         ImGui::Text("Frame Time: %.3f ms ( FPS: %.3f )", frameTime * 1000.0f, 1.0f / frameTime);
 
-        // Renderer2D stats removed — SpriteRenderPass now owns batch state
+        // Renderer2D stats removed - SpriteRenderPass now owns batch state
         // TODO: expose batch stats from SpriteRenderPass
 
         ImGui::End();

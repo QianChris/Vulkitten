@@ -1,5 +1,5 @@
 // ============================================================
-// VulkittenRHI Sample — Clear-to-Red + Triangle
+// VulkittenRHI Sample - Clear-to-Red + Triangle
 //
 // Switch between OpenGL and Vulkan by changing ONE line:
 //   const rhi::BackendType backend = rhi::BackendType::OpenGL;
@@ -73,7 +73,7 @@ struct Vertex {
     float color[3];
 };
 
-// Full-screen triangle — covers entire viewport, impossible to miss
+// Full-screen triangle - covers entire viewport, impossible to miss
 static const Vertex kVertices[3] = {
     {{-0.5f, 0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},  // bottom-left, red
     {{ 0.0f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},  // bottom-right, green
@@ -92,7 +92,7 @@ struct UniformBufferObject {
 int main(int argc, char* argv[])
 {
     // ---- Select Backend: --vulkan (default) or --opengl ----
-    rhi::BackendType backend = rhi::BackendType::Vulkan;
+    rhi::BackendType backend = rhi::BackendType::OpenGL;
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "--opengl") == 0 || strcmp(argv[i], "-gl") == 0)
             backend = rhi::BackendType::OpenGL;
@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     }
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "VulkittenRHI — Triangle", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(800, 600, "VulkittenRHI - Triangle", nullptr, nullptr);
     if (!window) { glfwTerminate(); return 1; }
 
     GLFWSurface surface(window);
@@ -131,10 +131,18 @@ int main(int argc, char* argv[])
     }
     printf("Backend: %s\n", renderer->GetBackendType() == rhi::BackendType::OpenGL ? "OpenGL" : "Vulkan");
 
-    // ---- Load shaders (SPIR-V works for both Vulkan and OpenGL 4.6 with GL_ARB_gl_spirv) ----
+    // ---- Load shaders (SPIR-V works for both Vulkan and OpenGL 4.6) ----
+    // VULKITTEN_RHI_DIR is set by CMake - resolves assets relative to VulkittenRHI root
     std::vector<uint8_t> vsData, fsData;
-    vsData = ReadFile("../Vulkitten/assets/shaders/Triangle.vert.spv");
-    fsData = ReadFile("../Vulkitten/assets/shaders/Triangle.frag.spv");
+    {
+        std::string vertPath = std::string(VULKITTEN_RHI_DIR) + "/../Vulkitten/assets/shaders/Triangle.vert.spv";
+        std::string fragPath = std::string(VULKITTEN_RHI_DIR) + "/../Vulkitten/assets/shaders/Triangle.frag.spv";
+        vsData = ReadFile(vertPath.c_str());
+        fsData = ReadFile(fragPath.c_str());
+        // Fallback: try relative to working directory (for standalone builds)
+        if (vsData.empty()) vsData = ReadFile("../Vulkitten/assets/shaders/Triangle.vert.spv");
+        if (fsData.empty()) fsData = ReadFile("../Vulkitten/assets/shaders/Triangle.frag.spv");
+    }
     if (vsData.empty() || fsData.empty()) { fprintf(stderr, "Shader load failed\n"); return 1; }
 
     // ---- Create resources ----
@@ -152,6 +160,12 @@ int main(int argc, char* argv[])
     ubo.projection = glm::mat4(1.0f);
     ubo.model = glm::mat4(1.0f);
     ubo.view = glm::mat4(1.0f);
+
+    // OpenGL NDC Y points up, Vulkan points down.
+    // When using the same SPIR-V shader for both backends, flip Y
+    // in the projection matrix so the triangle renders right-side-up.
+    if (renderer->GetBackendType() == rhi::BackendType::OpenGL)
+        ubo.projection[1][1] *= -1.0f;
 
     rhi::BufferDesc ubDesc;
     ubDesc.Size = sizeof(UniformBufferObject);

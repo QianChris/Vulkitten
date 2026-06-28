@@ -23,7 +23,7 @@ class IRenderDevice;
 class ICommandBuffer;
 
 // ============================================================
-// ResourceManager — handle pool + resource lifecycle
+// ResourceManager - handle pool + resource lifecycle
 //
 // Owns the handle pool with ABA protection and all GPU
 // resource metadata / RAII wrappers.

@@ -10,7 +10,7 @@
 namespace Vulkitten {
 
 // ============================================================
-// Renderer — platform-agnostic IRenderer base implementation.
+// Renderer - platform-agnostic IRenderer base implementation.
 //
 // Holds common IRenderer state (IDevice, IGpuResourceManager,
 // RenderGraph, ShaderLibrary, FrameContext). Concrete backends

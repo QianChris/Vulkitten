@@ -12,7 +12,7 @@ namespace Vulkitten {
 class IRenderer;
 
 // ============================================================
-// PipelineHandle — lightweight handle for cached pipeline state.
+// PipelineHandle - lightweight handle for cached pipeline state.
 //
 // Points to a compiled pipeline (VkPipeline / GL program) stored
 // in IGpuResourceManager. Used by RenderContext to bind the
@@ -21,14 +21,14 @@ class IRenderer;
 using PipelineHandle = uint64_t;
 
 // ============================================================
-// GeometryHandle — lightweight handle for geometry data.
+// GeometryHandle - lightweight handle for geometry data.
 //
 // Points to vertex + index buffer resources in IGpuResourceManager.
 // ============================================================
 using GeometryHandle = uint64_t;
 
 // ============================================================
-// RenderContext — per-pass command translation context.
+// RenderContext - per-pass command translation context.
 //
 // Created at the start of each render pass. Translates abstract
 // RenderCommands into concrete API drawcalls (OpenGL glDraw*

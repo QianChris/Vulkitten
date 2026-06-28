@@ -6,7 +6,7 @@ namespace Vulkitten {
 namespace rhi {
 
 // ============================================================
-// Format — cross-API pixel / vertex / depth-stencil format
+// Format - cross-API pixel / vertex / depth-stencil format
 //
 // Naming: [Component][BitsPerChannel]_[Type]
 //   Type: UNORM, FLOAT, UINT, SINT, SRGB

@@ -6,7 +6,7 @@
 #include <glad/glad.h>
 
 // ============================================================
-// ExampleLayer3D — 3D glTF asset visualization demo.
+// ExampleLayer3D - 3D glTF asset visualization demo.
 //
 // Loads a glTF 2.0 file using GltfLoader, creates GPU buffers,
 // and renders the mesh with a simple directional-light shader

@@ -39,16 +39,16 @@ void VkSwapchain::Create(uint32_t width, uint32_t height)
 {
 #ifdef VKT_HAS_VULKAN
     CreateSurface();
-    if (!m_Surface) { VKT_CORE_ERROR("VkSwapchain::Create — Surface creation failed"); return; }
+    if (!m_Surface) { VKT_CORE_ERROR("VkSwapchain::Create - Surface creation failed"); return; }
     CreateSwapchain(width, height);
-    if (!m_Swapchain) { VKT_CORE_ERROR("VkSwapchain::Create — Swapchain creation failed"); return; }
+    if (!m_Swapchain) { VKT_CORE_ERROR("VkSwapchain::Create - Swapchain creation failed"); return; }
     CreateImageViews();
-    if (m_ImageViews.empty()) { VKT_CORE_ERROR("VkSwapchain::Create — ImageView creation failed"); return; }
+    if (m_ImageViews.empty()) { VKT_CORE_ERROR("VkSwapchain::Create - ImageView creation failed"); return; }
     CreateRenderPass();
-    if (!m_RenderPass) { VKT_CORE_ERROR("VkSwapchain::Create — RenderPass creation failed"); return; }
+    if (!m_RenderPass) { VKT_CORE_ERROR("VkSwapchain::Create - RenderPass creation failed"); return; }
     CreateFramebuffers();
-    if (m_Framebuffers.empty()) { VKT_CORE_ERROR("VkSwapchain::Create — Framebuffer creation failed"); return; }
-    VKT_CORE_INFO("VkSwapchain::Create — Complete {0}x{1}, {2} images", width, height, m_Framebuffers.size());
+    if (m_Framebuffers.empty()) { VKT_CORE_ERROR("VkSwapchain::Create - Framebuffer creation failed"); return; }
+    VKT_CORE_INFO("VkSwapchain::Create - Complete {0}x{1}, {2} images", width, height, m_Framebuffers.size());
 #endif
 }
 
@@ -77,7 +77,7 @@ void VkSwapchain::Destroy()
             vkDestroySwapchainKHR(vkDevice, static_cast<VkSwapchainKHR>(m_Swapchain), nullptr);
         m_Swapchain = nullptr;
     }
-    // Surface is NOT destroyed here — it's owned by the window
+    // Surface is NOT destroyed here - it's owned by the window
     // and is only destroyed when the window is closed
 #endif
 }
@@ -269,7 +269,7 @@ bool VkSwapchain::AcquireNextImage(uint32_t& imageIndex, uint64_t /*semaphore*/)
     auto vkSwapchain = static_cast<VkSwapchainKHR>(m_Swapchain);
     if (!vkDevice || !vkSwapchain)
     {
-        VKT_CORE_WARN("VkSwapchain::AcquireNextImage — device or swapchain is null");
+        VKT_CORE_WARN("VkSwapchain::AcquireNextImage - device or swapchain is null");
         imageIndex = 0;
         return false;
     }
@@ -288,7 +288,7 @@ bool VkSwapchain::Present(uint32_t imageIndex, uint64_t /*semaphore*/)
 {
 #ifdef VKT_HAS_VULKAN
     auto vkDevice = static_cast<VkDevice>(m_Device.GetNativeDevice());
-    // Get queue from device — we don't have a queue yet, placeholder
+    // Get queue from device - we don't have a queue yet, placeholder
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.swapchainCount = 1;

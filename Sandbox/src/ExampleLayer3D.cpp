@@ -134,7 +134,7 @@ void ExampleLayer3D::LoadModel(const std::string& path)
     uint32_t meshCount = m_Loader->Load(path);
     if (meshCount == 0)
     {
-        VKT_CORE_ERROR("ExampleLayer3D: failed to load {0} — {1}",
+        VKT_CORE_ERROR("ExampleLayer3D: failed to load {0} - {1}",
                        path, m_Loader->GetLastError());
         return;
     }
@@ -302,7 +302,7 @@ void ExampleLayer3D::OnImguiRender()
 
     ImGui::Text("Meshes: %zu", m_Loader->GetMeshes().size());
     for (const auto& mesh : m_Meshes)
-        ImGui::Text("  %s — %u tris", mesh.Name.c_str(), mesh.IndexCount / 3);
+        ImGui::Text("  %s - %u tris", mesh.Name.c_str(), mesh.IndexCount / 3);
 
     ImGui::Separator();
     ImGui::DragFloat("FOV", &m_FOV, 0.5f, 10.0f, 120.0f);

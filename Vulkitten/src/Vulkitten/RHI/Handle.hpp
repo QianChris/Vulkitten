@@ -7,7 +7,7 @@ namespace Vulkitten {
 namespace rhi {
 
 // ============================================================
-// Handle<Tag> — strongly-typed GPU resource handle
+// Handle<Tag> - strongly-typed GPU resource handle
 //
 // Combines the RHI design's tag-based compile-time type safety
 // with the existing engine's generation counter for use-after-free

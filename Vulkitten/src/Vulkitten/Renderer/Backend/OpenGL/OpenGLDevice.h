@@ -8,7 +8,7 @@
 namespace Vulkitten {
 
 // ============================================================
-// OpenGLDevice — OpenGL implementation of IDevice.
+// OpenGLDevice - OpenGL implementation of IDevice.
 //
 // For OpenGL, the GL context IS the device. Resource creation
 // maps directly to GL calls (glGenBuffers, glGenTextures, etc.).

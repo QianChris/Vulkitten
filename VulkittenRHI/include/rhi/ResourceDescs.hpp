@@ -65,7 +65,7 @@ struct TextureViewDesc
 };
 
 // ============================================================
-// VertexAttribute — per-attribute layout
+// VertexAttribute - per-attribute layout
 //
 // KEY: Vertex format lives in Pipeline, NOT in Geometry.
 // ============================================================
@@ -115,7 +115,7 @@ struct DepthStencilState
 };
 
 // ============================================================
-// BlendState — per color attachment
+// BlendState - per color attachment
 // ============================================================
 
 struct BlendState
@@ -138,7 +138,7 @@ struct BlendState
 };
 
 // ============================================================
-// TextureSlot — declares texture binding in pipeline
+// TextureSlot - declares texture binding in pipeline
 // ============================================================
 
 struct TextureSlot
@@ -151,7 +151,7 @@ struct TextureSlot
 };
 
 // ============================================================
-// BufferSlot — declares buffer binding in pipeline
+// BufferSlot - declares buffer binding in pipeline
 // ============================================================
 
 struct BufferSlot
@@ -188,7 +188,7 @@ struct PipelineDesc
 };
 
 // ============================================================
-// GeometryDesc — pure vertex/index buffer references
+// GeometryDesc - pure vertex/index buffer references
 //
 // KEY: Geometry carries NO vertex format information.
 // Format is determined by PipelineDesc::VertexLayout.
@@ -226,7 +226,7 @@ struct SamplerDesc
 };
 
 // ============================================================
-// AttachmentDesc — per-attachment RenderPass description
+// AttachmentDesc - per-attachment RenderPass description
 // ============================================================
 
 struct AttachmentDesc

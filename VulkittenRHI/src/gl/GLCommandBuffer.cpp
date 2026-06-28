@@ -83,7 +83,7 @@ void GLCommandBuffer::EndRenderPass()
 }
 
 // ============================================================
-// BindPipeline — PSO-driven GL state
+// BindPipeline - PSO-driven GL state
 // ============================================================
 
 void GLCommandBuffer::BindPipeline(PipelineHandle pipeline)
@@ -98,7 +98,7 @@ void GLCommandBuffer::BindPipeline(PipelineHandle pipeline)
 }
 
 // ============================================================
-// BindGeometry — lazy VAO
+// BindGeometry - lazy VAO
 // ============================================================
 
 void GLCommandBuffer::BindGeometry(GeometryHandle geometry)
@@ -200,7 +200,7 @@ void GLCommandBuffer::PushConstants(const void* data, uint32_t size, uint32_t of
 
     // Push constants map to a uniform block at binding 0 with std140 layout.
     // For simplicity, treat as raw bytes via glProgramUniform*.
-    // [HACK: uniform location lookup omitted — assumes push constant block
+    // [HACK: uniform location lookup omitted - assumes push constant block
     //  uses explicit layout(binding=0, std140) uniform PushConstants { ... };]
     // For MVP: push constant data is written via glProgramUniform1fv etc.
     // Real implementation would use reflection or convention-based location mapping.
@@ -279,7 +279,7 @@ void GLCommandBuffer::DispatchIndirect(BufferHandle indirectBuffer, uint64_t off
 }
 
 // ============================================================
-// Copy (stubs — require texture implementation)
+// Copy (stubs - require texture implementation)
 // ============================================================
 
 void GLCommandBuffer::CopyBuffer(BufferHandle, BufferHandle, uint64_t, uint64_t, uint64_t) {}

@@ -9,7 +9,7 @@ namespace Vulkitten {
 class VulkanDevice;
 
 // ============================================================
-// VkShader — Vulkan shader module (GLSL → SPIR-V).
+// VkShader - Vulkan shader module (GLSL → SPIR-V).
 //
 // Compiles GLSL source to SPIR-V at runtime using glslang or
 // shaderc, then creates a VkShaderModule for pipeline usage.

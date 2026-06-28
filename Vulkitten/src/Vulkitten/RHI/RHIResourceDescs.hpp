@@ -65,7 +65,7 @@ struct TextureViewDesc
 };
 
 // ============================================================
-// AttachmentDesc — per-attachment description for RenderPass
+// AttachmentDesc - per-attachment description for RenderPass
 // ============================================================
 
 struct AttachmentDesc
@@ -80,7 +80,7 @@ struct AttachmentDesc
 };
 
 // ============================================================
-// SubpassDesc — a single subpass within a RenderPass
+// SubpassDesc - a single subpass within a RenderPass
 // ============================================================
 
 struct SubpassDesc
@@ -91,7 +91,7 @@ struct SubpassDesc
 };
 
 // ============================================================
-// SubpassDependency — explicit subpass-to-subpass barrier
+// SubpassDependency - explicit subpass-to-subpass barrier
 // ============================================================
 
 struct SubpassDependency
@@ -117,7 +117,7 @@ struct RenderPassDesc
 };
 
 // ============================================================
-// FramebufferDesc — binds textures to a RenderPass
+// FramebufferDesc - binds textures to a RenderPass
 // ============================================================
 
 struct FramebufferDesc

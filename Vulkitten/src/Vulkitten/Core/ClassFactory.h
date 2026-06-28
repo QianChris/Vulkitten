@@ -14,7 +14,7 @@ class Window;
 class RenderGraph;
 
 // ============================================================
-// ClassFactory — the single centralized singleton for the engine.
+// ClassFactory - the single centralized singleton for the engine.
 // All subsystem access and object creation routes through here.
 // ============================================================
 class VKT_API ClassFactory

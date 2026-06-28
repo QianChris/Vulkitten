@@ -40,7 +40,7 @@ void Engine::Shutdown()
 {
     VKT_PROFILE_FUNCTION();
 
-    VKT_CORE_INFO("Engine::Shutdown — shutting down...");
+    VKT_CORE_INFO("Engine::Shutdown - shutting down...");
 
     // Input lifecycle: delete the platform Input singleton if it exists.
     // (Currently created as a global static; Engine takes ownership of cleanup.)
@@ -50,7 +50,7 @@ void Engine::Shutdown()
     // FileSystem cleanup: clear virtual path mappings.
     // (Will be relevant when RegisterPath moves to Engine::Init)
 
-    VKT_CORE_INFO("Engine::Shutdown — complete.");
+    VKT_CORE_INFO("Engine::Shutdown - complete.");
 }
 
 Log& Engine::GetLogger()
@@ -72,7 +72,7 @@ Scope<Scene> Engine::CreateEmptyScene()
 
 Scope<Scene> Engine::LoadSceneFromGltf(const std::string& filepath)
 {
-    VKT_CORE_WARN("Engine::LoadSceneFromGltf — stub, glTF loading not yet implemented ({0})", filepath);
+    VKT_CORE_WARN("Engine::LoadSceneFromGltf - stub, glTF loading not yet implemented ({0})", filepath);
     return CreateScope<Scene>();
 }
 

@@ -13,7 +13,7 @@ namespace Vulkitten {
 class Camera;
 
 // ============================================================
-// SpriteRenderPass — 2D quad batch render pass.
+// SpriteRenderPass - 2D quad batch render pass.
 //
 // Replaces the old static Renderer2D. Owns its own VAO/VBO/IBO,
 // shader, and batch state. Executes DrawQuadCommands submitted

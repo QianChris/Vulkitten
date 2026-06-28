@@ -8,7 +8,7 @@ class IRenderer;
 class RenderGraph;
 
 // ============================================================
-// SceneContext — per-frame context injected into Scene::OnUpdate.
+// SceneContext - per-frame context injected into Scene::OnUpdate.
 //
 // Provides Scene and its Systems with access to the rendering
 // backend without relying on global singletons. Created by the

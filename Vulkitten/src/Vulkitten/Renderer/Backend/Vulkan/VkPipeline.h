@@ -7,7 +7,7 @@ namespace Vulkitten {
 class VulkanDevice;
 
 // ============================================================
-// VkPipeline — Vulkan graphics pipeline wrapper.
+// VkPipeline - Vulkan graphics pipeline wrapper.
 //
 // Creates VkPipeline with layout, descriptor set layout, shader
 // stages, vertex input state, and render pass compatibility.

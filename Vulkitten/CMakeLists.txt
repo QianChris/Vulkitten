@@ -13,13 +13,13 @@ add_subdirectory(vendor/yaml-cpp)
 # 宏开关
 add_definitions(-DVULKITTEN_ENABLE_ASSERTS=1)
 
-# Vulkan SDK (optional — gates VKT_HAS_VULKAN)
+# Vulkan SDK (optional - gates VKT_HAS_VULKAN)
 find_package(Vulkan QUIET)
 if(Vulkan_FOUND)
     add_definitions(-DVKT_HAS_VULKAN)
     message(STATUS "Vulkan SDK found: ${Vulkan_INCLUDE_DIRS}")
 else()
-    message(STATUS "Vulkan SDK not found — Vulkan backend disabled")
+    message(STATUS "Vulkan SDK not found - Vulkan backend disabled")
 endif()
 
 # 收集源文件
@@ -86,7 +86,7 @@ endif()
 # yaml-cpp
 target_link_libraries(Vulkitten PUBLIC yaml-cpp::yaml-cpp)
 
-# tinygltf (glTF 2.0 loader) — header-only to avoid stb_image conflicts
+# tinygltf (glTF 2.0 loader) - header-only to avoid stb_image conflicts
 set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE BOOL "" FORCE)

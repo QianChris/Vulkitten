@@ -44,7 +44,7 @@ struct GpuResourceSlot
 };
 
 // ============================================================
-// ShaderData — preprocessed shader source and metadata
+// ShaderData - preprocessed shader source and metadata
 // ============================================================
 struct ShaderData
 {
@@ -55,7 +55,7 @@ struct ShaderData
 };
 
 // ============================================================
-// IGpuResourceManager — centralized GPU resource management.
+// IGpuResourceManager - centralized GPU resource management.
 //
 // All GPU resources must be created through this interface.
 // Resources are referenced via uint64_t handles (encoding

@@ -105,7 +105,7 @@ void VulkanDevice::Init()
         VKT_CORE_WARN("VulkanDevice: vkCreateDevice failed with result {0}", static_cast<int>(result));
     }
 #else
-    VKT_CORE_INFO("VulkanDevice: Vulkan SDK not available — device is a stub");
+    VKT_CORE_INFO("VulkanDevice: Vulkan SDK not available - device is a stub");
 #endif
 }
 
@@ -125,20 +125,20 @@ void VulkanDevice::Shutdown()
 
 FrameContext VulkanDevice::beginFrame()
 {
-    // [HACK: 抽象层缺 Vulkan beginFrame — Task 15 实现]
+    // [HACK: 抽象层缺 Vulkan beginFrame - Task 15 实现]
     return FrameContext{};
 }
 
 void VulkanDevice::endFrame(FrameContext /*ctx*/)
 {
-    // [HACK: 抽象层缺 Vulkan endFrame — Task 15 实现]
+    // [HACK: 抽象层缺 Vulkan endFrame - Task 15 实现]
 }
 
 // ---- Command Buffer (stub until Task 16) ----
 
 rhi::ICommandBuffer* VulkanDevice::createCommandBuffer(FrameContext /*ctx*/)
 {
-    // [HACK: 抽象层缺 VkCommandBuffer — Task 16 创建]
+    // [HACK: 抽象层缺 VkCommandBuffer - Task 16 创建]
     return nullptr;
 }
 
@@ -318,7 +318,7 @@ rhi::PipelineHandle VulkanDevice::createPipeline(const rhi::PipelineDesc& desc)
 {
 #ifdef VKT_HAS_VULKAN
     // [HACK: Full VkPipeline creation with VkPipelineLayout from TextureSlots/BufferSlots,
-    //  VkPipelineCache, dynamic state for viewport/scissor — Task 16 完整实现]
+    //  VkPipelineCache, dynamic state for viewport/scissor - Task 16 完整实现]
     (void)desc;
 #endif
     auto handle = AllocHandle<rhi::PipelineTag>();
@@ -382,7 +382,7 @@ rhi::SamplerHandle VulkanDevice::createSampler(const rhi::SamplerDesc& desc)
 rhi::RenderPassHandle VulkanDevice::createRenderPass(const rhi::RenderPassDesc& desc)
 {
 #ifdef VKT_HAS_VULKAN
-    // [HACK: Full VkRenderPass creation with attachments/subpasses — Task 18 实现]
+    // [HACK: Full VkRenderPass creation with attachments/subpasses - Task 18 实现]
     (void)desc;
 #endif
     auto handle = AllocHandle<rhi::RenderPassTag>();
@@ -392,7 +392,7 @@ rhi::RenderPassHandle VulkanDevice::createRenderPass(const rhi::RenderPassDesc& 
 rhi::FramebufferHandle VulkanDevice::createFramebuffer(const rhi::FramebufferDesc& desc)
 {
 #ifdef VKT_HAS_VULKAN
-    // [HACK: Full VkFramebuffer creation — Task 18 实现]
+    // [HACK: Full VkFramebuffer creation - Task 18 实现]
     (void)desc;
 #endif
     auto handle = AllocHandle<rhi::FramebufferTag>();
@@ -402,7 +402,7 @@ rhi::FramebufferHandle VulkanDevice::createFramebuffer(const rhi::FramebufferDes
 void VulkanDevice::onResize(uint32_t width, uint32_t height)
 {
     (void)width; (void)height;
-    // [HACK: Swapchain recreation — Task 18 实现]
+    // [HACK: Swapchain recreation - Task 18 实现]
 }
 
 // ---- Utilities ----
@@ -420,7 +420,7 @@ void VulkanDevice::waitIdle()
 void VulkanDevice::Submit(FrameContext& /*frameContext*/)
 {
     // Stub: vkQueueSubmit + vkQueuePresentKHR
-    // [HACK: 抽象层缺完整 submit/present — Task 15 实现]
+    // [HACK: 抽象层缺完整 submit/present - Task 15 实现]
 }
 
 // ---- Handle Pool ----

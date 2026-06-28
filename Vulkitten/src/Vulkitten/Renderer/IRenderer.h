@@ -14,7 +14,7 @@ class FileSystem;
 class IWindow;
 
 // ============================================================
-// RendererConfig — configuration for creating an IRenderer.
+// RendererConfig - configuration for creating an IRenderer.
 // ============================================================
 struct RendererConfig
 {
@@ -23,7 +23,7 @@ struct RendererConfig
 };
 
 // ============================================================
-// IRenderer — the single backend renderer interface.
+// IRenderer - the single backend renderer interface.
 //
 // The platform/scene layers interact with the renderer exclusively
 // through this interface. Application creates the concrete impl.

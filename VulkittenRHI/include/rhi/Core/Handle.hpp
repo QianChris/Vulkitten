@@ -6,7 +6,7 @@
 namespace rhi {
 
 // ============================================================
-// Handle<Tag> — strongly-typed GPU resource handle
+// Handle<Tag> - strongly-typed GPU resource handle
 //
 // Combines a slot index with a generation counter for ABA
 // (use-after-free) protection. Id == 0 means Null handle.

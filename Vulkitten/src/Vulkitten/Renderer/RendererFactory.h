@@ -12,7 +12,7 @@ enum class RendererBackend : uint8_t
 };
 
 // ============================================================
-// RendererFactory — creates the correct IRenderer backend.
+// RendererFactory - creates the correct IRenderer backend.
 //
 // Encapsulates backend selection so Application.cpp contains
 // no #ifdef OPENGL / #ifdef VULKAN guards. The factory .cpp

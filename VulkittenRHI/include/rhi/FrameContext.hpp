@@ -5,7 +5,7 @@
 namespace rhi {
 
 // ============================================================
-// FrameContext — transient per-frame state
+// FrameContext - transient per-frame state
 //
 // Produced by IRenderDevice::beginFrame(), consumed by endFrame().
 // Upper layers only read frameIndex / swapchainIndex.

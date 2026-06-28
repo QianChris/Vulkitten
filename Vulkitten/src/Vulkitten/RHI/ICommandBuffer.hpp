@@ -11,7 +11,7 @@ namespace Vulkitten {
 namespace rhi {
 
 // ============================================================
-// ICommandBuffer — command recording interface
+// ICommandBuffer - command recording interface
 //
 // Recording order:
 //   begin() → [barrier(s)] → beginRenderPass() → bind* →

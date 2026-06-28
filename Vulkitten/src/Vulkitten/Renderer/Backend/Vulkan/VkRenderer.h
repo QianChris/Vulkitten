@@ -13,7 +13,7 @@ class VkSwapchain;
 class VkGpuResourceManager;
 
 // ============================================================
-// VkRenderer — Vulkan implementation of IRenderer.
+// VkRenderer - Vulkan implementation of IRenderer.
 //
 // Owns all Vulkan backend dependencies: VulkanInstance,
 // VulkanDevice, VkSwapchain, VkGpuResourceManager, and

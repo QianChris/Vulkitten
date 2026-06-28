@@ -5,34 +5,17 @@ project(VulkittenRHI VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Output directories
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(PLATFORM_NAME "x64")
-else()
-    set(PLATFORM_NAME "x86")
-endif()
-
-if(CMAKE_BUILD_TYPE)
-    set(CONFIG_NAME ${CMAKE_BUILD_TYPE})
-else()
-    set(CONFIG_NAME "Debug")
-endif()
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${CONFIG_NAME}-${PLATFORM_NAME})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${CONFIG_NAME}-${PLATFORM_NAME})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${CONFIG_NAME}-${PLATFORM_NAME})
-
 # Vulkan SDK (optional)
 find_package(Vulkan QUIET)
 if(Vulkan_FOUND)
     add_definitions(-DRHI_HAS_VULKAN)
     message(STATUS "Vulkan SDK found: ${Vulkan_INCLUDE_DIRS}")
 else()
-    message(STATUS "Vulkan SDK not found — Vulkan backend disabled")
+    message(STATUS "Vulkan SDK not found - Vulkan backend disabled")
 endif()
 
 # ============================================================
-# VulkittenRHI — static library
+# VulkittenRHI - static library
 # ============================================================
 set(RHI_HEADERS
     include/rhi/Core/Handle.hpp
@@ -74,26 +57,32 @@ target_include_directories(VulkittenRHI
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-# GLFW — vendored from parent project
-if(EXISTS "${CMAKE_SOURCE_DIR}/../Vulkitten/vendor/glfw")
-    add_subdirectory(${CMAKE_SOURCE_DIR}/../Vulkitten/vendor/glfw ${CMAKE_BINARY_DIR}/glfw)
-    target_link_libraries(VulkittenRHI PUBLIC glfw)
-    target_include_directories(VulkittenRHI PRIVATE ${CMAKE_SOURCE_DIR}/../Vulkitten/vendor/glfw/include)
-else()
-    find_package(glfw3 QUIET)
-    if(glfw3_FOUND)
-        target_link_libraries(VulkittenRHI PUBLIC glfw)
+# GLFW - vendored from parent project
+if(NOT TARGET glfw)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../Vulkitten/vendor/glfw")
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../Vulkitten/vendor/glfw ${CMAKE_BINARY_DIR}/glfw)
+        target_include_directories(VulkittenRHI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../Vulkitten/vendor/glfw/include)
     else()
-        message(WARNING "GLFW not found — samples will not link")
+        find_package(glfw3 QUIET)
+        if(NOT glfw3_FOUND)
+            message(WARNING "GLFW not found - samples will not link")
+        endif()
     endif()
 endif()
+if(TARGET glfw)
+    target_link_libraries(VulkittenRHI PUBLIC glfw)
+endif()
 
-# GLAD — OpenGL function loader (vendored from parent)
-if(EXISTS "${CMAKE_SOURCE_DIR}/../Vulkitten/vendor/Glad")
-    add_subdirectory(${CMAKE_SOURCE_DIR}/../Vulkitten/vendor/Glad ${CMAKE_BINARY_DIR}/glad)
+# GLAD - OpenGL function loader (vendored from parent)
+if(NOT TARGET glad)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../Vulkitten/vendor/Glad")
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../Vulkitten/vendor/Glad ${CMAKE_BINARY_DIR}/glad)
+    else()
+        message(WARNING "GLAD not found - OpenGL backend will not compile")
+    endif()
+endif()
+if(TARGET glad)
     target_link_libraries(VulkittenRHI PUBLIC glad)
-else()
-    message(WARNING "GLAD not found — OpenGL backend will not compile")
 endif()
 
 # OpenGL (Windows system library)
@@ -110,3 +99,20 @@ endif()
 # Samples
 # ============================================================
 add_subdirectory(samples)
+
+# ============================================================
+# Tests
+# ============================================================
+option(VULKITTEN_BUILD_TESTS "Build VulkittenRHI unit tests" ON)
+if(VULKITTEN_BUILD_TESTS)
+    enable_testing()
+    # Prevent googletest from overriding our output directories
+    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    # Add googletest from vendored location
+    if(NOT TARGET gtest_main)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/googletest
+                         ${CMAKE_BINARY_DIR}/googletest)
+    endif()
+    add_subdirectory(tests)
+endif()

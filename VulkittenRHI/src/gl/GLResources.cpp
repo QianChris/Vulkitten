@@ -393,7 +393,7 @@ GLPipelineResource::~GLPipelineResource()
 }
 
 // ============================================================
-// ApplyGLState — set ALL GL state from PSO
+// ApplyGLState - set ALL GL state from PSO
 // ============================================================
 
 static GLenum ToGLCullFace(RasterState::CullMode mode)
@@ -534,7 +534,7 @@ void GLPipelineResource::ApplyGLState() const
 }
 
 // ============================================================
-// GetOrCreateVAO — lazy VAO creation cached by geometry ID
+// GetOrCreateVAO - lazy VAO creation cached by geometry ID
 // ============================================================
 
 GLuint GLPipelineResource::GetOrCreateVAO(uint32_t geometryId,
@@ -653,7 +653,7 @@ GLFramebufferResource::GLFramebufferResource(const FramebufferDesc& desc,
         glGenFramebuffers(1, &m_GlFbo);
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_GlFbo);
-        // [HACK: attachment binding omitted for MVP — textures are stubs]
+        // [HACK: attachment binding omitted for MVP - textures are stubs]
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE)
             fprintf(stderr, "GLFramebufferResource: framebuffer incomplete (status=0x%x)\n", status);

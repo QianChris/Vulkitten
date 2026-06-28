@@ -12,7 +12,7 @@ using PipelineHandle = uint64_t;
 using GeometryHandle = uint64_t;
 
 // ============================================================
-// VkRenderContext — Vulkan per-pass command recording context.
+// VkRenderContext - Vulkan per-pass command recording context.
 //
 // Translates RenderCommands into Vulkan vkCmd* calls recorded
 // into the active VkCommandBuffer. Manages pipeline and geometry

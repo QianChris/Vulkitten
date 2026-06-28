@@ -222,7 +222,7 @@ uint64_t OpenGLGpuResourceManager::LoadShader(const std::string& virtualPath)
     std::string source = ReadFileToString(resolvedPath);
     if (source.empty())
     {
-        VKT_CORE_ERROR("OpenGLGpuResourceManager::LoadShader — failed: {0}", virtualPath);
+        VKT_CORE_ERROR("OpenGLGpuResourceManager::LoadShader - failed: {0}", virtualPath);
         return UINT64_MAX;
     }
     std::filesystem::path baseDir(resolvedPath);
