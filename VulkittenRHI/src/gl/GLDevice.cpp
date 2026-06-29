@@ -4,11 +4,14 @@
 #include "rhi/ResourceManager.hpp"
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
 #include <cstring>
 #include <cstdio>
 #include <stdexcept>
+
+// Windows WGL — used directly instead of GLFW to avoid dual-linkage
+// issues when GLFW is statically linked into both the DLL and the EXE.
+#include <windows.h>
 
 namespace rhi {
 
@@ -28,6 +31,25 @@ GLDevice::~GLDevice()
 }
 
 // ============================================================
+// GL proc loader (same logic as glfwGetProcAddress, but uses
+// the DLL's own WGL — no GLFW global state required.)
+// ============================================================
+
+static void* GlGetProcAddress(const char* name)
+{
+    void* proc = (void*)wglGetProcAddress((LPCSTR)name);
+    if (proc)
+        return proc;
+
+    // Core OpenGL 1.0/1.1 functions live in opengl32.dll
+    HMODULE module = GetModuleHandleA("opengl32.dll");
+    if (module)
+        return (void*)GetProcAddress(module, name);
+
+    return nullptr;
+}
+
+// ============================================================
 // Init / Shutdown
 // ============================================================
 
@@ -40,9 +62,16 @@ void GLDevice::Init()
     if (!m_Window)
         throw std::runtime_error("GLDevice: invalid native window handle");
 
-    glfwMakeContextCurrent(m_Window);
+    // Capture native WGL handles from the already-current context.
+    // The caller (test fixture / renderer) must have made the GL
+    // context current before calling Init().
+    m_NativeDC  = (void*)wglGetCurrentDC();
+    m_NativeHGLRC = (void*)wglGetCurrentContext();
+    if (!m_NativeDC || !m_NativeHGLRC)
+        throw std::runtime_error("GLDevice: no current GL context — "
+                                 "call glfwMakeContextCurrent before Init()");
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    if (!gladLoadGLLoader((GLADloadproc)GlGetProcAddress))
         throw std::runtime_error("GLDevice: failed to initialize GLAD");
 
     auto desc = m_Surface->GetDesc();
@@ -75,11 +104,18 @@ void GLDevice::Init()
 
 void GLDevice::Shutdown()
 {
+    // Guard against double-call (destructor also calls Shutdown)
+    if (!m_Window)
+        return;
+
+    // Make context current using native WGL (avoids GLFW cross-module issue)
+    if (m_NativeDC && m_NativeHGLRC)
+        wglMakeCurrent((HDC)m_NativeDC, (HGLRC)m_NativeHGLRC);
     WaitIdle();
 
-    // ResourceManager::DestroyAll() handles cleanup of all RAII resources.
-    // Called by Renderer (owner of ResourceManager), not here.
     m_Window = nullptr;
+    m_NativeDC = nullptr;
+    m_NativeHGLRC = nullptr;
 }
 
 // ============================================================
@@ -88,8 +124,9 @@ void GLDevice::Shutdown()
 
 FrameContext GLDevice::BeginFrame()
 {
-    if (m_Window)
-        glfwMakeContextCurrent(m_Window);
+    // Use native WGL to make context current (avoids GLFW cross-module issue)
+    if (m_NativeDC && m_NativeHGLRC)
+        wglMakeCurrent((HDC)m_NativeDC, (HGLRC)m_NativeHGLRC);
 
     // Detect window resize and update viewport (matches VK backend behavior)
     auto surfDesc = m_Surface->GetDesc();
@@ -106,8 +143,8 @@ FrameContext GLDevice::BeginFrame()
 
 void GLDevice::EndFrame(FrameContext /*ctx*/)
 {
-    if (m_Window)
-        glfwSwapBuffers(m_Window);
+    if (m_NativeDC)
+        SwapBuffers((HDC)m_NativeDC);
     m_FrameIndex = (m_FrameIndex + 1) % 2;
 }
 
@@ -308,9 +345,9 @@ void GLDevice::OnResize(uint32_t width, uint32_t height)
 {
     m_Width = width;
     m_Height = height;
-    if (m_Window)
+    if (m_NativeDC && m_NativeHGLRC)
     {
-        glfwMakeContextCurrent(m_Window);
+        wglMakeCurrent((HDC)m_NativeDC, (HGLRC)m_NativeHGLRC);
         glViewport(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height));
     }
 }

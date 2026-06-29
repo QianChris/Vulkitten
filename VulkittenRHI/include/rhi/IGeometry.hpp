@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/Core/Handle.hpp"
 
 #include <cstdint>
@@ -10,7 +11,7 @@ namespace rhi {
 // IGeometry — query interface for created GPU geometry
 // ============================================================
 
-class IGeometry
+class RHI_API IGeometry
 {
 public:
     virtual ~IGeometry() = default;

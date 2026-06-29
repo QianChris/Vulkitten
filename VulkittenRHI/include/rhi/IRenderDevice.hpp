@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/Core/Handle.hpp"
 #include "rhi/Core/Types.hpp"
 #include "rhi/ResourceDescs.hpp"
@@ -52,7 +53,7 @@ struct DeviceConfig
 // Vulkan:  owns VkDevice + VkPhysicalDevice + queue families.
 // ============================================================
 
-class IRenderDevice
+class RHI_API IRenderDevice
 {
 public:
     virtual ~IRenderDevice() = default;

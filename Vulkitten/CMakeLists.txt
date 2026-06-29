@@ -1,19 +1,19 @@
 # Vulkitten - 引擎核心DLL
 project(Vulkitten VERSION 1.0.0 LANGUAGES CXX)
 
-# 添加 spdlog 子目录
-add_subdirectory(vendor/spdlog)
-add_subdirectory(vendor/glm)
-add_subdirectory(vendor/glfw)
-add_subdirectory(vendor/glad)
-add_subdirectory(vendor/entt)
-add_subdirectory(vendor/yaml-cpp)
-# add_subdirectory(vendor/imgui)
+# 添加 spdlog 子目录 (3rdparty)
+add_subdirectory(../3rdparty/spdlog ${CMAKE_BINARY_DIR}/spdlog)
+add_subdirectory(../3rdparty/glm ${CMAKE_BINARY_DIR}/glm)
+add_subdirectory(../3rdparty/glfw ${CMAKE_BINARY_DIR}/glfw)
+add_subdirectory(../3rdparty/Glad ${CMAKE_BINARY_DIR}/glad)
+add_subdirectory(../3rdparty/entt ${CMAKE_BINARY_DIR}/entt)
+add_subdirectory(../3rdparty/yaml-cpp ${CMAKE_BINARY_DIR}/yaml-cpp)
+# add_subdirectory(../3rdparty/imgui ${CMAKE_BINARY_DIR}/imgui)
 
 # 宏开关
 add_definitions(-DVULKITTEN_ENABLE_ASSERTS=1)
 
-# Vulkan SDK (optional - gates VKT_HAS_VULKAN)
+# Vulkan SDK (optional - gates VKT_HASs_VULKAN)
 find_package(Vulkan QUIET)
 if(Vulkan_FOUND)
     add_definitions(-DVKT_HAS_VULKAN)
@@ -46,34 +46,34 @@ target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 # spdlog
 target_link_libraries(Vulkitten PUBLIC spdlog::spdlog)
-target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vendor/spdlog/include")
+target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/spdlog/include")
 
 # glm
 target_link_libraries(Vulkitten PUBLIC glm::glm)
-target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vendor/glm")
+target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/glm")
 
 # glfw
 target_link_libraries(Vulkitten PUBLIC glfw)
-target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vendor/glfw/include")
+target_include_directories(Vulkitten PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/glfw/include")
 
 # glad (OpenGL function loader)
 target_link_libraries(Vulkitten PUBLIC glad)
 
 # EnTT (ECS library) - include without linking to bypass C++20 requirement
-target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/entt/single_include/")
+target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/entt/single_include/")
 
 # imgui (GUI library)
 # target_link_libraries(Vulkitten PUBLIC imgui)
-target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/imgui")
+target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/imgui")
 
 # Create imguizmo SHARED library and link to Vulkitten
-target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/imguizmo/src")
+target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/imguizmo/src")
 
 # stb_image
-target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/stb_image")
+target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/stb_image")
 
 # nlohmann json
-target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nlohmann/include")
+target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/nlohmann/include")
 
 # OpenGL (Windows system library)
 target_link_libraries(Vulkitten PUBLIC opengl32)
@@ -83,6 +83,10 @@ if(Vulkan_FOUND)
     target_link_libraries(Vulkitten PUBLIC Vulkan::Vulkan)
 endif()
 
+# VulkittenRHI — rendering hardware interface DLL
+target_link_libraries(Vulkitten PUBLIC VulkittenRHI)
+target_include_directories(Vulkitten PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../VulkittenRHI/include")
+
 # yaml-cpp
 target_link_libraries(Vulkitten PUBLIC yaml-cpp::yaml-cpp)
 
@@ -91,7 +95,7 @@ set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_HEADER_ONLY ON CACHE BOOL "" FORCE)
-add_subdirectory(vendor/tinygltf)
+add_subdirectory(../3rdparty/tinygltf ${CMAKE_BINARY_DIR}/tinygltf)
 target_link_libraries(Vulkitten PUBLIC tinygltf)
 
 # 公开头文件目录 (供SandBox使用)
@@ -138,3 +142,39 @@ install(TARGETS Vulkitten
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
+
+# ============================================================
+# Solution Folder Organization
+# ============================================================
+
+# 3rdparty built targets
+set_target_properties(spdlog PROPERTIES FOLDER "3rdparty")
+set_target_properties(glm PROPERTIES FOLDER "3rdparty")
+set_target_properties(glfw PROPERTIES FOLDER "3rdparty")
+set_target_properties(glad PROPERTIES FOLDER "3rdparty")
+set_target_properties(yaml-cpp PROPERTIES FOLDER "3rdparty")
+if(TARGET tinygltf)
+    set_target_properties(tinygltf PROPERTIES FOLDER "3rdparty")
+endif()
+
+# 3rdparty internal / utility targets
+if(TARGET uninstall)
+    set_target_properties(uninstall PROPERTIES FOLDER "3rdparty")
+endif()
+if(TARGET update_mappings)
+    set_target_properties(update_mappings PROPERTIES FOLDER "3rdparty")
+endif()
+foreach(util IN ITEMS yaml-cpp-parse yaml-cpp-read yaml-cpp-sandbox)
+    if(TARGET ${util})
+        set_target_properties(${util} PROPERTIES FOLDER "3rdparty")
+    endif()
+endforeach()
+
+# GLFW's own solution folder — suppress by moving its contents to 3rdparty
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_target_properties(glfw PROPERTIES FOLDER "3rdparty")
+
+# Copy DLL helper targets
+if(TARGET CopyVulkittenDLL)
+    set_target_properties(CopyVulkittenDLL PROPERTIES FOLDER "Sample")
+endif()

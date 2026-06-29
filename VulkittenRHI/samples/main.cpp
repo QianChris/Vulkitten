@@ -118,6 +118,11 @@ int main(int argc, char* argv[])
 
     GLFWSurface surface(window);
 
+    // Ensure GL context is current before creating the renderer.
+    // GLDevice::Init() captures the current context via wglGetCurrentDC/Context.
+    if (backend == rhi::BackendType::OpenGL)
+        glfwMakeContextCurrent(window);
+
     // ---- Create Renderer ----
     rhi::RendererConfig config;
     config.Backend = backend;

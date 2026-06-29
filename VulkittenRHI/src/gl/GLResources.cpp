@@ -1,6 +1,6 @@
 #include "GLResources.hpp"
 
-#include <GLFW/glfw3.h>
+#include <windows.h>
 
 #include <cstring>
 #include <cstdio>
@@ -266,11 +266,13 @@ GLShaderResource::GLShaderResource(ShaderStage stage, const ShaderBytecode& byte
     {
         using PFN_glSpecializeShader = void (GLAPIENTRY*)(GLuint, const GLchar*, GLuint,
                                                             const GLuint*, const GLuint*);
+        // Use native WGL — avoids GLFW dual-linkage issues (GLFW statically
+        // linked into both DLL and EXE; the DLL's copy may have stale state).
         auto glSpecializeShader = reinterpret_cast<PFN_glSpecializeShader>(
-            glfwGetProcAddress("glSpecializeShader"));
+            wglGetProcAddress("glSpecializeShader"));
         if (!glSpecializeShader)
             glSpecializeShader = reinterpret_cast<PFN_glSpecializeShader>(
-                glfwGetProcAddress("glSpecializeShaderARB"));
+                wglGetProcAddress("glSpecializeShaderARB"));
 
         glShaderBinary(1, &m_GlShader, GL_SHADER_BINARY_FORMAT_SPIR_V,
                        bytecode.Data, static_cast<GLsizei>(bytecode.Size));

@@ -1,30 +1,31 @@
-[submodule "Vulkitten/vendor/spdlog"]
-	path = Vulkitten/vendor/spdlog
+[submodule "3rdparty/spdlog"]
+	path = 3rdparty/spdlog
 	url = https://github.com/gabime/spdlog.git
-[submodule "Vulkitten/vendor/glm"]
-	path = Vulkitten/vendor/glm
+[submodule "3rdparty/glm"]
+	path = 3rdparty/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "Vulkitten/vendor/glfw"]
-	path = Vulkitten/vendor/glfw
+[submodule "3rdparty/glfw"]
+	path = 3rdparty/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "Vulkitten/vendor/imgui"]
-	path = Vulkitten/vendor/imgui
-	url = https://github.com/ocornut/imgui.git
-[submodule "Vulkitten/vendor/entt"]
-	path = Vulkitten/vendor/entt
+[submodule "3rdparty/entt"]
+	path = 3rdparty/entt
 	url = https://github.com/skypjack/entt.git
-[submodule "Vulkitten/vendor/yaml-cpp"]
-	path = Vulkitten/vendor/yaml-cpp
+[submodule "3rdparty/yaml-cpp"]
+	path = 3rdparty/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
-[submodule "Vulkitten/vendor/imguizmo"]
-	path = Vulkitten/vendor/imguizmo
+[submodule "3rdparty/imguizmo"]
+	path = 3rdparty/imguizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
-[submodule "Vulkitten/vendor/imnodes"]
-	path = Vulkitten/vendor/imnodes
+[submodule "3rdparty/imnodes"]
+	path = 3rdparty/imnodes
 	url = https://github.com/Nelarius/imnodes.git
-[submodule "Vulkitten/vendor/tinygltf"]
-	path = Vulkitten/vendor/tinygltf
+[submodule "3rdparty/tinygltf"]
+	path = 3rdparty/tinygltf
 	url = https://github.com/syoyo/tinygltf.git
 [submodule "3rdparty/googletest"]
 	path = 3rdparty/googletest
 	url = https://github.com/google/googletest.git
+[submodule "3rdparty/imgui"]
+	path = 3rdparty/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking

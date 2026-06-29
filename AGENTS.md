@@ -6,11 +6,11 @@ Guidelines for AI agents contributing to the Vulkitten Engine, a C++17 game engi
 
 ## Project Overview
 - **Standard**: C++17 | **Build**: CMake 3.16+ with Visual Studio 2022 (x64, Windows)
-- **Architecture**: DLL (`Vulkitten`) + Executable (`SandBox`) + Editor (`VulkittenEditor`)
-- **Renderer**: OpenGL 4 (GLAD) via abstract `RendererAPI`; RenderGraph pipeline (in-progress); Vulkan planned
+- **Architecture**: DLLs (`VulkittenRHI` → `Vulkitten`) + Executable (`SandBox`) + Editor (`VulkittenEditor`)
+- **Renderer**: OpenGL 4 (GLAD) + Vulkan 1.3 via abstract `rhi::IRenderDevice`; RenderGraph pipeline (in-progress)
 - **ECS**: EnTT-based with `Scene` owning `entt::registry`, `Entity` wrappers, `System` interface
 - **Editor**: Docked ImGui panels, ImGuizmo, undo/redo command system, entity picking
-- **Key Dependencies**: spdlog, glm, glfw, glad, imgui, entt, yaml-cpp, imguizmo, imnodes, tinygltf
+- **Key Dependencies**: spdlog, glm, glfw, glad, imgui, entt, yaml-cpp, imguizmo, imnodes, tinygltf, googletest
 
 ---
 
@@ -189,30 +189,31 @@ UIRender order (within dockspace): Viewport → SceneHierarchy → Property → 
 
 ## Vendor Dependencies
 
-Git submodules (in `Vulkitten/vendor/`):
+All third-party dependencies live in `3rdparty/` (shared across all projects):
 
-| Library | Purpose |
-|---------|---------|
-| `spdlog` | Logging framework |
-| `glm` | Math library (vec/mat/quat) |
-| `glfw` | Window creation + input |
-| `imgui` | Immediate-mode GUI (Dear ImGui) |
-| `entt` | ECS library (header-only, C++17) |
-| `yaml-cpp` | YAML serialization |
-| `ImGuizmo` | 3D gizmo for ImGui (Translate/Rotate/Scale) |
-| `imnodes` | Node editor for ImGui (future use) |
-| `tinygltf` | glTF 2.0 model loader (header-only) |
-
-Manual (header-only, no submodule):
-- `nlohmann/json` — JSON parsing in `vendor/nlohmann/include/`
-- `stb_image` — Image loading in `vendor/stb_image/`
-- `glad` — OpenGL function loader in `vendor/Glad/`
+| Library | Type | Location | Purpose |
+|---------|------|----------|---------|
+| `spdlog` | git submodule | `3rdparty/spdlog/` | Logging framework |
+| `glm` | git submodule | `3rdparty/glm/` | Math library (vec/mat/quat) |
+| `glfw` | git submodule | `3rdparty/glfw/` | Window creation + input |
+| `imgui` | git submodule | `3rdparty/imgui/` | Immediate-mode GUI (Dear ImGui) |
+| `entt` | git submodule | `3rdparty/entt/` | ECS library (header-only, C++17) |
+| `yaml-cpp` | git submodule | `3rdparty/yaml-cpp/` | YAML serialization |
+| `ImGuizmo` | git submodule | `3rdparty/imguizmo/` | 3D gizmo for ImGui (Translate/Rotate/Scale) |
+| `imnodes` | git submodule | `3rdparty/imnodes/` | Node editor for ImGui (future use) |
+| `tinygltf` | git submodule | `3rdparty/tinygltf/` | glTF 2.0 model loader (header-only) |
+| `googletest` | git submodule | `3rdparty/googletest/` | C++ unit testing framework |
+| `nlohmann/json` | manual | `3rdparty/nlohmann/include/` | JSON parsing (header-only) |
+| `stb_image` | manual | `3rdparty/stb_image/` | Image loading (header-only) |
+| `Glad` | manual | `3rdparty/Glad/` | OpenGL function loader |
 
 ---
 
 ## Notes
-- Only Windows (x64) + OpenGL supported; Vulkan planned
-- Third-party libs vendored in `Vulkitten/vendor/`
+- Windows (x64) with OpenGL 4.6 + Vulkan 1.3 backends
+- Third-party libs vendored in `3rdparty/` (shared across all projects)
+- `VulkittenRHI` is a DLL exporting symbols via `RHI_API` (pattern: `VulkittenRHI/include/rhi/Core/Export.hpp`)
+- `Vulkitten` is a DLL exporting symbols via `VKT_API` (pattern: `Vulkitten/src/Vulkitten/Core/Core.h`)
 - All `.cpp` files must include `vktpch.h` first
 - Use `VKT_PROFILE_*` macros for profiling
 - Commit format: `type: short description` (e.g., `feat: add 2D renderer`)

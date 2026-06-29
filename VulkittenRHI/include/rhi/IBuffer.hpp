@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/Core/Handle.hpp"
 #include "rhi/Core/Types.hpp"
 
@@ -11,7 +12,7 @@ namespace rhi {
 // IBuffer — query interface for created GPU buffers
 // ============================================================
 
-class IBuffer
+class RHI_API IBuffer
 {
 public:
     virtual ~IBuffer() = default;

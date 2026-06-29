@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/Core/Handle.hpp"
 #include "rhi/Core/Types.hpp"
 #include "rhi/Core/Format.hpp"
@@ -33,7 +34,7 @@ class ICommandBuffer;
 // API.
 // ============================================================
 
-class ResourceManager
+class RHI_API ResourceManager
 {
 public:
     explicit ResourceManager();

@@ -162,7 +162,8 @@ void GLTestFixture::TearDown()
     if (m_Device)
     {
         m_Device->EndFrame(m_CurrentFrame);
-        m_Device->Shutdown();
+        // Shutdown is called by ~GLDevice() via m_Device.reset() below;
+        // calling it explicitly here would double-trigger glFinish()
         m_Device.reset();
     }
 

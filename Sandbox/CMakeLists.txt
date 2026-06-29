@@ -81,3 +81,6 @@ endif()
 install(TARGETS SandBox
     RUNTIME DESTINATION bin
 )
+
+# Solution folder
+set_target_properties(SandBox PROPERTIES FOLDER "Sample")
