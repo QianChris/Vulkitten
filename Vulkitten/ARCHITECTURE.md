@@ -4,7 +4,14 @@
 
 ```
 VulkittenEngine/
-├── Vulkitten/              # 引擎核心 DLL
+├── 3rdparty/               # 第三方依赖 (git submodules + 手动)
+│   ├── spdlog/ glm/ glfw/ imgui/ entt/ yaml-cpp/
+│   ├── imguizmo/ imnodes/ tinygltf/ googletest/
+│   ├── Glad/ nlohmann/ stb_image/
+├── VulkittenRHI/           # RHI 动态库 (VulkittenRHI.dll)
+│   ├── include/rhi/        # 公开 RHI 头文件
+│   └── src/                # GL + VK 后端实现
+├── Vulkitten/              # 引擎核心 DLL (Vulkitten.dll)
 │   ├── src/
 │   │   ├── Vulkitten.h     # 统一对外头文件
 │   │   ├── vktpch.h/cpp    # 预编译头
@@ -19,18 +26,18 @@ VulkittenEngine/
 │   │       ├── ImGui/      # ImGui 集成层
 │   │       ├── Perf/       # 性能分析（Instrumentor, Timer）
 │   │       └── Utils/      # 工具（FileDialogs, YAMLConversions）
-│   ├── assets/             # 引擎 Shader 资产（shaders/, computeshaders/）
-│   └── vendor/             # 8 个 git submodule + 手动依赖
+│   └── assets/             # 引擎 Shader 资产（shaders/, computeshaders/）
 ├── Sandbox/                # 测试应用 (Sandbox.exe)
 ├── VulkittenEditor/        # 编辑器应用 (VulkittenEditor.exe)
 └── tools/                  # 文件树生成器、Shader 编译器
 ```
 
 **构建系统：** CMake 3.16+, C++17, Visual Studio 2022 (x64, Windows)
-- 根 `CMakeLists.txt` 定义三项目构建顺序：Vulkitten → Sandbox → VulkittenEditor
+- 根 `CMakeLists.txt` 定义构建顺序：VulkittenRHI → Vulkitten → Sandbox → VulkittenEditor
 - 输出：`bin/{Config}-x64/{ProjectName}/`
 - 中间文件：`bin-int/{Config}-x64/{ProjectName}/`
-- Vulkitten 为 DLL（`VULKITTEN_BUILD_DLL`），Sandbox/Editor 链接 Vulkitten 并通过 post-build 复制 DLL
+- VulkittenRHI 为 DLL（`RHI_BUILD_DLL`，导出 `RHI_API`）
+- Vulkitten 为 DLL（`VULKITTEN_BUILD_DLL`，导出 `VKT_API`），依赖 VulkittenRHI
 
 ---
 
@@ -111,10 +118,29 @@ EventDispatcher<T>
 
 ### DLL 导出
 
-```cpp
-// Core.h
-#define VKT_API __declspec(dllexport/dllimport)
+两个 DLL 使用独立的导出宏：
 
+```cpp
+// VulkittenRHI: include/rhi/Core/Export.hpp
+#ifdef RHI_BUILD_DLL
+    #define RHI_API __declspec(dllexport)
+#else
+    #define RHI_API __declspec(dllimport)
+#endif
+
+// Vulkitten: src/Vulkitten/Core/Core.h
+#ifdef VULKITTEN_BUILD_DLL
+    #define VKT_API __declspec(dllexport)
+#else
+    #define VKT_API __declspec(dllimport)
+#endif
+```
+
+`VulkittenRHI` 导出 `rhi` 命名空间下的公有接口（`Renderer`, `IRenderDevice`, `ICommandBuffer` 等 12 个类）。
+`Vulkitten` 导出 `Vulkitten` 命名空间下的公有接口（`Application`, `Engine`, `Entity` 等）。
+消费者链接 `.lib` 即可获得 `__declspec(dllimport)`。
+
+```cpp
 template<typename T> using Ref = std::shared_ptr<T>;
 template<typename T> using Scope = std::unique_ptr<T>;
 
@@ -663,7 +689,7 @@ Engine::Get().GetFileSystem().RegisterPath("../../Sandbox", "sandbox");
 
 ## 10. 构建与依赖
 
-### Vendored 依赖（Vulkitten/vendor/）
+### Vendored 依赖（3rdparty/）
 
 | 库 | 类型 | 版本获取 | 用途 |
 |----|------|---------|------|
@@ -676,9 +702,10 @@ Engine::Get().GetFileSystem().RegisterPath("../../Sandbox", "sandbox");
 | **ImGuizmo** | 源文件包含 | git submodule | 3D Gizmo (Translate/Rotate/Scale) |
 | **imnodes** | 仅头文件 | git submodule | 节点编辑器 (未来使用) |
 | **tinygltf** | 仅头文件 | git submodule | glTF 2.0 模型加载 |
+| **googletest** | 编译 | git submodule | C++ 单元测试框架 |
 | **nlohmann/json** | 仅头文件 | 手动 | JSON 解析 |
 | **stb_image** | 仅头文件 | 手动 | 图像加载 |
-| **glad** | 编译 | 手动 (Vulkitten/vendor/Glad/) | OpenGL 函数加载器 |
+| **glad** | 编译 | 手动 (3rdparty/Glad/) | OpenGL 函数加载器 |
 
 ### 构建命令
 

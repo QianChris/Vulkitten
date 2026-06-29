@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/Core/Handle.hpp"
 #include "rhi/Core/Types.hpp"
 #include "rhi/Core/Format.hpp"
@@ -21,7 +22,7 @@ namespace rhi {
 // OpenGL:  immediate execution with state-change caching.
 // ============================================================
 
-class ICommandBuffer
+class RHI_API ICommandBuffer
 {
 public:
     virtual ~ICommandBuffer() = default;

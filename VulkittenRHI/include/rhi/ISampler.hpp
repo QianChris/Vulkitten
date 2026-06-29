@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/Core/Handle.hpp"
 
 namespace rhi {
@@ -10,7 +11,7 @@ namespace rhi {
 // Mostly a type tag; all configuration is in SamplerDesc.
 // ============================================================
 
-class ISampler
+class RHI_API ISampler
 {
 public:
     virtual ~ISampler() = default;

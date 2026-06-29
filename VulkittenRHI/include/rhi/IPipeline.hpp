@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/Core/Handle.hpp"
 
 namespace rhi {
@@ -8,7 +9,7 @@ namespace rhi {
 // IPipeline — query interface for created GPU pipelines
 // ============================================================
 
-class IPipeline
+class RHI_API IPipeline
 {
 public:
     virtual ~IPipeline() = default;

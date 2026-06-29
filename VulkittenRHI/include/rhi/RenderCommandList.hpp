@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/Core/Handle.hpp"
 #include "rhi/Core/Types.hpp"
 #include "rhi/ResourceDescs.hpp"
@@ -46,7 +47,7 @@ struct Binding
 //            used by passes, destroyed by Renderer::EndFrame().
 // ============================================================
 
-class RenderCommandList
+class RHI_API RenderCommandList
 {
 public:
     RenderCommandList(IRenderDevice& device, ResourceManager& rm, ICommandBuffer& cmd);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
+
 #include <cstdint>
 
 namespace rhi {
@@ -22,7 +24,7 @@ struct SurfaceDesc
 //   Vulkan:  used to create VkSurfaceKHR
 // ============================================================
 
-class ISurface
+class RHI_API ISurface
 {
 public:
     virtual ~ISurface() = default;

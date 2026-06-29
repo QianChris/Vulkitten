@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/Core/Types.hpp"
 #include "rhi/Core/Handle.hpp"
 #include "rhi/ISurface.hpp"
@@ -54,7 +55,7 @@ struct RendererConfig
 //   }
 // ============================================================
 
-class Renderer
+class RHI_API Renderer
 {
 public:
     // Factory: creates the correct backend based on config.Backend

@@ -15,16 +15,23 @@ else()
 endif()
 
 # ============================================================
-# VulkittenRHI - static library
+# VulkittenRHI - dynamic library (DLL)
 # ============================================================
 set(RHI_HEADERS
     include/rhi/Core/Handle.hpp
     include/rhi/Core/Format.hpp
     include/rhi/Core/Types.hpp
+    include/rhi/Core/Export.hpp
     include/rhi/ResourceDescs.hpp
     include/rhi/ResourceManager.hpp
     include/rhi/ISurface.hpp
     include/rhi/FrameContext.hpp
+    include/rhi/IBuffer.hpp
+    include/rhi/ITexture.hpp
+    include/rhi/IShader.hpp
+    include/rhi/IPipeline.hpp
+    include/rhi/IGeometry.hpp
+    include/rhi/ISampler.hpp
     include/rhi/ICommandBuffer.hpp
     include/rhi/IRenderDevice.hpp
     include/rhi/RenderCommandList.hpp
@@ -50,18 +57,59 @@ if(Vulkan_FOUND)
     )
 endif()
 
-add_library(VulkittenRHI STATIC ${RHI_HEADERS} ${RHI_SOURCES})
+add_library(VulkittenRHI SHARED ${RHI_HEADERS} ${RHI_SOURCES})
+
+# DLL export macro
+target_compile_definitions(VulkittenRHI PRIVATE RHI_BUILD_DLL)
 
 target_include_directories(VulkittenRHI
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
+# ---- Output Directory Properties ----
+set_target_properties(VulkittenRHI PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/VulkittenRHI
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/VulkittenRHI
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/VulkittenRHI
+)
+
+# Per-config output directories
+foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG_UPPER)
+    set_target_properties(VulkittenRHI PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}}/VulkittenRHI
+        LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}}/VulkittenRHI
+        ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER}}/VulkittenRHI
+    )
+endforeach()
+
+# Intermediate file directory
+set_target_properties(VulkittenRHI PROPERTIES
+    CMAKE_INTERMEDIATE_DIRECTORY ${CMAKE_INTERMEDIATE_DIRECTORY}/VulkittenRHI
+    PDB_OUTPUT_DIRECTORY ${CMAKE_INTERMEDIATE_DIRECTORY}/VulkittenRHI
+    COMPILE_PDB_OUTPUT_DIRECTORY ${CMAKE_INTERMEDIATE_DIRECTORY}/VulkittenRHI
+)
+
+# Windows: set PDB name to match DLL
+if(MSVC)
+    set_target_properties(VulkittenRHI PROPERTIES
+        COMPILE_PDB_NAME VulkittenRHI
+    )
+endif()
+
+# Install rules
+install(TARGETS VulkittenRHI
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
 # GLFW - vendored from parent project
 if(NOT TARGET glfw)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../Vulkitten/vendor/glfw")
-        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../Vulkitten/vendor/glfw ${CMAKE_BINARY_DIR}/glfw)
-        target_include_directories(VulkittenRHI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../Vulkitten/vendor/glfw/include)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/glfw")
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/glfw ${CMAKE_BINARY_DIR}/glfw_rhi)
+        target_include_directories(VulkittenRHI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/glfw/include)
     else()
         find_package(glfw3 QUIET)
         if(NOT glfw3_FOUND)
@@ -75,8 +123,8 @@ endif()
 
 # GLAD - OpenGL function loader (vendored from parent)
 if(NOT TARGET glad)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../Vulkitten/vendor/Glad")
-        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../Vulkitten/vendor/Glad ${CMAKE_BINARY_DIR}/glad)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/Glad")
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/Glad ${CMAKE_BINARY_DIR}/glad_rhi)
     else()
         message(WARNING "GLAD not found - OpenGL backend will not compile")
     endif()

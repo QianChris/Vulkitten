@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/Core/Handle.hpp"
 #include "rhi/Core/Types.hpp"
 
@@ -9,7 +10,7 @@ namespace rhi {
 // IShader — query interface for created GPU shaders
 // ============================================================
 
-class IShader
+class RHI_API IShader
 {
 public:
     virtual ~IShader() = default;

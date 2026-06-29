@@ -7,7 +7,7 @@ add_executable(Sample ${SAMPLE_SOURCES})
 target_link_libraries(Sample PRIVATE VulkittenRHI glfw)
 
 target_include_directories(Sample PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Vulkitten/vendor/glm
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../3rdparty/glm
 )
 
 # Absolute path to VulkittenRHI root, used to resolve asset paths at runtime

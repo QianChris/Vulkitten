@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/Core/Handle.hpp"
 #include "rhi/Core/Format.hpp"
 #include "rhi/Core/Types.hpp"
@@ -11,7 +12,7 @@ namespace rhi {
 // ITexture — query interface for created GPU textures
 // ============================================================
 
-class ITexture
+class RHI_API ITexture
 {
 public:
     virtual ~ITexture() = default;
