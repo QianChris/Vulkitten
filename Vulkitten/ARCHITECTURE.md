@@ -9,8 +9,11 @@ VulkittenEngine/
 │   ├── imguizmo/ imnodes/ tinygltf/ googletest/
 │   ├── Glad/ nlohmann/ stb_image/
 ├── VulkittenRHI/           # RHI 动态库 (VulkittenRHI.dll)
-│   ├── include/rhi/        # 公开 RHI 头文件
-│   └── src/                # GL + VK 后端实现
+│   ├── include/rhi/        # 公开 RHI 头文件（12 个 RHI_API 导出类）
+│   ├── src/gl/             # OpenGL 4.6 后端（原生 WGL，零 GLFW 依赖）
+│   ├── src/vk/             # Vulkan 1.3 后端
+│   ├── samples/            # RHISample.exe
+│   └── tests/              # 100 个测试 (68 unit + 18 GL + 14 VK)
 ├── Vulkitten/              # 引擎核心 DLL (Vulkitten.dll)
 │   ├── src/
 │   │   ├── Vulkitten.h     # 统一对外头文件
@@ -34,10 +37,11 @@ VulkittenEngine/
 
 **构建系统：** CMake 3.16+, C++17, Visual Studio 2022 (x64, Windows)
 - 根 `CMakeLists.txt` 定义构建顺序：VulkittenRHI → Vulkitten → Sandbox → VulkittenEditor
-- 输出：`bin/{Config}-x64/{ProjectName}/`
+- 输出：`bin/{Config}-x64/`（DLL 和 EXE 在同一目录以解决 DLL 运行时查找问题）
 - 中间文件：`bin-int/{Config}-x64/{ProjectName}/`
-- VulkittenRHI 为 DLL（`RHI_BUILD_DLL`，导出 `RHI_API`）
+- VulkittenRHI 为 DLL（`RHI_BUILD_DLL`，导出 `RHI_API`）；GL 后端使用原生 WGL 以避免 GLFW 跨模块双链接问题
 - Vulkitten 为 DLL（`VULKITTEN_BUILD_DLL`，导出 `VKT_API`），依赖 VulkittenRHI
+- .sln 文件夹组织：`Core/` `Sample/` `Editor/` `3rdparty/` `Tests/`
 
 ---
 
@@ -139,6 +143,17 @@ EventDispatcher<T>
 `VulkittenRHI` 导出 `rhi` 命名空间下的公有接口（`Renderer`, `IRenderDevice`, `ICommandBuffer` 等 12 个类）。
 `Vulkitten` 导出 `Vulkitten` 命名空间下的公有接口（`Application`, `Engine`, `Entity` 等）。
 消费者链接 `.lib` 即可获得 `__declspec(dllimport)`。
+
+### GLFW 跨模块双链接问题
+
+GLFW 和 GLAD 作为静态库同时链接到 `VulkittenRHI.dll` 和可执行文件时，每个模块拥有独立的全局状态（`_glfw` 结构体、`glad_*` 函数指针）。为避免此问题：
+
+| 后端 | 上下文管理 | GL 函数加载 | GLFW 函数 |
+|------|-----------|-------------|-----------|
+| **OpenGL** | 原生 `wglMakeCurrent` / `SwapBuffers` | 原生 `wglGetProcAddress` + `GetProcAddress(opengl32.dll)` | 零依赖 |
+| **Vulkan** | — | — | `glfwInit()` 在 `VKDevice::Init()` 中初始化 DLL 的 GLFW 副本 |
+
+GL 后端完全不依赖 GLFW — 所有上下文操作使用 Windows 原生 WGL API。VK 后端调用 `glfwInit()` 初始化 DLL 自身的 GLFW 状态后使用 `glfwGetRequiredInstanceExtensions` / `glfwCreateWindowSurface`。
 
 ```cpp
 template<typename T> using Ref = std::shared_ptr<T>;

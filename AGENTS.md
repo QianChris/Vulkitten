@@ -30,13 +30,34 @@ cmake --build build --target SandBox --config Release
 # Clean and rebuild
 cmake --build build --target clean --config Debug && cmake --build build --config Debug
 ```
-Binaries: `bin/[Config]-x64/[ProjectName]/` (e.g., `bin/Debug-x64/SandBox/SandBox.exe`)
+Binaries: `bin/[Config]-x64/` (flat layout — DLLs and EXEs share the same directory for runtime resolution)
+- DLLs: `bin/Debug-x64/VulkittenRHI.dll`, `Vulkitten.dll`
+- EXEs: `bin/Debug-x64/SandBox.exe`, `RHISample.exe`, `VulkittenEditor.exe`
+- Legacy subdirectories for some projects: `bin/Debug-x64/Vulkitten/Vulkitten.dll`, `bin/Debug-x64/SandBox/SandBox.exe`
+
+### Solution Folders
+Visual Studio .sln is organized into:
+- `Core/` — Vulkitten, VulkittenRHI
+- `Sample/` — SandBox, RHISample
+- `Editor/` — VulkittenEditor
+- `3rdparty/` — all vendored libraries
+- `Tests/` — RHI test executables
 
 ### Lint
 Use vendored `.clang-format` (4 spaces, 100-char limit, CRLF endings).
 
 ### Test
-No test framework configured. Verify changes via successful builds and manual execution of `SandBox.exe`.
+```bash
+# Run all RHI tests (requires GPU for GL/VK suites)
+cd bin/Debug-x64
+./VulkittenRHIUnitTests.exe   # 68 unit tests (no GPU needed)
+./VulkittenRHIGLTests.exe     # 18 OpenGL GPU tests
+./VulkittenRHIVKTests.exe     # 14 Vulkan GPU tests
+
+# Or via CTest
+ctest --test-dir build --config Debug
+```
+**100 tests total** across 3 suites: 68 unit + 18 GL integration + 14 VK integration.
 
 ---
 
@@ -212,8 +233,9 @@ All third-party dependencies live in `3rdparty/` (shared across all projects):
 ## Notes
 - Windows (x64) with OpenGL 4.6 + Vulkan 1.3 backends
 - Third-party libs vendored in `3rdparty/` (shared across all projects)
-- `VulkittenRHI` is a DLL exporting symbols via `RHI_API` (pattern: `VulkittenRHI/include/rhi/Core/Export.hpp`)
-- `Vulkitten` is a DLL exporting symbols via `VKT_API` (pattern: `Vulkitten/src/Vulkitten/Core/Core.h`)
+- `VulkittenRHI` is a DLL exporting symbols via `RHI_API` (see `VulkittenRHI/include/rhi/Core/Export.hpp`)
+- `Vulkitten` is a DLL exporting symbols via `VKT_API` (see `Vulkitten/src/Vulkitten/Core/Core.h`)
+- **GLFW dual-linkage**: GLFW and GLAD are statically linked into both the DLL and EXE. The GL backend uses native WGL calls (`wglMakeCurrent`, `wglGetProcAddress`) to avoid cross-module GLFW state issues. The VK backend calls `glfwInit()` in `VKDevice::Init()` to initialize the DLL's own GLFW copy.
 - All `.cpp` files must include `vktpch.h` first
 - Use `VKT_PROFILE_*` macros for profiling
 - Commit format: `type: short description` (e.g., `feat: add 2D renderer`)
