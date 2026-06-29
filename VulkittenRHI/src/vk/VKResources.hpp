@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/IBuffer.hpp"
 #include "rhi/ITexture.hpp"
 #include "rhi/IShader.hpp"
@@ -19,7 +20,7 @@ namespace rhi {
 // ============================================================
 // VKBufferResource — RAII VkBuffer + VkDeviceMemory + IBuffer
 // ============================================================
-class VKBufferResource : public IBuffer
+class RHI_API VKBufferResource : public IBuffer
 {
 public:
     VKBufferResource(VkDevice device, const BufferDesc& desc, const void* initialData,
@@ -50,7 +51,7 @@ private:
 // ============================================================
 // VKTextureResource — RAII VkImage + VkDeviceMemory + VkImageView
 // ============================================================
-class VKTextureResource : public ITexture
+class RHI_API VKTextureResource : public ITexture
 {
 public:
     VKTextureResource(VkDevice device, VkPhysicalDevice physicalDevice,
@@ -78,7 +79,7 @@ private:
 // ============================================================
 // VKShaderResource — RAII VkShaderModule + IShader
 // ============================================================
-class VKShaderResource : public IShader
+class RHI_API VKShaderResource : public IShader
 {
 public:
     VKShaderResource(VkDevice device, ShaderStage stage, const ShaderBytecode& bytecode);
@@ -102,7 +103,7 @@ private:
 // ============================================================
 // VKPipelineResource — RAII VkPipeline + layout + descriptor layout
 // ============================================================
-class VKPipelineResource : public IPipeline
+class RHI_API VKPipelineResource : public IPipeline
 {
 public:
     VKPipelineResource(VkDevice device,
@@ -144,7 +145,7 @@ private:
 // ============================================================
 // VKGeometryResource — geometry metadata + IGeometry
 // ============================================================
-class VKGeometryResource : public IGeometry
+class RHI_API VKGeometryResource : public IGeometry
 {
 public:
     explicit VKGeometryResource(const GeometryDesc& desc);
@@ -161,7 +162,7 @@ private:
 // ============================================================
 // VKSamplerResource — RAII VkSampler + ISampler
 // ============================================================
-class VKSamplerResource : public ISampler
+class RHI_API VKSamplerResource : public ISampler
 {
 public:
     VKSamplerResource(VkDevice device, const SamplerDesc& desc);

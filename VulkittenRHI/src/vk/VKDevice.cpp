@@ -7,6 +7,9 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include <windows.h>
+#include <vulkan/vulkan_win32.h>
+
 #include <algorithm>
 #include <stdexcept>
 #include <cstring>
@@ -50,6 +53,13 @@ void VKDevice::Init()
 {
     if (!m_Surface)
         throw std::runtime_error("VKDevice: no surface provided");
+
+    // glfwInit is ref-counted; must be called from the DLL too because
+    // GLFW is statically linked into both DLL and EXE — the DLL has its
+    // own copy of GLFW global state that must be initialized before
+    // calling glfwGetRequiredInstanceExtensions / glfwCreateWindowSurface.
+    if (!glfwInit())
+        throw std::runtime_error("VKDevice: glfwInit() failed");
 
     // === Create Instance ===
     VkApplicationInfo appInfo{};

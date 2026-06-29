@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/IBuffer.hpp"
 #include "rhi/ITexture.hpp"
 #include "rhi/IShader.hpp"
@@ -22,7 +23,7 @@ class ResourceManager;
 // ============================================================
 // GLBufferResource — RAII GL buffer + IBuffer impl
 // ============================================================
-class GLBufferResource : public IBuffer
+class RHI_API GLBufferResource : public IBuffer
 {
 public:
     GLBufferResource(const BufferDesc& desc, const void* initialData);
@@ -56,7 +57,7 @@ GLenum FormatToGLType(Format f, bool& outNormalized);
 // ============================================================
 // GLTextureResource — RAII GL texture
 // ============================================================
-class GLTextureResource : public ITexture
+class RHI_API GLTextureResource : public ITexture
 {
 public:
     GLTextureResource(const TextureDesc& desc, const void* initialData);
@@ -82,7 +83,7 @@ private:
 // ============================================================
 // GLShaderResource — RAII GL shader object + IShader impl
 // ============================================================
-class GLShaderResource : public IShader
+class RHI_API GLShaderResource : public IShader
 {
 public:
     GLShaderResource(ShaderStage stage, const ShaderBytecode& bytecode);
@@ -111,7 +112,7 @@ private:
 // Stores the complete PipelineDesc so GLCommandBuffer can
 // apply ALL GL state from the PSO during BindPipeline.
 // ============================================================
-class GLPipelineResource : public IPipeline
+class RHI_API GLPipelineResource : public IPipeline
 {
 public:
     GLPipelineResource(const PipelineDesc& desc,
@@ -166,7 +167,7 @@ private:
 // ============================================================
 // GLGeometryResource — geometry metadata + IGeometry impl
 // ============================================================
-class GLGeometryResource : public IGeometry
+class RHI_API GLGeometryResource : public IGeometry
 {
 public:
     explicit GLGeometryResource(const GeometryDesc& desc);
@@ -184,7 +185,7 @@ private:
 // ============================================================
 // GLSamplerResource — RAII GL sampler + ISampler impl
 // ============================================================
-class GLSamplerResource : public ISampler
+class RHI_API GLSamplerResource : public ISampler
 {
 public:
     explicit GLSamplerResource(const SamplerDesc& desc);
@@ -199,7 +200,7 @@ private:
 // ============================================================
 // GLRenderPassResource — stores RenderPassDesc
 // ============================================================
-class GLRenderPassResource
+class RHI_API GLRenderPassResource
 {
 public:
     explicit GLRenderPassResource(const RenderPassDesc& desc);
@@ -212,7 +213,7 @@ private:
 // ============================================================
 // GLFramebufferResource — RAII GL FBO
 // ============================================================
-class GLFramebufferResource
+class RHI_API GLFramebufferResource
 {
 public:
     GLFramebufferResource(const FramebufferDesc& desc,

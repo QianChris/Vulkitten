@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/IRenderDevice.hpp"
 #include "rhi/ISurface.hpp"
 #include "rhi/ResourceDescs.hpp"
@@ -24,7 +25,7 @@ class VKPipelineResource;
 // ResourceManager. Only creates native Vulkan objects.
 // ============================================================
 
-class VKDevice : public IRenderDevice
+class RHI_API VKDevice : public IRenderDevice
 {
 public:
     explicit VKDevice(ISurface* surface, ResourceManager& rm);

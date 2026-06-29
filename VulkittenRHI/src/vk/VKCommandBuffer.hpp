@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/ICommandBuffer.hpp"
 #include "rhi/Core/Handle.hpp"
 
@@ -14,7 +15,7 @@ class VKPipelineResource;
 class VKBufferResource;
 class VKGeometryResource;
 
-class VKCommandBuffer : public ICommandBuffer
+class RHI_API VKCommandBuffer : public ICommandBuffer
 {
 public:
     explicit VKCommandBuffer(VKDevice& device, void* vkCommandBuffer, uint32_t frameIndex = 0);

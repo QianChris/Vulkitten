@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/ICommandBuffer.hpp"
 #include "rhi/Core/Handle.hpp"
 #include "rhi/ResourceDescs.hpp"
@@ -15,7 +16,7 @@ class GLPipelineResource;
 class GLBufferResource;
 class GLGeometryResource;
 
-class GLCommandBuffer : public ICommandBuffer
+class RHI_API GLCommandBuffer : public ICommandBuffer
 {
 public:
     explicit GLCommandBuffer(GLDevice& device);

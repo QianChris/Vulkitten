@@ -19,8 +19,8 @@ if(WIN32)
     target_link_libraries(Sample PRIVATE opengl32)
 endif()
 
-# Runtime output - debugger working dir points to VulkittenRHI root
+# Output to common bin/ directory so DLLs are found at runtime
+# Working directory points to VulkittenRHI root for asset resolution
 set_target_properties(Sample PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sample
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.."
 )

@@ -8,12 +8,12 @@ add_subdirectory(../3rdparty/glfw ${CMAKE_BINARY_DIR}/glfw)
 add_subdirectory(../3rdparty/Glad ${CMAKE_BINARY_DIR}/glad)
 add_subdirectory(../3rdparty/entt ${CMAKE_BINARY_DIR}/entt)
 add_subdirectory(../3rdparty/yaml-cpp ${CMAKE_BINARY_DIR}/yaml-cpp)
-# add_subdirectory(../3rdparty/imgui)
+# add_subdirectory(../3rdparty/imgui ${CMAKE_BINARY_DIR}/imgui)
 
 # 宏开关
 add_definitions(-DVULKITTEN_ENABLE_ASSERTS=1)
 
-# Vulkan SDK (optional - gates VKT_HAS_VULKAN)
+# Vulkan SDK (optional - gates VKT_HASs_VULKAN)
 find_package(Vulkan QUIET)
 if(Vulkan_FOUND)
     add_definitions(-DVKT_HAS_VULKAN)

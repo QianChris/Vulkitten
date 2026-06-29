@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/ISurface.hpp"
 #include "rhi/Core/Types.hpp"
 
@@ -17,7 +18,7 @@ namespace rhi {
 //          synchronization primitives for frame pacing.
 // ============================================================
 
-class VKSwapchain
+class RHI_API VKSwapchain
 {
 public:
     VKSwapchain();

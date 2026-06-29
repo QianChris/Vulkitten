@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rhi/Core/Export.hpp"
 #include "rhi/IRenderDevice.hpp"
 #include "rhi/ISurface.hpp"
 
@@ -32,7 +33,7 @@ class GLFramebufferResource;
 // ResourceManager. Only creates native GL objects.
 // ============================================================
 
-class GLDevice : public IRenderDevice
+class RHI_API GLDevice : public IRenderDevice
 {
 public:
     explicit GLDevice(ISurface* surface, ResourceManager& rm);
@@ -98,6 +99,8 @@ private:
     }
     ISurface*   m_Surface = nullptr;
     GLFWwindow* m_Window = nullptr;
+    void*       m_NativeDC = nullptr;      // HDC  — captured from current context in Init()
+    void*       m_NativeHGLRC = nullptr;   // HGLRC — captured from current context in Init()
     uint32_t    m_FrameIndex = 0;
     uint32_t    m_Width = 0;
     uint32_t    m_Height = 0;
