@@ -166,3 +166,33 @@ if(VULKITTEN_BUILD_TESTS)
     endif()
     add_subdirectory(tests)
 endif()
+
+# ============================================================
+# Solution Folder Organization
+# ============================================================
+
+# 3rdparty targets built by RHI (only if not already built by Vulkitten)
+if(TARGET glfw)
+    set_target_properties(glfw PROPERTIES FOLDER "3rdparty")
+endif()
+if(TARGET glad)
+    set_target_properties(glad PROPERTIES FOLDER "3rdparty")
+endif()
+set_target_properties(gtest PROPERTIES FOLDER "3rdparty")
+set_target_properties(gtest_main PROPERTIES FOLDER "3rdparty")
+if(TARGET gmock)
+    set_target_properties(gmock PROPERTIES FOLDER "3rdparty")
+endif()
+if(TARGET gmock_main)
+    set_target_properties(gmock_main PROPERTIES FOLDER "3rdparty")
+endif()
+
+# Test targets
+set_target_properties(VulkittenRHIUnitTests PROPERTIES FOLDER "Tests")
+set_target_properties(VulkittenRHIGLTests PROPERTIES FOLDER "Tests")
+if(TARGET VulkittenRHIVKTests)
+    set_target_properties(VulkittenRHIVKTests PROPERTIES FOLDER "Tests")
+endif()
+if(TARGET CompileTestShaders)
+    set_target_properties(CompileTestShaders PROPERTIES FOLDER "Tests")
+endif()

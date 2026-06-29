@@ -142,3 +142,39 @@ install(TARGETS Vulkitten
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
+
+# ============================================================
+# Solution Folder Organization
+# ============================================================
+
+# 3rdparty built targets
+set_target_properties(spdlog PROPERTIES FOLDER "3rdparty")
+set_target_properties(glm PROPERTIES FOLDER "3rdparty")
+set_target_properties(glfw PROPERTIES FOLDER "3rdparty")
+set_target_properties(glad PROPERTIES FOLDER "3rdparty")
+set_target_properties(yaml-cpp PROPERTIES FOLDER "3rdparty")
+if(TARGET tinygltf)
+    set_target_properties(tinygltf PROPERTIES FOLDER "3rdparty")
+endif()
+
+# 3rdparty internal / utility targets
+if(TARGET uninstall)
+    set_target_properties(uninstall PROPERTIES FOLDER "3rdparty")
+endif()
+if(TARGET update_mappings)
+    set_target_properties(update_mappings PROPERTIES FOLDER "3rdparty")
+endif()
+foreach(util IN ITEMS yaml-cpp-parse yaml-cpp-read yaml-cpp-sandbox)
+    if(TARGET ${util})
+        set_target_properties(${util} PROPERTIES FOLDER "3rdparty")
+    endif()
+endforeach()
+
+# GLFW's own solution folder — suppress by moving its contents to 3rdparty
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_target_properties(glfw PROPERTIES FOLDER "3rdparty")
+
+# Copy DLL helper targets
+if(TARGET CopyVulkittenDLL)
+    set_target_properties(CopyVulkittenDLL PROPERTIES FOLDER "Sample")
+endif()

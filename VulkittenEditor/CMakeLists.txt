@@ -83,3 +83,9 @@ endif()
 install(TARGETS VulkittenEditor
     RUNTIME DESTINATION bin
 )
+
+# Solution folder
+set_target_properties(VulkittenEditor PROPERTIES FOLDER "Editor")
+if(TARGET CopyVulkittenDLLEditor)
+    set_target_properties(CopyVulkittenDLLEditor PROPERTIES FOLDER "Editor")
+endif()

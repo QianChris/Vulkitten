@@ -68,3 +68,25 @@ add_subdirectory(Vulkitten)
 add_subdirectory(VulkittenRHI)
 add_subdirectory(SandBox)
 add_subdirectory(VulkittenEditor)
+
+# ============================================================
+# Solution Folder Organization
+# ============================================================
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+# Core libraries
+set_target_properties(Vulkitten PROPERTIES FOLDER "Core")
+set_target_properties(VulkittenRHI PROPERTIES FOLDER "Core")
+
+# Samples
+set_target_properties(SandBox PROPERTIES FOLDER "Sample")
+set_target_properties(RHISample PROPERTIES FOLDER "Sample")
+if(TARGET CopyVulkittenDLL)
+    set_target_properties(CopyVulkittenDLL PROPERTIES FOLDER "Sample")
+endif()
+
+# Editor
+set_target_properties(VulkittenEditor PROPERTIES FOLDER "Editor")
+if(TARGET CopyVulkittenDLLEditor)
+    set_target_properties(CopyVulkittenDLLEditor PROPERTIES FOLDER "Editor")
+endif()
